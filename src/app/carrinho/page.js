@@ -1,0 +1,396 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+export default function CartPage() {
+  const router = useRouter();
+  const [cartIds, setCartIds] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [activeSeller, setActiveSeller] = useState(null);
+
+  // Form Fields
+  const [formData, setFormData] = useState({
+    name: '',
+    whatsapp: '',
+    email: '',
+    address: '',
+    notes: ''
+  });
+
+  useEffect(() => {
+    // 1. Load active seller
+    const storedSeller = localStorage.getItem('ref_seller');
+    if (storedSeller) {
+      setActiveSeller(JSON.parse(storedSeller));
+    }
+
+    // 2. Load cart items
+    const cartStr = localStorage.getItem('jet_engine_store_carrinho') || '';
+    const ids = cartStr.split(',').filter(id => id.trim() !== '');
+    setCartIds(ids);
+
+    // 3. Fetch products to get details
+    const fetchProductDetails = async () => {
+      if (ids.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const prods = await res.json();
+          // Filter products that are in our cart IDs
+          const uniqueIds = new Set(ids);
+          const filtered = prods.filter(p => uniqueIds.has(String(p.id)));
+          setProducts(filtered);
+        }
+      } catch (err) {
+        console.error('Error fetching cart products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, []);
+
+  // Compute quantity and lists
+  const cartQuantities = cartIds.reduce((acc, id) => {
+    acc[id] = (acc[id] || 0) + 1;
+    return acc;
+  }, {});
+
+  const updateQuantity = (id, newQty) => {
+    let updatedIds = [...cartIds];
+    const currentQty = cartQuantities[id] || 0;
+
+    if (newQty > currentQty) {
+      // Add items
+      const diff = newQty - currentQty;
+      for (let i = 0; i < diff; i++) {
+        updatedIds.push(String(id));
+      }
+    } else if (newQty < currentQty) {
+      // Remove items
+      const diff = currentQty - newQty;
+      for (let i = 0; i < diff; i++) {
+        const idx = updatedIds.indexOf(String(id));
+        if (idx > -1) {
+          updatedIds.splice(idx, 1);
+        }
+      }
+    }
+
+    setCartIds(updatedIds);
+    localStorage.setItem('jet_engine_store_carrinho', updatedIds.join(','));
+    window.dispatchEvent(new Event('cart_changed'));
+
+    // Remove product details from state if quantity is 0
+    if (newQty === 0) {
+      setProducts(products.filter(p => String(p.id) !== String(id)));
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (cartIds.length === 0) return;
+
+    if (!formData.name || !formData.whatsapp) {
+      alert('Nome e WhatsApp são obrigatórios!');
+      return;
+    }
+
+    setSubmitting(true);
+
+    // Prepare order items
+    const orderItems = products.map(p => ({
+      product_id: p.id,
+      title: p.title,
+      sku: p.sku || '',
+      quantity: cartQuantities[p.id] || 0,
+      price: p.preco || null
+    })).filter(item => item.quantity > 0);
+
+    const orderPayload = {
+      customer_name: formData.name,
+      customer_whatsapp: formData.whatsapp,
+      customer_email: formData.email,
+      customer_address: formData.address,
+      notes: formData.notes,
+      seller_id: activeSeller ? activeSeller.id : null,
+      items: orderItems
+    };
+
+    try {
+      // 1. Save to server database
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload)
+      });
+
+      if (res.ok) {
+        const orderRes = await res.json();
+        const orderId = orderRes.orderId;
+
+        // 2. Format WhatsApp Message
+        let message = `*SOLICITAÇÃO DE ORÇAMENTO - #${orderId}*\n\n`;
+        message += `*Cliente:* ${formData.name}\n`;
+        message += `*WhatsApp:* ${formData.whatsapp}\n`;
+        if (formData.email) message += `*Email:* ${formData.email}\n`;
+        if (formData.address) message += `*Entregar em:* ${formData.address}\n`;
+        if (formData.notes) message += `*Observações:* ${formData.notes}\n`;
+        
+        if (activeSeller) {
+          message += `*Vendedor:* ${activeSeller.name}\n`;
+        }
+        
+        message += `\n*PRODUTOS REQUISITADOS:*\n`;
+        
+        products.forEach(p => {
+          const qty = cartQuantities[p.id] || 0;
+          if (qty > 0) {
+            const skuText = p.sku ? ` (Código: ${p.sku})` : '';
+            const weightText = p.peso ? ` [${p.peso} ${p.unidade_peso}]` : '';
+            const priceText = p.preco ? ` - R$ ${p.preco.toFixed(2)}` : '';
+            message += `- ${qty}x ${p.title}${skuText}${weightText}${priceText}\n`;
+          }
+        });
+        
+        message += `\n_Orçamento enviado via antenorefilhos.com.br_`;
+
+        // 3. Clear cart
+        localStorage.removeItem('jet_engine_store_carrinho');
+        window.dispatchEvent(new Event('cart_changed'));
+
+        // 4. Determine destination WhatsApp number
+        // If selling through a validated seller, redirect to the seller's specific WhatsApp!
+        // Else, redirect to store main WhatsApp.
+        const destPhone = activeSeller ? activeSeller.phone : '5524988650462';
+        
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${destPhone}&text=${encodeURIComponent(message)}`;
+
+        // 5. Open WhatsApp redirect in new window or same window
+        window.location.href = whatsappUrl;
+
+        // 6. Navigate current page to /obrigado
+        router.push('/obrigado');
+      } else {
+        alert('Erro ao enviar o orçamento. Por favor, tente novamente.');
+      }
+    } catch (err) {
+      console.error('Error submitting checkout:', err);
+      alert('Houve um erro técnico. Por favor, tente novamente.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '80px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
+        <h2>Carregando seu orçamento...</h2>
+      </div>
+    );
+  }
+
+  if (cartIds.length === 0) {
+    return (
+      <div className="container" style={{ padding: '80px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '48px', display: 'block', marginBottom: '20px' }}>🛒</span>
+        <h2 style={{ color: 'white', marginBottom: '15px' }}>Seu Orçamento está Vazio</h2>
+        <p style={{ marginBottom: '30px' }}>Nenhum produto foi adicionado à sua lista.</p>
+        <Link href="/boutique" className="btn btn-primary">
+          Ver Boutique & Adega
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '40px 0' }}>
+      <div className="container">
+        <h1 style={{ fontSize: '32px', color: 'white', marginBottom: '30px' }}>Conferência de Orçamento</h1>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '40px' }} className="checkout-layout">
+          
+          {/* Cart Items List */}
+          <main>
+            <h3 style={{ color: 'white', fontSize: '18px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              Produtos Selecionados ({products.length})
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {products.map(product => {
+                const qty = cartQuantities[product.id] || 0;
+                if (qty === 0) return null;
+                
+                return (
+                  <div key={product.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    padding: '20px',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-lg)'
+                  }}>
+                    {/* Thumbnail */}
+                    <div style={{ width: '80px', height: '60px', backgroundColor: '#232936', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: 'var(--text-muted)' }}>Sem foto</div>
+                      )}
+                    </div>
+
+                    {/* Product Metadata */}
+                    <div style={{ flexGrow: 1 }}>
+                      <h4 style={{ color: 'white', fontSize: '15px', marginBottom: '4px' }}>{product.title}</h4>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {product.sku ? `EAN: ${product.sku}` : ''} 
+                        {product.peso ? ` | Peso: ${product.peso} ${product.unidade_peso}` : ''}
+                      </p>
+                      {product.preco && (
+                        <p style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 'bold', marginTop: '4px' }}>
+                          R$ {product.preco.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Quantity selectors */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button 
+                        onClick={() => updateQuantity(product.id, qty - 1)}
+                        className="btn btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        -
+                      </button>
+                      <span style={{ minWidth: '24px', textAlign: 'center', fontWeight: 'bold', color: 'white', fontSize: '14px' }}>
+                        {qty}
+                      </span>
+                      <button 
+                        onClick={() => updateQuantity(product.id, qty + 1)}
+                        className="btn btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </main>
+
+          {/* Checkout Info Form */}
+          <aside>
+            <div className="glass" style={{ padding: '30px', borderRadius: 'var(--radius-lg)' }}>
+              <h3 style={{ color: 'white', fontSize: '18px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                Dados para Envio
+              </h3>
+              
+              <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label className="form-label">Nome Completo *</label>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    required 
+                    placeholder="Seu nome completo" 
+                    className="form-control"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">WhatsApp (Celular) *</label>
+                  <input 
+                    type="tel" 
+                    name="whatsapp" 
+                    required 
+                    placeholder="Ex: (24) 98865-0462" 
+                    className="form-control"
+                    value={formData.whatsapp}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">E-mail (Opcional)</label>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    placeholder="seuemail@exemplo.com" 
+                    className="form-control"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Endereço de Entrega (Opcional)</label>
+                  <input 
+                    type="text" 
+                    name="address" 
+                    placeholder="Rua, Número, Bairro, Cidade" 
+                    className="form-control"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Observações</label>
+                  <textarea 
+                    name="notes" 
+                    rows="3" 
+                    placeholder="Alguma observação sobre ponto da carne, safra do vinho, etc." 
+                    className="form-control"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                  ></textarea>
+                </div>
+
+                {activeSeller && (
+                  <div style={{
+                    backgroundColor: 'var(--primary-light)',
+                    border: '1px solid var(--primary)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px',
+                    fontSize: '12px',
+                    marginBottom: '20px',
+                    color: 'var(--text-primary)'
+                  }}>
+                    📢 Seu atendimento será finalizado no WhatsApp do vendedor: <b>{activeSeller.name}</b>.
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  disabled={submitting}
+                  className="btn btn-primary" 
+                  style={{ width: '100%', padding: '14px', fontSize: '15px' }}
+                >
+                  {submitting ? 'Salvando Pedido...' : 'Enviar Orçamento via WhatsApp'}
+                </button>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
