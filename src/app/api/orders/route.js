@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { execute, queryOne, getDb } from '@/lib/db';
 import nodemailer from 'nodemailer';
 
+export const dynamic = 'force-dynamic';
+
 // Setup email transporter using environment variables or a fallback
 const createTransporter = () => {
   // Use hostinger SMTP details if provided in env, else a test fallback

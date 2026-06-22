@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   const authHeader = request.headers.get('Authorization');
   const expectedToken = process.env.SYNC_TOKEN || 'antenor_sync_secret_token_123'; // Default fallback for dev

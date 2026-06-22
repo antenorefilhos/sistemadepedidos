@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { queryAll, execute, getDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 // Simple password verification from header or search param
 // Verify credentials and return role ('admin', 'manager', or null)
 const getRole = (request) => {

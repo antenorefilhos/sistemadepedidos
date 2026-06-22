@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { queryAll, execute, getDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 const verifyAdmin = (request) => {
   const { searchParams } = new URL(request.url);
   const password = searchParams.get('auth') || request.headers.get('Authorization');
