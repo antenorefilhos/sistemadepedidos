@@ -1,11 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = [...(config.externals || []), 'sqlite3'];
-    }
-    return config;
-  }
+  /* config options here */
 };
 
 export default nextConfig;
