@@ -61,16 +61,16 @@ export default function AdminDashboard() {
     if (!pass) return;
     setLoading(true);
     try {
-      const ordersRes = await fetch(`/api/admin/orders?auth=${encodeURIComponent(pass)}`);
-      if (ordersRes.ok) {
-        const isDefaultAdmin = pass === 'antenor123';
-        const detectedRole = isDefaultAdmin ? 'admin' : 'manager';
+      const authRes = await fetch(`/api/admin/auth?auth=${encodeURIComponent(pass)}`);
+      if (authRes.ok) {
+        const { role: detectedRole } = await authRes.json();
         setRole(detectedRole);
         setIsAuthenticated(true);
         sessionStorage.setItem('admin_auth_pass', pass);
       } else {
         setIsAuthenticated(false);
         setRole(null);
+        alert('Senha incorreta. Tente novamente.');
       }
     } catch (err) {
       console.error(err);
