@@ -207,7 +207,14 @@ export default function ProductDetails({ product, relatedProducts }) {
                 Valor Unitário Estimado
               </span>
               <span style={{ fontSize: '32px', color: 'var(--primary)', fontWeight: 'bold' }}>
-                {product.preco ? `R$ ${product.preco.toFixed(2)}` : 'Preço sob consulta'}
+                {product.preco ? (
+                  <>
+                    <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
+                    {product.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </>
+                ) : (
+                  'Preço sob consulta'
+                )}
               </span>
               {product.peso && (
                 <span style={{ fontSize: '14px', color: 'var(--text-muted)', marginLeft: '10px' }}>
@@ -366,7 +373,16 @@ export default function ProductDetails({ product, relatedProducts }) {
                       </h3>
                       <div className="product-meta" style={{ marginTop: '10px' }}>
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.peso ? `${p.peso} ${p.unidade_peso}` : ''}</span>
-                        <span style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 'bold' }}>{p.preco ? `R$ ${p.preco.toFixed(2)}` : 'Preço sob consulta'}</span>
+                        <span style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                          {p.preco ? (
+                            <>
+                              <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                              {p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </>
+                          ) : (
+                            'Preço sob consulta'
+                          )}
+                        </span>
                       </div>
                     </div>
                   </div>

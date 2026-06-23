@@ -365,7 +365,14 @@ export default function BoutiqueClient() {
                             {product.peso ? `${product.peso} ${product.unidade_peso}` : ''}
                           </span>
                           <span className="product-price">
-                            {product.preco ? `R$ ${product.preco.toFixed(2)}` : 'Preço sob consulta'}
+                            {product.preco ? (
+                              <>
+                                <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                                {product.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </>
+                            ) : (
+                              'Preço sob consulta'
+                            )}
                           </span>
                         </div>
                         

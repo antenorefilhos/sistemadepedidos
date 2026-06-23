@@ -176,11 +176,11 @@ export default function AdminDashboard() {
     const itemsHtml = order.items.map(item => `
       <tr style="border-bottom: 1px dashed #ccc;">
         <td style="padding: 6px 0; font-size: 13px;">${item.quantity}x ${item.product_title}</td>
-        <td style="padding: 6px 0; font-size: 13px; text-align: right;">${item.price ? `R$ ${(item.price * item.quantity).toFixed(2)}` : 'Sob consulta'}</td>
+        <td style="padding: 6px 0; font-size: 13px; text-align: right;">${item.price ? `<span style="font-size: 10px; font-weight: normal;">R$</span> ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'Sob consulta'}</td>
       </tr>
     `).join('');
 
-    const totalStr = order.items.reduce((acc, item) => acc + (item.price ? (item.price * item.quantity) : 0), 0).toFixed(2);
+    const totalStr = order.items.reduce((acc, item) => acc + (item.price ? (item.price * item.quantity) : 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     printWindow.document.write(`
       <html>
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
             </tbody>
           </table>
           <div class="divider"></div>
-          <p class="total">Total Estimado: R$ ${totalStr}</p>
+          <p class="total">Total Estimado: <span style="font-size: 11px; font-weight: normal;">R$</span> ${totalStr}</p>
           ${order.notes ? `<p style="font-size: 11px; margin-top: 10px;"><b>Obs:</b> ${order.notes}</p>` : ''}
           <div class="divider"></div>
           <p style="text-align: center; font-size: 10px;">Obrigado pela preferência!</p>
@@ -735,7 +735,10 @@ export default function AdminDashboard() {
                 <span>Faturamento Finalizado</span>
                 <i className="fa-solid fa-circle-dollar-to-slot" style={{ color: 'var(--success)' }}></i>
               </div>
-              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {salesRevenue.toFixed(2)}</h2>
+              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>
+                <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
+                {salesRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Base: {completedOrdersCount} orçamentos concluídos</span>
             </div>
 
@@ -755,7 +758,10 @@ export default function AdminDashboard() {
                 <span>Ticket Médio</span>
                 <i className="fa-solid fa-calculator" style={{ color: 'var(--primary-hover)' }}></i>
               </div>
-              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {ticketMedio.toFixed(2)}</h2>
+              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>
+                <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
+                {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Média por orçamento finalizado</span>
             </div>
 
@@ -765,7 +771,10 @@ export default function AdminDashboard() {
                 <span>Demanda Solicitada</span>
                 <i className="fa-solid fa-arrows-to-eye" style={{ color: 'var(--text-muted)' }}></i>
               </div>
-              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {totalRevenue.toFixed(2)}</h2>
+              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>
+                <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
+                {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Volume total de orçamentos abertos</span>
             </div>
           </div>
@@ -931,7 +940,14 @@ export default function AdminDashboard() {
                                               {item.sku ? <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '10px' }}>EAN: {item.sku}</span> : ''}
                                             </div>
                                             <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                                              {item.price ? `R$ ${(item.price * item.quantity).toFixed(2)}` : 'Preço sob consulta'}
+                                              {item.price ? (
+                                                <>
+                                                  <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                                                  {(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </>
+                                              ) : (
+                                                'Preço sob consulta'
+                                              )}
                                             </span>
                                           </li>
                                         );
@@ -1025,7 +1041,14 @@ export default function AdminDashboard() {
                           </td>
                           <td><code>{p.sku || '-'}</code></td>
                           <td style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                            {p.preco ? `R$ ${p.preco.toFixed(2)}` : 'Sob consulta'}
+                            {p.preco ? (
+                              <>
+                                <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                                {p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </>
+                            ) : (
+                              'Sob consulta'
+                            )}
                           </td>
                           <td>{p.type === 'carnes_' ? 'Boutique' : 'Adega'}</td>
                           <td>
@@ -1208,7 +1231,10 @@ export default function AdminDashboard() {
                         <div key={sector}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
                             <span style={{ color: 'var(--text-primary)' }}>{sector === 'adega' ? 'Adega' : 'Boutique'}</span>
-                            <span style={{ fontWeight: 'bold' }}>R$ {amount.toFixed(2)} ({percentage}%)</span>
+                            <span style={{ fontWeight: 'bold' }}>
+                              <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                              {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({percentage}%)
+                            </span>
                           </div>
                           {/* Visual CSS-bar */}
                           <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>

@@ -162,7 +162,7 @@ export default function CartPage() {
           if (qty > 0) {
             const skuText = p.sku ? ` (Código: ${p.sku})` : '';
             const weightText = p.peso ? ` [${p.peso} ${p.unidade_peso}]` : '';
-            const priceText = p.preco ? ` - R$ ${p.preco.toFixed(2)}` : '';
+            const priceText = p.preco ? ` - R$ ${p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
             message += `- ${qty}x ${p.title}${skuText}${weightText}${priceText}\n`;
           }
         });
@@ -270,7 +270,8 @@ export default function CartPage() {
                         <div>
                           {product.preco ? (
                             <span style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: 'bold' }}>
-                              R$ {product.preco.toFixed(2)}
+                              <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                              {product.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           ) : (
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Preço sob consulta</span>
