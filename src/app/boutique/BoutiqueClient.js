@@ -68,8 +68,14 @@ export default function BoutiqueClient() {
                           (p.description && p.description.toLowerCase().includes(search.toLowerCase())) ||
                           (p.sku && p.sku.includes(search));
                           
+    const meatSubcategories = ['bovinos', 'cordeiro', 'suinos', 'aves', 'linguicas', 'exoticas'];
     const matchesCategory = selectedCategory === '' || 
-                            p.categories.some(cat => cat.slug === selectedCategory);
+                            p.categories.some(cat => {
+                              if (selectedCategory === 'carnes') {
+                                return cat.slug === 'carnes' || meatSubcategories.includes(cat.slug);
+                              }
+                              return cat.slug === selectedCategory;
+                            });
                             
     return matchesSearch && matchesCategory;
   });
@@ -153,9 +159,10 @@ export default function BoutiqueClient() {
               {carnesCategories.length > 0 && (
                 <div style={{ marginBottom: '30px' }}>
                   <h4 style={{ color: 'white', fontSize: '13px', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.05em' }}>
-                    Categorias
+                    Departamentos
                   </h4>
-                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {/* Todos os Produtos */}
                     <li>
                       <button 
                         onClick={() => setSelectedCategory('')}
@@ -167,31 +174,104 @@ export default function BoutiqueClient() {
                           cursor: 'pointer',
                           fontSize: '13px',
                           textAlign: 'left',
-                          width: '100%'
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
                         }}
                       >
-                        <i className="fa-solid fa-utensils" style={{ marginRight: '8px' }}></i> Todas as Carnes
+                        <i className="fa-solid fa-border-all" style={{ fontSize: '12px' }}></i> Todos os Produtos
                       </button>
                     </li>
-                    {carnesCategories.map(cat => (
-                      <li key={cat.id}>
-                        <button 
-                          onClick={() => setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: selectedCategory === cat.slug ? 'var(--primary)' : 'var(--text-secondary)',
-                            fontWeight: selectedCategory === cat.slug ? '600' : '400',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            textAlign: 'left',
-                            width: '100%'
-                          }}
-                        >
-                          {selectedCategory === cat.slug && <i className="fa-solid fa-chevron-right" style={{ marginRight: '6px', fontSize: '9px', color: 'var(--primary)' }}></i>} {cat.name}
-                        </button>
-                      </li>
-                    ))}
+
+                    {/* Carnes Parent Category */}
+                    <li style={{ marginTop: '5px' }}>
+                      <button 
+                        onClick={() => setSelectedCategory('carnes')}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: selectedCategory === 'carnes' ? 'var(--primary)' : 'white',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          textAlign: 'left',
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          paddingBottom: '4px',
+                          borderBottom: '1px solid #1a1e26'
+                        }}
+                      >
+                        <i className="fa-solid fa-drumstick-bite" style={{ fontSize: '12px', color: 'var(--primary)' }}></i> Carnes
+                      </button>
+                      
+                      {/* Carnes Subcategories */}
+                      <ul style={{ listStyle: 'none', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                        {[
+                          { slug: 'bovinos', name: 'Bovinos' },
+                          { slug: 'cordeiro', name: 'Cordeiro' },
+                          { slug: 'suinos', name: 'Suínos' },
+                          { slug: 'aves', name: 'Aves' },
+                          { slug: 'linguicas', name: 'Linguiças' },
+                          { slug: 'exoticas', name: 'Exóticas' }
+                        ].map(sub => {
+                          const isActive = selectedCategory === sub.slug;
+                          return (
+                            <li key={sub.slug}>
+                              <button
+                                onClick={() => setSelectedCategory(isActive ? '' : sub.slug)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+                                  fontWeight: isActive ? '600' : '400',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  textAlign: 'left',
+                                  width: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                {isActive ? (
+                                  <i className="fa-solid fa-circle" style={{ fontSize: '5px', color: 'var(--primary)' }}></i>
+                                ) : (
+                                  <i className="fa-regular fa-circle" style={{ fontSize: '5px', color: 'var(--text-muted)' }}></i>
+                                )}
+                                {sub.name}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </li>
+
+                    {/* Pescados Parent Category */}
+                    <li style={{ marginTop: '10px' }}>
+                      <button 
+                        onClick={() => setSelectedCategory('pescados')}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: selectedCategory === 'pescados' ? 'var(--primary)' : 'white',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          textAlign: 'left',
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          paddingBottom: '4px',
+                          borderBottom: '1px solid #1a1e26'
+                        }}
+                      >
+                        <i className="fa-solid fa-fish" style={{ fontSize: '12px', color: 'var(--primary)' }}></i> Pescados
+                      </button>
+                    </li>
                   </ul>
                 </div>
               )}

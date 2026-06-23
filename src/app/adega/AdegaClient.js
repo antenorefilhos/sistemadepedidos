@@ -100,6 +100,8 @@ export default function AdegaClient() {
 
   // Group categories by type for display
   const adegaCategories = categories.filter(c => c.type === 'sessoes_vinho_');
+  const wineTypes = adegaCategories.filter(c => ['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
+  const wineCountries = adegaCategories.filter(c => !['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
 
   return (
     <div style={{ minHeight: '80vh', padding: '40px 0' }}>
@@ -150,47 +152,99 @@ export default function AdegaClient() {
               {/* Category Filter */}
               {adegaCategories.length > 0 && (
                 <div style={{ marginBottom: '30px' }}>
-                  <h4 style={{ color: 'white', fontSize: '13px', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.05em' }}>
-                    Categorias Adega
-                  </h4>
-                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <li>
-                      <button 
-                        onClick={() => setSelectedCategory('')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: selectedCategory === '' ? 'var(--primary)' : 'var(--text-secondary)',
-                          fontWeight: selectedCategory === '' ? '600' : '400',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          textAlign: 'left',
-                          width: '100%'
-                        }}
-                      >
-                        <i className="fa-solid fa-wine-glass" style={{ marginRight: '8px' }}></i> Todos os Vinhos
-                      </button>
-                    </li>
-                    {adegaCategories.map(cat => (
-                      <li key={cat.id}>
-                        <button 
-                          onClick={() => setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: selectedCategory === cat.slug ? 'var(--primary)' : 'var(--text-secondary)',
-                            fontWeight: selectedCategory === cat.slug ? '600' : '400',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            textAlign: 'left',
-                            width: '100%'
-                          }}
-                        >
-                          {selectedCategory === cat.slug && <i className="fa-solid fa-chevron-right" style={{ marginRight: '6px', fontSize: '9px', color: 'var(--primary)' }}></i>} {cat.name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  {wineTypes.length > 0 && (
+                    <>
+                      <h4 style={{ color: 'white', fontSize: '13px', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.05em' }}>
+                        Tipos de Vinho
+                      </h4>
+                      <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '25px' }}>
+                        <li>
+                          <button 
+                            onClick={() => setSelectedCategory('')}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: selectedCategory === '' ? 'var(--primary)' : 'var(--text-secondary)',
+                              fontWeight: selectedCategory === '' ? '600' : '400',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              textAlign: 'left',
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <i className="fa-solid fa-wine-glass" style={{ fontSize: '12px' }}></i> Todos os Vinhos
+                          </button>
+                        </li>
+                        {wineTypes.map(cat => (
+                          <li key={cat.id}>
+                            <button 
+                              onClick={() => setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: selectedCategory === cat.slug ? 'var(--primary)' : 'var(--text-secondary)',
+                                fontWeight: selectedCategory === cat.slug ? '600' : '400',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                textAlign: 'left',
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              {selectedCategory === cat.slug ? (
+                                <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                              ) : (
+                                <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                              )}
+                              {cat.name}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {wineCountries.length > 0 && (
+                    <>
+                      <h4 style={{ color: 'white', fontSize: '13px', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.05em', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                        Países / Regiões
+                      </h4>
+                      <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {wineCountries.map(cat => (
+                          <li key={cat.id}>
+                            <button 
+                              onClick={() => setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: selectedCategory === cat.slug ? 'var(--primary)' : 'var(--text-secondary)',
+                                fontWeight: selectedCategory === cat.slug ? '600' : '400',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                textAlign: 'left',
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              {selectedCategory === cat.slug ? (
+                                <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                              ) : (
+                                <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                              )}
+                              {cat.name}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
               )}
 
