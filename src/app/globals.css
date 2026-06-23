@@ -227,22 +227,41 @@ p {
   border: 1px solid var(--border-color);
 }
 
-/* Header / Navigation */
+/* Header / Navigation (Always Premium Black with Blur & Glassmorphism) */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 100;
-  height: 90px;
+  height: 75px; /* Compact height */
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  transition: background var(--transition-normal);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(6, 8, 12, 0.75) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  transition: all 0.3s ease;
+}
+
+.navbar-logo-img {
+  height: 44px; /* Smaller elegant logo */
+  width: auto;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    height: 65px; /* Compact height on mobile */
+  }
+  .navbar-logo-img {
+    height: 35px; /* Even smaller logo on mobile */
+  }
 }
 
 .navbar-scrolled {
-  background: var(--bg-nav);
+  background: rgba(6, 8, 12, 0.85) !important;
   box-shadow: var(--shadow-md);
 }
 
@@ -265,21 +284,21 @@ p {
 
 .nav-links {
   display: flex;
-  gap: 32px;
+  gap: 22px; /* Tighter links gap */
   list-style: none;
 }
 
 .nav-links a {
-  color: var(--primary-hover);
-  font-size: 14px;
+  color: #d7b994 !important; /* Gold/Bronze color regardless of light theme */
+  font-size: 13px !important; /* Slightly smaller text */
   font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   transition: color var(--transition-fast);
 }
 
 .nav-links a:hover, .nav-links .active {
-  color: var(--text-primary);
+  color: #ffffff !important; /* White color on hover regardless of light theme */
 }
 
 /* Product Card Grid */
@@ -631,7 +650,23 @@ footer a:hover {
   }
 }
 
-/* Theme Toggle Button */
+/* Theme Toggle Button (Always Gold/Bronze inside Navbar) */
+.navbar .theme-toggle-btn {
+  background: none;
+  border: none;
+  color: #ab9070 !important;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+.navbar .theme-toggle-btn:hover {
+  color: #ffffff !important;
+  transform: scale(1.1);
+}
 .theme-toggle-btn {
   background: none;
   border: none;
@@ -649,7 +684,22 @@ footer a:hover {
   transform: scale(1.1);
 }
 
-/* Mobile Hamburger Menu */
+/* Mobile Hamburger Menu (Always Gold/Bronze inside Navbar) */
+.navbar .hamburger-btn {
+  background: none;
+  border: none;
+  color: #ab9070 !important;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+}
+.navbar .hamburger-btn:hover {
+  color: #ffffff !important;
+}
 .hamburger-btn {
   background: none;
   border: none;
@@ -662,22 +712,22 @@ footer a:hover {
   justify-content: center;
 }
 @media (max-width: 768px) {
-  .hamburger-btn {
+  .hamburger-btn, .navbar .hamburger-btn {
     display: inline-flex;
   }
 }
 
-/* Mobile Drawer Menu */
+/* Mobile Drawer Menu (Always dark-themed/glassmorphic) */
 .mobile-drawer {
   position: fixed;
   top: 0;
   right: -300px;
   width: 280px;
   height: 100vh;
-  background-color: var(--bg-nav);
-  backdrop-filter: var(--blur-glass);
-  -webkit-backdrop-filter: var(--blur-glass);
-  border-left: 1px solid var(--border-color);
+  background-color: rgba(6, 8, 12, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
   z-index: 1000;
   padding: 80px 24px 40px 24px;
   display: flex;
@@ -708,9 +758,12 @@ footer a:hover {
   right: 24px;
   background: none;
   border: none;
-  color: var(--primary);
+  color: #d7b994 !important;
   font-size: 20px;
   cursor: pointer;
+}
+.mobile-drawer-close:hover {
+  color: #ffffff !important;
 }
 .mobile-drawer-links {
   list-style: none;
@@ -723,14 +776,14 @@ footer a:hover {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text-primary);
+  color: #ffffff !important;
   display: block;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(171, 144, 112, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 .mobile-drawer-links a:hover, .mobile-drawer-links a.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+  color: #d7b994 !important;
+  border-bottom-color: #d7b994 !important;
 }
 
 /* Floating Cart Bar Mobile Tweaks to prevent wrapping/overflows */

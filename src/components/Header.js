@@ -97,9 +97,7 @@ export default function Header() {
     window.dispatchEvent(new Event('seller_changed'));
   };
 
-  const logoSrc = theme === 'light' 
-    ? '/novo/wp-content/uploads/DELI-LOGO-PRETO.png' 
-    : '/novo/wp-content/uploads/DELI-LOGO-BRANCO.png';
+  const logoSrc = '/novo/wp-content/uploads/DELI-LOGO-PALHA.png';
 
   const menuLinks = [
     { href: '/', label: 'Início' },
@@ -119,7 +117,7 @@ export default function Header() {
             <img 
               src={logoSrc} 
               alt="Antenor & Filhos" 
-              style={{ height: '65px', width: 'auto', display: 'block', transition: 'all 0.3s' }}
+              className="navbar-logo-img"
             />
           </Link>
           
