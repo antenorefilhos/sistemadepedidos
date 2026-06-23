@@ -314,9 +314,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     if (role !== 'admin') return;
+
+    if (!isLocalhost) {
+      alert('⚠️ Edição de produtos só funciona em ambiente local (localhost).\n\nPara salvar alterações em produção:\n1. Execute: npm run dev\n2. Acesse: http://localhost:3000/admin\n3. Edite o produto\n4. Execute: ./sync-catalog.ps1\n\nO Vercel redesploa automaticamente após o push.');
+      return;
+    }
 
     const payload = {
       ...productForm,
@@ -348,6 +355,10 @@ export default function AdminDashboard() {
 
   const handleDeleteProduct = async (id) => {
     if (role !== 'admin') return;
+    if (!isLocalhost) {
+      alert('⚠️ Exclusão de produtos só funciona em localhost. Execute npm run dev e acesse http://localhost:3000/admin');
+      return;
+    }
     if (!confirm('Tem certeza que deseja excluir permanentemente este produto?')) return;
 
     try {
@@ -403,6 +414,10 @@ export default function AdminDashboard() {
   const handleSaveCategory = async (e) => {
     e.preventDefault();
     if (role !== 'admin') return;
+    if (!isLocalhost) {
+      alert('⚠️ Edição de categorias só funciona em localhost. Execute npm run dev e acesse http://localhost:3000/admin');
+      return;
+    }
 
     try {
       const method = categoryForm.id ? 'PUT' : 'POST';
@@ -704,6 +719,29 @@ export default function AdminDashboard() {
 
       {/* Main Admin Content Panel */}
       <main style={{ flexGrow: 1, padding: '30px', backgroundColor: 'var(--bg-main)' }}>
+        
+        {/* Banner de Aviso de Produção */}
+        {typeof window !== 'undefined' && 
+         (window.location.hostname === 'antenorefilhos.com.br' || 
+          window.location.hostname === 'www.antenorefilhos.com.br' ||
+          window.location.hostname.includes('vercel.app')) && (
+          <div style={{
+            backgroundColor: '#7a1b1b',
+            color: '#ffdddd',
+            padding: '12px 20px',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: '20px',
+            border: '1px solid #ff4444',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: '14px',
+            fontWeight: '600'
+          }}>
+            <i className="fa-solid fa-triangle-exclamation" style={{ color: '#ff4444', fontSize: '18px' }}></i>
+            <span>Atenção: Você está visualizando o Painel em PRODUÇÃO. Quaisquer alterações salvas afetarão o site público em tempo real!</span>
+          </div>
+        )}
         
         {/* Mobile Navigation bar (tabs visible only on mobile) */}
         <div className="show-mobile" style={{ marginBottom: '20px' }}>
