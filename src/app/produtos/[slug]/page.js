@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import ProductDetails from './ProductDetails';
 
 export async function generateMetadata({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   
   const product = await queryOne(
     `SELECT title, description, image_url FROM products WHERE slug = ? AND status = 'on'`,
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductDetailPage({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   
   // 1. Fetch main product details with joined categories
   const p = await queryOne(
