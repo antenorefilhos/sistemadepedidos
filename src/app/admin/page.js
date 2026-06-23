@@ -17,11 +17,15 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   
-  // Pagination/Search for products
+  // Pagination/Search/Filters for products and orders
   const [prodSearch, setProdSearch] = useState('');
   const [prodTypeFilter, setProdTypeFilter] = useState('');
   const [prodPage, setProdPage] = useState(1);
-  const prodPerPage = 50;
+  const prodPerPage = 20;
+
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('');
+  const [orderSellerFilter, setOrderSellerFilter] = useState('');
 
   // New/Editing Product Form Modal State
   const [showProductModal, setShowProductModal] = useState(false);
@@ -59,9 +63,7 @@ export default function AdminDashboard() {
     try {
       const ordersRes = await fetch(`/api/admin/orders?auth=${encodeURIComponent(pass)}`);
       if (ordersRes.ok) {
-        // Find role: adminPass is 'antenor123'
         const isDefaultAdmin = pass === 'antenor123';
-        // Test role via write operation validation or simple matching (for UI roles)
         const detectedRole = isDefaultAdmin ? 'admin' : 'manager';
         setRole(detectedRole);
         setIsAuthenticated(true);
@@ -166,6 +168,64 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // Print Receipt handler
+  const handlePrintOrder = (order) => {
+    const printWindow = window.open('', '_blank');
+    const itemsHtml = order.items.map(item => `
+      <tr style="border-bottom: 1px dashed #ccc;">
+        <td style="padding: 6px 0; font-size: 13px;">${item.quantity}x ${item.product_title}</td>
+        <td style="padding: 6px 0; font-size: 13px; text-align: right;">${item.price ? `R$ ${(item.price * item.quantity).toFixed(2)}` : 'Sob consulta'}</td>
+      </tr>
+    `).join('');
+
+    const totalStr = order.items.reduce((acc, item) => acc + (item.price ? (item.price * item.quantity) : 0), 0).toFixed(2);
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Recibo - Pedido #${order.id}</title>
+          <style>
+            body { font-family: 'Courier New', Courier, monospace; width: 80mm; margin: 0 auto; padding: 10px; color: #000; background-color: #fff; }
+            h2 { text-align: center; margin: 5px 0; font-size: 18px; }
+            p { font-size: 12px; margin: 3px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .divider { border-top: 1px dashed #000; margin: 10px 0; }
+            .total { font-weight: bold; font-size: 14px; text-align: right; margin-top: 10px; }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          <h2>ANTENOR & FILHOS</h2>
+          <p style="text-align: center;">Estrada União Indústria, 12273 - Itaipava</p>
+          <div class="divider"></div>
+          <p><b>Pedido:</b> #${order.id}</p>
+          <p><b>Data:</b> ${formatDate(order.created_at)}</p>
+          <p><b>Cliente:</b> ${order.customer_name}</p>
+          <p><b>WhatsApp:</b> ${order.customer_whatsapp}</p>
+          ${order.customer_address ? `<p><b>Entrega:</b> ${order.customer_address}</p>` : ''}
+          <p><b>Atendente:</b> ${order.seller_name || 'Site Direto'}</p>
+          <div class="divider"></div>
+          <table>
+            <thead>
+              <tr style="border-bottom: 1px dashed #000;">
+                <th style="text-align: left; font-size: 12px; padding: 4px 0;">Item</th>
+                <th style="text-align: right; font-size: 12px; padding: 4px 0;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <div class="divider"></div>
+          <p class="total">Total Estimado: R$ ${totalStr}</p>
+          ${order.notes ? `<p style="font-size: 11px; margin-top: 10px;"><b>Obs:</b> ${order.notes}</p>` : ''}
+          <div class="divider"></div>
+          <p style="text-align: center; font-size: 10px;">Obrigado pela preferência!</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   // CSV Export for Orders
@@ -389,11 +449,17 @@ export default function AdminDashboard() {
     if (role !== 'admin') return;
     if (!newSeller.name || !newSeller.phone) return;
 
+    // Auto slugify name
+    const slugVal = newSeller.name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
     try {
       const res = await fetch(`/api/admin/sellers?auth=${encodeURIComponent(password)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSeller)
+        body: JSON.stringify({ ...newSeller, slug: slugVal })
       });
       if (res.ok) {
         alert('Vendedor cadastrado com sucesso!');
@@ -407,11 +473,45 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteSeller = async (id) => {
+    if (role !== 'admin') return;
+    if (!confirm('Tem certeza que deseja excluir este vendedor?')) return;
+    try {
+      const res = await fetch(`/api/admin/sellers?id=${id}&auth=${encodeURIComponent(password)}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        fetchData();
+      } else {
+        alert('Erro ao excluir vendedor.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // Helpers
   const formatDate = (isoString) => {
     const d = new Date(isoString);
     return d.toLocaleString('pt-BR');
   };
+
+  // Filtering Orders
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = o.customer_name.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                          o.id.toString() === orderSearch;
+    const matchesStatus = orderStatusFilter === '' || o.status === orderStatusFilter;
+    
+    let matchesSeller = true;
+    if (orderSellerFilter !== '') {
+      if (orderSellerFilter === 'direto') {
+        matchesSeller = !o.seller_id;
+      } else {
+        matchesSeller = o.seller_id === Number(orderSellerFilter);
+      }
+    }
+    return matchesSearch && matchesStatus && matchesSeller;
+  });
 
   // Filtering Products for Table
   const filteredProducts = products.filter(p => {
@@ -427,10 +527,10 @@ export default function AdminDashboard() {
 
   // Statistics calculation helpers
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter(o => o.status === 'pending').length;
-  const completedOrders = orders.filter(o => o.status === 'completed').length;
+  const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
+  const completedOrdersCount = orders.filter(o => o.status === 'completed').length;
   
-  // Revenue estimation (total value of all items in completed or all orders)
+  // Total Budgets Estimate Revenue
   const calculateTotalRevenue = (onlyCompleted = false) => {
     let total = 0;
     orders.forEach(o => {
@@ -444,34 +544,43 @@ export default function AdminDashboard() {
     return total;
   };
 
-  // Group orders by date (last 10 entries with dates)
-  const getOrdersCountByDate = () => {
-    const counts = {};
-    orders.forEach(o => {
-      const dateStr = new Date(o.created_at).toLocaleDateString('pt-BR');
-      counts[dateStr] = (counts[dateStr] || 0) + 1;
-    });
-    return Object.entries(counts).slice(0, 10);
-  };
+  const salesRevenue = calculateTotalRevenue(true);
+  const totalRevenue = calculateTotalRevenue(false);
+  const ticketMedio = completedOrdersCount > 0 ? (salesRevenue / completedOrdersCount) : 0;
 
-  // Get Top Products Sold
-  const getTopProducts = () => {
-    const productCounts = {};
+  // Chart data: Sales by Category
+  const getSalesByCategory = () => {
+    const categoriesStats = { Boutique: 0, Adega: 0 };
     orders.forEach(o => {
       o.items.forEach(i => {
-        productCounts[i.product_title] = (productCounts[i.product_title] || 0) + i.quantity;
+        // Simple heuristic: if EAN starts with number or has certain structure
+        // In database type is carnes_ or adega, let's fetch matching products
+        const matchProd = products.find(p => p.title === i.product_title);
+        const sector = matchProd?.type === 'adega' ? 'Adega' : 'Boutique';
+        if (i.price) {
+          categoriesStats[sector] += (i.price * i.quantity);
+        }
       });
     });
-    return Object.entries(productCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    return Object.entries(categoriesStats);
+  };
+
+  // Chart data: Orders by Seller
+  const getOrdersBySeller = () => {
+    const sellerStats = { 'Site Direto': 0 };
+    sellers.forEach(s => { sellerStats[s.name] = 0; });
+    orders.forEach(o => {
+      const name = o.seller_name || 'Site Direto';
+      sellerStats[name] = (sellerStats[name] || 0) + 1;
+    });
+    return Object.entries(sellerStats).sort((a, b) => b[1] - a[1]);
   };
 
   if (!isAuthenticated) {
     return (
-      <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyCentent: 'center', padding: '40px 20px' }}>
+      <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
         <form onSubmit={handleLogin} className="glass" style={{ maxWidth: '400px', width: '100%', padding: '40px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h2 style={{ color: 'var(--primary)', textAlign: 'center', marginBottom: '10px' }}>Painel Gerencial</h2>
+          <h2 style={{ color: 'var(--primary)', textAlign: 'center', marginBottom: '10px', fontFamily: 'var(--font-serif)' }}>Painel Gerencial</h2>
           <div className="form-group">
             <label className="form-label">Senha de Acesso</label>
             <input 
@@ -492,94 +601,224 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div style={{ padding: '40px 0', minHeight: '80vh' }}>
-      <div className="container">
-        
-        {/* Header Title */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '20px',
-          marginBottom: '30px',
-          borderBottom: '1px solid var(--border-color)',
-          paddingBottom: '20px'
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h1 style={{ fontSize: '32px', color: 'white' }}>Painel Gerencial</h1>
-              <span style={{
-                fontSize: '10px',
-                fontWeight: 'bold',
-                backgroundColor: role === 'admin' ? 'var(--primary)' : 'var(--text-muted)',
-                color: 'black',
-                padding: '2px 8px',
-                borderRadius: '10px',
-                textTransform: 'uppercase'
-              }}>{role}</span>
-            </div>
-            <p style={{ fontSize: '14px' }}>Gerenciamento do catálogo, pedidos, vendedores e relatórios</p>
-          </div>
-          <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '8px 16px' }}>
-            Sair do Painel
-          </button>
+    <div style={{ minHeight: '90vh', display: 'flex' }}>
+      
+      {/* Redesigned Premium Sidebar Panel */}
+      <aside style={{ 
+        width: '260px', 
+        backgroundColor: '#07080a', 
+        borderRight: '1px solid var(--border-color)', 
+        padding: '30px 20px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '30px',
+        flexShrink: 0
+      }} className="hide-mobile">
+        <div>
+          <h3 style={{ color: 'var(--primary)', fontSize: '15px', letterSpacing: '0.15em', marginBottom: '5px' }}>Antenor & Filhos</h3>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>MÓDULO DE EXPEDIÇÃO v1.2</span>
         </div>
 
-        {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '30px' }}>
-          <button 
-            onClick={() => setActiveTab('orders')} 
-            className={`btn ${activeTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '10px 20px', fontSize: '13px' }}
-          >
-            📋 Pedidos ({totalOrders})
-          </button>
-          <button 
-            onClick={() => setActiveTab('products')} 
-            className={`btn ${activeTab === 'products' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '10px 20px', fontSize: '13px' }}
-          >
-            🥩 Produtos ({products.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('categories')} 
-            className={`btn ${activeTab === 'categories' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '10px 20px', fontSize: '13px' }}
-          >
-            🏷️ Categorias ({categories.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('sellers')} 
-            className={`btn ${activeTab === 'sellers' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '10px 20px', fontSize: '13px' }}
-          >
-            👥 Vendedores ({sellers.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('stats')} 
-            className={`btn ${activeTab === 'stats' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '10px 20px', fontSize: '13px' }}
-          >
-            📈 Relatórios & Métricas
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <li>
+            <button 
+              onClick={() => setActiveTab('orders')} 
+              style={{
+                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                backgroundColor: activeTab === 'orders' ? 'var(--primary-light)' : 'transparent',
+                color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-muted)',
+                border: activeTab === 'orders' ? '1px solid var(--primary)' : '1px solid transparent',
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}
+            >
+              <i className="fa-solid fa-list-check" style={{ width: '16px' }}></i> Orçamentos
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={() => setActiveTab('products')} 
+              style={{
+                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                backgroundColor: activeTab === 'products' ? 'var(--primary-light)' : 'transparent',
+                color: activeTab === 'products' ? 'var(--primary)' : 'var(--text-muted)',
+                border: activeTab === 'products' ? '1px solid var(--primary)' : '1px solid transparent',
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}
+            >
+              <i className="fa-solid fa-drumstick-bite" style={{ width: '16px' }}></i> Catálogo
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={() => setActiveTab('categories')} 
+              style={{
+                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                backgroundColor: activeTab === 'categories' ? 'var(--primary-light)' : 'transparent',
+                color: activeTab === 'categories' ? 'var(--primary)' : 'var(--text-muted)',
+                border: activeTab === 'categories' ? '1px solid var(--primary)' : '1px solid transparent',
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}
+            >
+              <i className="fa-solid fa-tags" style={{ width: '16px' }}></i> Categorias
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={() => setActiveTab('sellers')} 
+              style={{
+                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                backgroundColor: activeTab === 'sellers' ? 'var(--primary-light)' : 'transparent',
+                color: activeTab === 'sellers' ? 'var(--primary)' : 'var(--text-muted)',
+                border: activeTab === 'sellers' ? '1px solid var(--primary)' : '1px solid transparent',
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}
+            >
+              <i className="fa-solid fa-users" style={{ width: '16px' }}></i> Vendedores
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={() => setActiveTab('stats')} 
+              style={{
+                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                backgroundColor: activeTab === 'stats' ? 'var(--primary-light)' : 'transparent',
+                color: activeTab === 'stats' ? 'var(--primary)' : 'var(--text-muted)',
+                border: activeTab === 'stats' ? '1px solid var(--primary)' : '1px solid transparent',
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}
+            >
+              <i className="fa-solid fa-chart-pie" style={{ width: '16px' }}></i> Estatísticas
+            </button>
+          </li>
+        </ul>
+
+        <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+            Usuário: <b>{role === 'admin' ? 'Administrador' : 'Gerente'}</b>
+          </div>
+          <button onClick={handleLogout} className="btn btn-secondary" style={{ width: '100%', padding: '8px', fontSize: '12px' }}>
+            Sair do Módulo
           </button>
         </div>
+      </aside>
+
+      {/* Main Admin Content Panel */}
+      <main style={{ flexGrow: 1, padding: '30px', backgroundColor: 'var(--bg-main)' }}>
+        
+        {/* Mobile Navigation bar (tabs visible only on mobile) */}
+        <div className="show-mobile" style={{ marginBottom: '20px' }}>
+          <select 
+            value={activeTab} 
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="form-control"
+            style={{ border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold' }}
+          >
+            <option value="orders">📋 Orçamentos ({totalOrders})</option>
+            <option value="products">🥩 Produtos ({products.length})</option>
+            <option value="categories">🏷️ Categorias ({categories.length})</option>
+            <option value="sellers">👥 Vendedores ({sellers.length})</option>
+            <option value="stats">📈 Estatísticas & Relatórios</option>
+          </select>
+        </div>
+
+        {/* Dashboard Widgets Row (Visible in stats/orders) */}
+        {(activeTab === 'orders' || activeTab === 'stats') && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '20px',
+            marginBottom: '30px'
+          }}>
+            {/* Widget 1 */}
+            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                <span>Faturamento Finalizado</span>
+                <i className="fa-solid fa-circle-dollar-to-slot" style={{ color: 'var(--success)' }}></i>
+              </div>
+              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {salesRevenue.toFixed(2)}</h2>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Base: {completedOrdersCount} orçamentos concluídos</span>
+            </div>
+
+            {/* Widget 2 */}
+            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                <span>Pedidos Totais</span>
+                <i className="fa-solid fa-file-invoice" style={{ color: 'var(--primary)' }}></i>
+              </div>
+              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>{totalOrders}</h2>
+              <span style={{ fontSize: '11px', color: 'var(--warning)' }}>{pendingOrdersCount} pendentes de atendimento</span>
+            </div>
+
+            {/* Widget 3 */}
+            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                <span>Ticket Médio</span>
+                <i className="fa-solid fa-calculator" style={{ color: 'var(--primary-hover)' }}></i>
+              </div>
+              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {ticketMedio.toFixed(2)}</h2>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Média por orçamento finalizado</span>
+            </div>
+
+            {/* Widget 4 */}
+            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                <span>Demanda Solicitada</span>
+                <i className="fa-solid fa-arrows-to-eye" style={{ color: 'var(--text-muted)' }}></i>
+              </div>
+              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {totalRevenue.toFixed(2)}</h2>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Volume total de orçamentos abertos</span>
+            </div>
+          </div>
+        )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>Processando dados...</div>
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>Carregando dados do servidor...</div>
         ) : (
           <div>
             {/* TAB 1: ORDERS */}
             {activeTab === 'orders' && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-                  <h3 style={{ color: 'white' }}>Lista de Pedidos de Orçamento</h3>
-                  <button onClick={exportToCSV} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
-                    📥 Exportar para CSV
-                  </button>
+                {/* Filters Row */}
+                <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)', marginBottom: '25px' }}>
+                  <h4 style={{ color: 'white', fontSize: '13px', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filtros de Pesquisa</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar por cliente ou ID..." 
+                      className="form-control"
+                      value={orderSearch}
+                      onChange={(e) => setOrderSearch(e.target.value)}
+                    />
+                    <select
+                      className="form-control"
+                      value={orderStatusFilter}
+                      onChange={(e) => setOrderStatusFilter(e.target.value)}
+                    >
+                      <option value="">Todos os Status</option>
+                      <option value="pending">🟡 Pendente</option>
+                      <option value="viewed">🔵 Visualizado</option>
+                      <option value="completed">🟢 Finalizado</option>
+                      <option value="cancelled">🔴 Cancelado</option>
+                    </select>
+                    <select
+                      className="form-control"
+                      value={orderSellerFilter}
+                      onChange={(e) => setOrderSellerFilter(e.target.value)}
+                    >
+                      <option value="">Filtrar por Vendedor</option>
+                      <option value="direto">Site Direto</option>
+                      {sellers.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <button onClick={exportToCSV} className="btn btn-secondary" style={{ padding: '10px', fontSize: '12px' }}>
+                      <i className="fa-solid fa-file-csv" style={{ marginRight: '6px' }}></i> Exportar CSV
+                    </button>
+                  </div>
                 </div>
-                {orders.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)' }}>Nenhum pedido de orçamento registrado.</p>
+
+                {filteredOrders.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)' }}>Nenhum pedido de orçamento corresponde aos filtros selecionados.</p>
                 ) : (
                   <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
                     <table className="admin-table">
@@ -588,14 +827,14 @@ export default function AdminDashboard() {
                           <th>ID</th>
                           <th>Data</th>
                           <th>Cliente</th>
-                          <th>WhatsApp</th>
+                          <th>Contato</th>
                           <th>Vendedor</th>
                           <th>Status</th>
                           <th>Ações</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.map(order => {
+                        {filteredOrders.map(order => {
                           const isExpanded = expandedOrderId === order.id;
                           return (
                             <tr key={order.id} style={{ borderBottom: isExpanded ? 'none' : '1px solid var(--border-color)' }}>
@@ -603,7 +842,6 @@ export default function AdminDashboard() {
                               <td>{formatDate(order.created_at)}</td>
                               <td>
                                 <b>{order.customer_name}</b>
-                                {order.customer_email && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{order.customer_email}</div>}
                                 {order.customer_address && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Entrega: {order.customer_address}</div>}
                               </td>
                               <td>
@@ -611,18 +849,13 @@ export default function AdminDashboard() {
                                   href={`https://wa.me/${order.customer_whatsapp.replace(/\D/g, '')}`} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
-                                  style={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                                  style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                  {order.customer_whatsapp} ↗
+                                  <i className="fa-brands fa-whatsapp" style={{ color: '#25D366' }}></i>
+                                  {order.customer_whatsapp}
                                 </a>
                               </td>
-                              <td>
-                                {order.seller_name ? (
-                                  <span style={{ color: '#e5c158' }}>{order.seller_name}</span>
-                                ) : (
-                                  <span style={{ color: 'var(--text-muted)' }}>Site Direto</span>
-                                )}
-                              </td>
+                              <td>{order.seller_name || <span style={{ color: 'var(--text-muted)' }}>Site Direto</span>}</td>
                               <td>
                                 <select 
                                   value={order.status}
@@ -635,23 +868,31 @@ export default function AdminDashboard() {
                                     border: '1px solid var(--border-color)',
                                     padding: '6px 10px',
                                     fontSize: '12px',
-                                    fontWeight: '500'
+                                    fontWeight: '600'
                                   }}
                                 >
-                                  <option value="pending">🟡 Pendente</option>
-                                  <option value="viewed">🔵 Visualizado</option>
-                                  <option value="completed">🟢 Finalizado</option>
-                                  <option value="cancelled">🔴 Cancelado</option>
+                                  <option value="pending">Pendente</option>
+                                  <option value="viewed">Visualizado</option>
+                                  <option value="completed">Finalizado</option>
+                                  <option value="cancelled">Cancelado</option>
                                 </select>
                               </td>
                               <td>
-                                <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{ display: 'flex', gap: '8px' }}>
                                   <button 
                                     onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
                                     className="btn btn-secondary" 
                                     style={{ padding: '6px 12px', fontSize: '11px' }}
                                   >
-                                    {isExpanded ? 'Recolher' : 'Ver Itens'}
+                                    {isExpanded ? 'Recolher' : 'Ver Detalhes'}
+                                  </button>
+                                  <button 
+                                    onClick={() => handlePrintOrder(order)}
+                                    className="btn btn-secondary" 
+                                    style={{ padding: '6px 10px', fontSize: '11px', borderColor: 'var(--primary)' }}
+                                    title="Imprimir Cupom de Expedição"
+                                  >
+                                    <i className="fa-solid fa-print"></i>
                                   </button>
                                   {role === 'admin' && (
                                     <button 
@@ -663,35 +904,42 @@ export default function AdminDashboard() {
                                     </button>
                                   )}
                                 </div>
-                                
+
                                 {isExpanded && (
                                   <div style={{
                                     position: 'absolute',
                                     left: 20,
                                     right: 20,
-                                    backgroundColor: '#1c212a',
+                                    backgroundColor: '#111317',
                                     border: '1px solid var(--border-hover)',
-                                    padding: '20px',
+                                    padding: '24px',
                                     marginTop: '10px',
-                                    zIndex: 10
+                                    zIndex: 10,
+                                    borderRadius: 'var(--radius-lg)'
                                   }}>
-                                    <h5 style={{ color: 'white', marginBottom: '10px', fontSize: '14px' }}>Itens Requisitados:</h5>
-                                    <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
-                                      {order.items.map(item => (
-                                        <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #232936', fontSize: '13px' }}>
-                                          <span>
-                                            <b>{item.quantity}x</b> {item.product_title} 
-                                            {item.sku ? <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '10px' }}>EAN: {item.sku}</span> : ''}
-                                          </span>
-                                          <span style={{ color: 'var(--primary)' }}>
-                                            {item.price ? `R$ ${(item.price * item.quantity).toFixed(2)}` : 'Preço sob consulta'}
-                                          </span>
-                                        </li>
-                                      ))}
+                                    <h5 style={{ color: 'white', marginBottom: '15px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cortes & Vinhos Requisitados:</h5>
+                                    <ul style={{ listStyle: 'none', paddingLeft: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                      {order.items.map(item => {
+                                        const matchProd = products.find(p => p.title === item.product_title);
+                                        return (
+                                          <li key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingBottom: '10px', borderBottom: '1px solid #1c212a', fontSize: '13px' }}>
+                                            {matchProd?.image_url && (
+                                              <img src={matchProd.image_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                            )}
+                                            <div style={{ flexGrow: 1 }}>
+                                              <b>{item.quantity}x</b> {item.product_title}
+                                              {item.sku ? <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '10px' }}>EAN: {item.sku}</span> : ''}
+                                            </div>
+                                            <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                                              {item.price ? `R$ ${(item.price * item.quantity).toFixed(2)}` : 'Preço sob consulta'}
+                                            </span>
+                                          </li>
+                                        );
+                                      })}
                                     </ul>
                                     {order.notes && (
-                                      <div style={{ marginTop: '15px', padding: '10px', backgroundColor: 'rgba(0,0,0,0.2)', fontSize: '12px' }}>
-                                        <b>Observações do Cliente:</b> {order.notes}
+                                      <div style={{ marginTop: '15px', padding: '12px', backgroundColor: 'rgba(0,0,0,0.3)', fontSize: '13px', borderRadius: '4px', borderLeft: '3px solid var(--primary)' }}>
+                                        <b>Observações da Expedição:</b> {order.notes}
                                       </div>
                                     )}
                                   </div>
@@ -711,19 +959,18 @@ export default function AdminDashboard() {
             {activeTab === 'products' && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
-                  <h3 style={{ color: 'white' }}>Gerenciamento de Produtos</h3>
+                  <h3 style={{ color: 'white' }}>Lista do Catálogo de Produtos</h3>
                   {role === 'admin' && (
                     <button onClick={() => handleOpenProductModal(null)} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>
-                      ➕ Novo Produto
+                      ➕ Criar Produto
                     </button>
                   )}
                 </div>
 
-                {/* Filter & Search Product Bar */}
                 <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap' }}>
                   <input 
                     type="text" 
-                    placeholder="Pesquisar por título ou EAN..." 
+                    placeholder="Pesquisar catálogo..." 
                     className="form-control"
                     style={{ maxWidth: '300px' }}
                     value={prodSearch}
@@ -736,12 +983,9 @@ export default function AdminDashboard() {
                     onChange={(e) => { setProdTypeFilter(e.target.value); setProdPage(1); }}
                   >
                     <option value="">Todos os Setores</option>
-                    <option value="carnes_">🥩 Boutique de Carnes</option>
-                    <option value="adega">🍷 Adega de Vinhos</option>
+                    <option value="carnes_">Boutique de Carnes</option>
+                    <option value="adega">Adega de Vinhos</option>
                   </select>
-                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)' }}>
-                    <span>Total filtrado: <b>{filteredProducts.length}</b></span>
-                  </div>
                 </div>
 
                 <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
@@ -752,7 +996,6 @@ export default function AdminDashboard() {
                         <th>Título</th>
                         <th>EAN (SKU)</th>
                         <th>Preço</th>
-                        <th>Peso</th>
                         <th>Setor</th>
                         <th>Status</th>
                         {role === 'admin' && <th>Ações</th>}
@@ -782,12 +1025,9 @@ export default function AdminDashboard() {
                           </td>
                           <td><code>{p.sku || '-'}</code></td>
                           <td style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                            {p.preco ? `R$ ${p.preco.toFixed(2)}` : 'Consulta'}
+                            {p.preco ? `R$ ${p.preco.toFixed(2)}` : 'Sob consulta'}
                           </td>
-                          <td>{p.peso ? `${p.peso} ${p.unidade_peso}` : '-'}</td>
-                          <td>
-                            {p.type === 'carnes_' ? '🥩 Boutique' : '🍷 Adega'}
-                          </td>
+                          <td>{p.type === 'carnes_' ? 'Boutique' : 'Adega'}</td>
                           <td>
                             <span style={{ color: p.status === 'on' ? 'var(--success)' : 'var(--danger)', fontWeight: '600' }}>
                               {p.status === 'on' ? 'Ativo' : 'Inativo'}
@@ -796,20 +1036,8 @@ export default function AdminDashboard() {
                           {role === 'admin' && (
                             <td>
                               <div style={{ display: 'flex', gap: '8px' }}>
-                                <button 
-                                  onClick={() => handleOpenProductModal(p)}
-                                  className="btn btn-secondary" 
-                                  style={{ padding: '4px 10px', fontSize: '11px' }}
-                                >
-                                  Editar
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteProduct(p.id)}
-                                  className="btn btn-danger" 
-                                  style={{ padding: '4px 10px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}
-                                >
-                                  Excluir
-                                </button>
+                                <button onClick={() => handleOpenProductModal(p)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }}>Editar</button>
+                                <button onClick={() => handleDeleteProduct(p.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}>Excluir</button>
                               </div>
                             </td>
                           )}
@@ -820,27 +1048,25 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Pagination Controls */}
-                {totalProdPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
-                    <button 
-                      onClick={() => setProdPage(Math.max(1, prodPage - 1))}
-                      disabled={prodPage === 1}
-                      className="btn btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: '12px' }}
-                    >
-                      Anterior
-                    </button>
-                    <span style={{ display: 'flex', alignItems: 'center', color: 'white' }}>Página {prodPage} de {totalProdPages}</span>
-                    <button 
-                      onClick={() => setProdPage(Math.min(totalProdPages, prodPage + 1))}
-                      disabled={prodPage === totalProdPages}
-                      className="btn btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: '12px' }}
-                    >
-                      Próxima
-                    </button>
-                  </div>
-                )}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                  <button 
+                    disabled={prodPage === 1}
+                    onClick={() => setProdPage(p => p - 1)}
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px' }}
+                  >
+                    Anterior
+                  </button>
+                  <span style={{ alignSelf: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>Página <b>{prodPage}</b> de {totalProdPages}</span>
+                  <button 
+                    disabled={prodPage === totalProdPages}
+                    onClick={() => setProdPage(p => p + 1)}
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px' }}
+                  >
+                    Próxima
+                  </button>
+                </div>
               </div>
             )}
 
@@ -848,414 +1074,275 @@ export default function AdminDashboard() {
             {activeTab === 'categories' && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
-                  <h3 style={{ color: 'white' }}>Categorias & Taxonomias</h3>
+                  <h3 style={{ color: 'white' }}>Gerenciamento de Categorias</h3>
                   {role === 'admin' && (
                     <button onClick={() => handleOpenCategoryModal(null)} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>
-                      ➕ Nova Categoria / Tag
+                      ➕ Criar Categoria
                     </button>
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                  {['sessoes_carnes_', 'sessoes_vinho_', 'racas_carnes', 'embalagem_carnes'].map(taxType => {
-                    const filteredCats = categories.filter(c => c.type === taxType);
-                    let displayTitle = '';
-                    switch (taxType) {
-                      case 'sessoes_carnes_': displayTitle = '🥩 Categorias de Carnes'; break;
-                      case 'sessoes_vinho_': displayTitle = '🍷 Categorias de Vinhos'; break;
-                      case 'racas_carnes': displayTitle = '🐂 Raças de Carnes'; break;
-                      case 'embalagem_carnes': displayTitle = '📦 Embalagens de Carnes'; break;
-                    }
-
-                    return (
-                      <div key={taxType} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '20px' }}>
-                        <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', marginBottom: '15px', fontSize: '15px' }}>
-                          {displayTitle}
-                        </h4>
-                        {filteredCats.length === 0 ? (
-                          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nenhuma cadastrada.</p>
-                        ) : (
-                          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {filteredCats.map(c => (
-                              <li key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #161922', paddingBottom: '8px', fontSize: '13px' }}>
-                                <div>
-                                  <span style={{ color: 'white', fontWeight: '500' }}>{c.name}</span>
-                                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Slug: <code>{c.slug}</code> | {c.products_count || 0} prod.</div>
-                                </div>
-                                {role === 'admin' && (
-                                  <div style={{ display: 'flex', gap: '5px' }}>
-                                    <button onClick={() => handleOpenCategoryModal(c)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '11px' }}>Editar</button>
-                                    <button onClick={() => handleDeleteCategory(c.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '11px' }}>Excluir</button>
-                                  </div>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Slug</th>
+                        <th>Tipo (Taxonomia)</th>
+                        {role === 'admin' && <th>Ações</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categories.map(cat => (
+                        <tr key={cat.id}>
+                          <td>#{cat.id}</td>
+                          <td><b>{cat.name}</b></td>
+                          <td><code>{cat.slug}</code></td>
+                          <td>
+                            <span style={{ fontSize: '12px', color: 'var(--primary-hover)' }}>{cat.type}</span>
+                          </td>
+                          {role === 'admin' && (
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={() => handleOpenCategoryModal(cat)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }}>Editar</button>
+                                <button onClick={() => handleDeleteCategory(cat.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}>Excluir</button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
 
             {/* TAB 4: SELLERS */}
             {activeTab === 'sellers' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '40px' }} className="admin-sellers-layout">
-                
-                {/* Sellers List */}
-                <div>
-                  <h3 style={{ color: 'white', marginBottom: '20px' }}>Vendedores Cadastrados</h3>
-                  <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>Nome</th>
-                          <th>Slug (Referência)</th>
-                          <th>WhatsApp Vendedor</th>
-                          <th>Total Pedidos</th>
-                          <th>Link de Divulgação</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sellers.map(sel => (
-                          <tr key={sel.id}>
-                            <td><b>{sel.name}</b></td>
-                            <td><code>{sel.slug}</code></td>
-                            <td>{sel.phone}</td>
-                            <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)' }}>{sel.orders_count}</td>
-                            <td>
-                              <input 
-                                type="text" 
-                                readOnly 
-                                value={`https://antenorefilhos.com.br/boutique?ref=${sel.slug}`}
-                                style={{
-                                  backgroundColor: '#1a1e26',
-                                  border: '1px solid var(--border-color)',
-                                  borderRadius: 'var(--radius-sm)',
-                                  color: 'var(--text-secondary)',
-                                  fontSize: '11px',
-                                  padding: '6px',
-                                  width: '240px'
-                                }}
-                                onClick={(e) => { e.target.select(); document.execCommand('copy'); alert('Link copiado!'); }}
-                                title="Clique para copiar"
-                              />
-                            </td>
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: role === 'admin' ? '1fr 350px' : '1fr', gap: '30px', alignItems: 'start' }}>
+                  <div>
+                    <h3 style={{ color: 'white', marginBottom: '20px' }}>Lista de Vendedores Ativos</h3>
+                    <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>WhatsApp</th>
+                            <th>Slug Comissional</th>
+                            {role === 'admin' && <th>Ações</th>}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Create Seller Form */}
-                <aside>
-                  {role === 'admin' ? (
-                    <form onSubmit={handleCreateSeller} className="glass" style={{ padding: '30px', borderRadius: 'var(--radius-lg)' }}>
-                      <h3 style={{ color: 'white', fontSize: '18px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-                        Cadastrar Novo Vendedor
-                      </h3>
-                      
-                      <div className="form-group">
-                        <label className="form-label">Nome Completo</label>
-                        <input 
-                          type="text" 
-                          required 
-                          placeholder="Ex: Carlos Santos" 
-                          className="form-control"
-                          value={newSeller.name}
-                          onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">WhatsApp (DDD+Celular, sem traço)</label>
-                        <input 
-                          type="tel" 
-                          required 
-                          placeholder="Ex: 5524988650462" 
-                          className="form-control"
-                          value={newSeller.phone}
-                          onChange={(e) => setNewSeller({ ...newSeller, phone: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Código de Indicação (Slug opcional)</label>
-                        <input 
-                          type="text" 
-                          placeholder="Ex: carlos" 
-                          className="form-control"
-                          value={newSeller.slug}
-                          onChange={(e) => setNewSeller({ ...newSeller, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') })}
-                        />
-                      </div>
-
-                      <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', marginTop: '10px' }}>
-                        Salvar Vendedor
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="glass" style={{ padding: '30px', color: 'var(--text-muted)', textAlign: 'center' }}>
-                      ⚠️ Cadastro de vendedores desabilitado no nível de permissão Manager.
+                        </thead>
+                        <tbody>
+                          {sellers.map(s => (
+                            <tr key={s.id}>
+                              <td>#{s.id}</td>
+                              <td><b>{s.name}</b></td>
+                              <td>
+                                <a href={`https://wa.me/${s.phone}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                                  {s.phone} ↗
+                                </a>
+                              </td>
+                              <td><code>?ref={s.slug}</code></td>
+                              {role === 'admin' && (
+                                <td>
+                                  <button onClick={() => handleDeleteSeller(s.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}>Excluir</button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
+                  </div>
+
+                  {role === 'admin' && (
+                    <aside className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
+                      <h4 style={{ color: 'white', marginBottom: '15px', textTransform: 'uppercase', fontSize: '13px' }}>Cadastrar Vendedor</h4>
+                      <form onSubmit={handleCreateSeller} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label">Nome Completo</label>
+                          <input 
+                            type="text" 
+                            required 
+                            placeholder="Nome do vendedor" 
+                            className="form-control"
+                            value={newSeller.name}
+                            onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
+                          />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label">WhatsApp (Fixo sem símbolos)</label>
+                          <input 
+                            type="tel" 
+                            required 
+                            placeholder="Ex: 5524988650462" 
+                            className="form-control"
+                            value={newSeller.phone}
+                            onChange={(e) => setNewSeller({ ...newSeller, phone: e.target.value })}
+                          />
+                        </div>
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '10px' }}>
+                          Salvar Vendedor
+                        </button>
+                      </form>
+                    </aside>
                   )}
-                </aside>
+                </div>
               </div>
             )}
 
             {/* TAB 5: STATS */}
             {activeTab === 'stats' && (
-              <div>
-                <h3 style={{ color: 'white', marginBottom: '20px' }}>Relatórios e Métricas de Atendimento</h3>
-                
-                {/* Scorecards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-                    <h5 style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '10px' }}>Total de Orçamentos</h5>
-                    <span style={{ fontSize: '36px', color: 'white', fontWeight: 'bold' }}>{totalOrders}</span>
-                  </div>
-                  
-                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-                    <h5 style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '10px' }}>Pedidos Pendentes</h5>
-                    <span style={{ fontSize: '36px', color: 'var(--warning)', fontWeight: 'bold' }}>{pendingOrders}</span>
-                  </div>
-
-                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-                    <h5 style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '10px' }}>Pedidos Finalizados</h5>
-                    <span style={{ fontSize: '36px', color: 'var(--success)', fontWeight: 'bold' }}>{completedOrders}</span>
-                  </div>
-
-                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-                    <h5 style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '10px' }}>Faturamento Estimado</h5>
-                    <span style={{ fontSize: '30px', color: 'var(--primary)', fontWeight: 'bold' }}>R$ {calculateTotalRevenue(true).toFixed(2)}</span>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Total: R$ {calculateTotalRevenue(false).toFixed(2)}</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', flexWrap: 'wrap' }} className="stats-graphics-grid">
-                  
-                  {/* Left Side: Orders by Date list */}
-                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-                    <h4 style={{ color: 'white', marginBottom: '15px', fontSize: '16px' }}>📅 Volume por Data (Últimos dias)</h4>
-                    {getOrdersCountByDate().length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)' }}>Sem dados.</p>
-                    ) : (
-                      <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {getOrdersCountByDate().map(([date, count]) => (
-                          <li key={date} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #161922', fontSize: '13px', color: 'white' }}>
-                            <span>{date}</span>
-                            <b>{count} orçamento(s)</b>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Right Side: Top products sold */}
-                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-                    <h4 style={{ color: 'white', marginBottom: '15px', fontSize: '16px' }}>🏆 Produtos Mais Solicitados</h4>
-                    {getTopProducts().length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)' }}>Sem solicitações.</p>
-                    ) : (
-                      <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {getTopProducts().map(([title, qty], index) => (
-                          <li key={title} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #161922', fontSize: '13px', color: 'white' }}>
-                            <span>{index + 1}. {title}</span>
-                            <b>{qty} unidades</b>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-
-                {/* Seller commissions performance ranking */}
-                <h3 style={{ color: 'white', marginTop: '40px', marginBottom: '20px' }}>Desempenho de Vendas por Vendedor</h3>
-                <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '30px' }}>
-                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {sellers.map((sel, idx) => {
-                      const percentage = totalOrders > 0 ? (sel.orders_count / totalOrders) * 100 : 0;
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
+                {/* Chart 1: Sales By Category */}
+                <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
+                  <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mapeamento de Demanda por Setor</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {getSalesByCategory().map(([sector, amount]) => {
+                      const totalAmt = calculateTotalRevenue(false) || 1;
+                      const percentage = Math.round((amount / totalAmt) * 100);
                       return (
-                        <li key={sel.id} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'white' }}>
-                            <span><b>#{idx+1}</b> {sel.name} (<code>{sel.slug}</code>)</span>
-                            <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{sel.orders_count} pedidos ({percentage.toFixed(1)}%)</span>
+                        <div key={sector}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
+                            <span style={{ color: 'var(--text-primary)' }}>{sector === 'adega' ? 'Adega' : 'Boutique'}</span>
+                            <span style={{ fontWeight: 'bold' }}>R$ {amount.toFixed(2)} ({percentage}%)</span>
                           </div>
-                          <div style={{ width: '100%', height: '8px', backgroundColor: '#1a1e26', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: 'var(--primary)' }}></div>
+                          {/* Visual CSS-bar */}
+                          <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ 
+                              width: `${percentage}%`, 
+                              height: '100%', 
+                              backgroundColor: sector === 'adega' ? '#800020' : 'var(--primary)',
+                              borderRadius: '4px' 
+                            }}></div>
                           </div>
-                        </li>
+                        </div>
                       );
                     })}
-                    
-                    {/* Site Direct sales */}
-                    {(() => {
-                      const directCount = orders.filter(o => !o.seller_id).length;
-                      const percentage = totalOrders > 0 ? (directCount / totalOrders) * 100 : 0;
+                  </div>
+                </div>
+
+                {/* Chart 2: Orders by Seller */}
+                <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
+                  <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ranking de Vendas por Vendedor</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {getOrdersBySeller().map(([name, count]) => {
+                      const maxOrders = Math.max(...getOrdersBySeller().map(x => x[1])) || 1;
+                      const percentage = Math.round((count / maxOrders) * 100);
                       return (
-                        <li style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '10px', borderTop: '1px dashed var(--border-color)', paddingTop: '15px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'white' }}>
-                            <span>🌐 Compras Diretas no Site (Sem vendedor)</span>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>{directCount} pedidos ({percentage.toFixed(1)}%)</span>
+                        <div key={name}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
+                            <span style={{ color: 'var(--text-primary)' }}>{name}</span>
+                            <span style={{ fontWeight: 'bold' }}>{count} {count === 1 ? 'pedido' : 'pedidos'}</span>
                           </div>
-                          <div style={{ width: '100%', height: '8px', backgroundColor: '#1a1e26', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: 'var(--text-muted)' }}></div>
+                          {/* Visual CSS-bar */}
+                          <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ 
+                              width: `${percentage}%`, 
+                              height: '100%', 
+                              backgroundColor: name === 'Site Direto' ? 'var(--text-muted)' : 'var(--primary)',
+                              borderRadius: '4px' 
+                            }}></div>
                           </div>
-                        </li>
+                        </div>
                       );
-                    })()}
-                  </ul>
+                    })}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* PRODUCT FORM MODAL (Admin Only) */}
+      {/* PRODUCT FORM MODAL */}
       {showProductModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <form onSubmit={handleSaveProduct} className="glass" style={{
-            maxWidth: '650px',
-            width: '100%',
-            backgroundColor: '#0c0e12',
-            border: '1px solid var(--primary)',
-            padding: '30px',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }}>
-            <h3 style={{ color: 'white', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              {productForm.id ? '📝 Editar Produto' : '➕ Cadastrar Novo Produto'}
-            </h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }} className="stats-graphics-grid">
-              <div className="form-group">
-                <label className="form-label">Título do Produto</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="Ex: Shoulder Steak Novilho"
-                  className="form-control"
-                  value={productForm.title}
-                  onChange={(e) => handleProductTitleChange(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Slug (URL)</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="shoulder-steak-novilho"
-                  className="form-control"
-                  value={productForm.slug}
-                  onChange={(e) => setProductForm({ ...productForm, slug: e.target.value })}
-                />
-              </div>
-            </div>
-
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <form onSubmit={handleSaveProduct} className="glass" style={{ maxWidth: '600px', width: '100%', padding: '30px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ color: 'white', marginBottom: '20px' }}>{productForm.id ? 'Editar Produto' : 'Cadastrar Novo Produto'}</h3>
+            
             <div className="form-group">
-              <label className="form-label">Descrição</label>
-              <textarea 
-                rows="2"
-                placeholder="Detalhes sobre a procedência, marmorização, etc."
+              <label className="form-label">Nome do Produto</label>
+              <input 
+                type="text" 
+                required 
+                placeholder="Ex: Picanha Black Angus" 
                 className="form-control"
-                value={productForm.description}
-                onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                value={productForm.title}
+                onChange={(e) => handleProductTitleChange(e.target.value)}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }} className="stats-graphics-grid">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div className="form-group">
-                <label className="form-label">EAN (SKU/Código)</label>
+                <label className="form-label">EAN (SKU)</label>
                 <input 
                   type="text" 
-                  placeholder="Ex: 789123456"
+                  placeholder="Código de barras" 
                   className="form-control"
                   value={productForm.sku}
                   onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
                 />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Preço (R$)</label>
                 <input 
                   type="number" 
-                  step="0.01"
-                  placeholder="Ex: 89.90"
+                  step="0.01" 
+                  placeholder="Ex: 129.90" 
                   className="form-control"
                   value={productForm.preco}
                   onChange={(e) => setProductForm({ ...productForm, preco: e.target.value })}
                 />
               </div>
+            </div>
 
-              <div className="form-group" style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 2 }}>
-                  <label className="form-label">Peso</label>
-                  <input 
-                    type="text" 
-                    placeholder="400"
-                    className="form-control"
-                    value={productForm.peso}
-                    onChange={(e) => setProductForm({ ...productForm, peso: e.target.value })}
-                  />
-                </div>
-                <div style={{ flex: 1.5 }}>
-                  <label className="form-label">Unidade</label>
-                  <select 
-                    className="form-control"
-                    value={productForm.unidade_peso}
-                    onChange={(e) => setProductForm({ ...productForm, unidade_peso: e.target.value })}
-                  >
-                    <option value="g">g</option>
-                    <option value="kg">kg</option>
-                    <option value="un">un</option>
-                  </select>
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-group">
+                <label className="form-label">Peso / Volume</label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: 500" 
+                  className="form-control"
+                  value={productForm.peso}
+                  onChange={(e) => setProductForm({ ...productForm, peso: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Unidade de Peso</label>
+                <select 
+                  className="form-control"
+                  value={productForm.unidade_peso}
+                  onChange={(e) => setProductForm({ ...productForm, unidade_peso: e.target.value })}
+                >
+                  <option value="g">Gramas (g)</option>
+                  <option value="kg">Quilos (kg)</option>
+                  <option value="ml">Mililitros (ml)</option>
+                  <option value="un">Unidade (un)</option>
+                </select>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }} className="stats-graphics-grid">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div className="form-group">
-                <label className="form-label">Setor</label>
+                <label className="form-label">Setor / Tipo</label>
                 <select 
                   className="form-control"
                   value={productForm.type}
                   onChange={(e) => setProductForm({ ...productForm, type: e.target.value })}
                 >
-                  <option value="carnes_">🥩 Boutique (Carnes)</option>
-                  <option value="adega">🍷 Adega (Vinho)</option>
+                  <option value="carnes_">Boutique de Carnes</option>
+                  <option value="adega">Adega de Vinhos</option>
                 </select>
               </div>
-
               <div className="form-group">
-                <label className="form-label">Status</label>
-                <select 
-                  className="form-control"
-                  value={productForm.status}
-                  onChange={(e) => setProductForm({ ...productForm, status: e.target.value })}
-                >
-                  <option value="on">Ativo (Exibido)</option>
-                  <option value="off">Inativo (Oculto)</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Pontuação (Vinhos)</label>
+                <label className="form-label">Pontuação / Classificação (Se Adega)</label>
                 <input 
                   type="text" 
-                  placeholder="Ex: 94 pts"
+                  placeholder="Ex: RP95 | WS92" 
                   className="form-control"
                   value={productForm.pontuacao}
                   onChange={(e) => setProductForm({ ...productForm, pontuacao: e.target.value })}
@@ -1267,95 +1354,68 @@ export default function AdminDashboard() {
               <label className="form-label">URL da Imagem</label>
               <input 
                 type="text" 
-                placeholder="https://antenorefilhos.com.br/wp-content/..."
+                placeholder="Ex: /novo/wp-content/uploads/imagem.jpg" 
                 className="form-control"
                 value={productForm.image_url}
                 onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
               />
             </div>
 
-            {/* Category checkboxes */}
             <div className="form-group">
-              <label className="form-label">Categorias / Taxonomias Vinculadas</label>
-              <div style={{
-                maxHeight: '140px',
-                overflowY: 'auto',
-                backgroundColor: '#161922',
-                border: '1px solid var(--border-color)',
-                padding: '12px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                gap: '8px'
-              }}>
+              <label className="form-label">Categorias Associadas</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxHeight: '120px', overflowY: 'auto', padding: '10px', border: '1px solid var(--border-color)' }}>
                 {categories.map(cat => {
-                  let labelPrefix = '';
-                  switch (cat.type) {
-                    case 'sessoes_carnes_': labelPrefix = '🥩 Categoria'; break;
-                    case 'sessoes_vinho_': labelPrefix = '🍷 Vinho'; break;
-                    case 'racas_carnes': labelPrefix = '🐂 Raça'; break;
-                    case 'embalagem_carnes': labelPrefix = '📦 Embalagem'; break;
-                  }
+                  const isChecked = productForm.categoryIds.includes(cat.id);
                   return (
-                    <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'white', cursor: 'pointer' }}>
+                    <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}>
                       <input 
-                        type="checkbox"
-                        checked={productForm.categoryIds.includes(cat.id)}
-                        onChange={(e) => {
-                          const isChecked = e.target.checked;
-                          const updated = isChecked
-                            ? [...productForm.categoryIds, cat.id]
-                            : productForm.categoryIds.filter(id => id !== cat.id);
+                        type="checkbox" 
+                        checked={isChecked}
+                        onChange={() => {
+                          const updated = isChecked 
+                            ? productForm.categoryIds.filter(id => id !== cat.id)
+                            : [...productForm.categoryIds, cat.id];
                           setProductForm({ ...productForm, categoryIds: updated });
                         }}
                       />
-                      <span>[{labelPrefix}] {cat.name}</span>
+                      {cat.name} <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>({cat.type})</span>
                     </label>
                   );
                 })}
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button type="button" onClick={() => setShowProductModal(false)} className="btn btn-secondary" style={{ padding: '8px 20px' }}>
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary" style={{ padding: '8px 25px' }}>
-                Salvar Produto
-              </button>
+            <div className="form-group">
+              <label className="form-label">Descrição detalhada</label>
+              <textarea 
+                rows="3"
+                placeholder="Detalhes adicionais do corte ou vinho" 
+                className="form-control"
+                value={productForm.description}
+                onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+              ></textarea>
+            </div>
+
+            <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+              <button type="submit" className="btn btn-primary" style={{ flexGrow: 1 }}>Salvar Alterações</button>
+              <button type="button" onClick={() => setShowProductModal(false)} className="btn btn-secondary">Cancelar</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* CATEGORY FORM MODAL (Admin Only) */}
+      {/* CATEGORY FORM MODAL */}
       {showCategoryModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <form onSubmit={handleSaveCategory} className="glass" style={{
-            maxWidth: '450px',
-            width: '100%',
-            backgroundColor: '#0c0e12',
-            border: '1px solid var(--primary)',
-            padding: '30px'
-          }}>
-            <h3 style={{ color: 'white', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              {categoryForm.id ? '📝 Editar Categoria' : '➕ Nova Categoria / Tag'}
-            </h3>
-
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <form onSubmit={handleSaveCategory} className="glass" style={{ maxWidth: '400px', width: '100%', padding: '30px' }}>
+            <h3 style={{ color: 'white', marginBottom: '20px' }}>{categoryForm.id ? 'Editar Categoria' : 'Criar Categoria'}</h3>
+            
             <div className="form-group">
               <label className="form-label">Nome da Categoria</label>
               <input 
                 type="text" 
                 required 
-                placeholder="Ex: Angus"
+                placeholder="Ex: VPJ Angus" 
                 className="form-control"
                 value={categoryForm.name}
                 onChange={(e) => handleCategoryNameChange(e.target.value)}
@@ -1363,38 +1423,22 @@ export default function AdminDashboard() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Slug (URL)</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="angus"
-                className="form-control"
-                value={categoryForm.slug}
-                onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
               <label className="form-label">Tipo de Taxonomia</label>
-              <select 
+              <select
                 className="form-control"
                 value={categoryForm.type}
                 onChange={(e) => setCategoryForm({ ...categoryForm, type: e.target.value })}
               >
-                <option value="sessoes_carnes_">🥩 Categoria de Carnes</option>
-                <option value="sessoes_vinho_">🍷 Categoria de Vinhos</option>
-                <option value="racas_carnes">🐂 Raças de Carnes (Angus, Wagyu, etc.)</option>
-                <option value="embalagem_carnes">📦 Embalagens de Carnes (Peça, Fatiado, etc.)</option>
+                <option value="sessoes_carnes_">Boutique: Categorias</option>
+                <option value="racas_carnes">Boutique: Raças</option>
+                <option value="embalagem_carnes">Boutique: Embalagens</option>
+                <option value="sessoes_vinho_">Adega: Seções de Vinho</option>
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button type="button" onClick={() => setShowCategoryModal(false)} className="btn btn-secondary" style={{ padding: '8px 20px' }}>
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary" style={{ padding: '8px 25px' }}>
-                Salvar Categoria
-              </button>
+            <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+              <button type="submit" className="btn btn-primary" style={{ flexGrow: 1 }}>Salvar Categoria</button>
+              <button type="button" onClick={() => setShowCategoryModal(false)} className="btn btn-secondary">Cancelar</button>
             </div>
           </form>
         </div>

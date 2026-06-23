@@ -80,6 +80,9 @@ export default function EntregasPage() {
               <h5 style={{ color: 'white', fontSize: '12px', textTransform: 'uppercase', marginBottom: '5px' }}>Telefone Varejo (Loja)</h5>
               <p style={{ fontSize: '15px', fontWeight: 'bold' }}>
                 <i className="fa-solid fa-phone" style={{ color: 'var(--primary)', marginRight: '8px' }}></i> (24) 2222-1482
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px', fontWeight: 'normal' }}>
+                  <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', marginRight: '4px' }}></i> WhatsApp
+                </span>
               </p>
             </div>
             <div>

@@ -245,8 +245,8 @@ export default function CartPage() {
                     border: '1px solid var(--border-color)',
                     borderRadius: 'var(--radius-lg)'
                   }}>
-                    {/* Thumbnail */}
-                    <div style={{ width: '80px', height: '60px', backgroundColor: '#232936', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                    {/* Thumbnail (Exactly 1:1) */}
+                    <div style={{ width: '80px', height: '80px', backgroundColor: '#232936', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
                       {product.image_url ? (
                         <img src={product.image_url} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
@@ -254,39 +254,50 @@ export default function CartPage() {
                       )}
                     </div>
 
-                    {/* Product Metadata */}
-                    <div style={{ flexGrow: 1 }}>
-                      <h4 style={{ color: 'white', fontSize: '15px', marginBottom: '4px' }}>{product.title}</h4>
-                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        {product.sku ? `EAN: ${product.sku}` : ''} 
-                        {product.peso ? ` | Peso: ${product.peso} ${product.unidade_peso}` : ''}
-                      </p>
-                      {product.preco && (
-                        <p style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 'bold', marginTop: '4px' }}>
-                          R$ {product.preco.toFixed(2)}
+                    {/* Product Contents */}
+                    <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {/* Top: Description (takes full width) */}
+                      <div>
+                        <h4 style={{ color: 'white', fontSize: '15px', marginBottom: '2px', fontWeight: '500' }}>{product.title}</h4>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          {product.sku ? `EAN: ${product.sku}` : ''} 
+                          {product.peso ? ` | Peso: ${product.peso} ${product.unidade_peso}` : ''}
                         </p>
-                      )}
-                    </div>
+                      </div>
+                      
+                      {/* Bottom: Price and Quantity Controls */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', flexWrap: 'wrap', paddingTop: '4px' }}>
+                        <div>
+                          {product.preco ? (
+                            <span style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                              R$ {product.preco.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Preço sob consulta</span>
+                          )}
+                        </div>
 
-                    {/* Quantity selectors */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button 
-                        onClick={() => updateQuantity(product.id, qty - 1)}
-                        className="btn btn-secondary" 
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                      >
-                        -
-                      </button>
-                      <span style={{ minWidth: '24px', textAlign: 'center', fontWeight: 'bold', color: 'white', fontSize: '14px' }}>
-                        {qty}
-                      </span>
-                      <button 
-                        onClick={() => updateQuantity(product.id, qty + 1)}
-                        className="btn btn-secondary" 
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                      >
-                        +
-                      </button>
+                        {/* Quantity selectors */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button 
+                            onClick={() => updateQuantity(product.id, qty - 1)}
+                            className="btn btn-secondary" 
+                            style={{ padding: '4px 10px', fontSize: '12px', minWidth: '32px' }}
+                          >
+                            -
+                          </button>
+                          <span style={{ minWidth: '20px', textAlign: 'center', fontWeight: 'bold', color: 'white', fontSize: '14px' }}>
+                            {qty}
+                          </span>
+                          <button 
+                            onClick={() => updateQuantity(product.id, qty + 1)}
+                            className="btn btn-secondary" 
+                            style={{ padding: '4px 10px', fontSize: '12px', minWidth: '32px' }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

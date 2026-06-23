@@ -29,6 +29,21 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
+        {/* Theme preservation script to avoid styling flash */}
+        <script 
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme');
+                  if (theme === 'light') {
+                    document.documentElement.classList.add('light-theme');
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
         {/* Google Site-Kit / Analytics tag (gtag.js) */}
         <Script 
           src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
@@ -118,13 +133,13 @@ export default function RootLayout({ children }) {
                 <i className="fa-solid fa-location-dot" style={{ color: 'var(--primary)', marginRight: '8px' }}></i> Estrada União Indústria, 12273 - Itaipava, Petrópolis - RJ
               </p>
               <p style={{ fontSize: '13px', marginBottom: '8px' }}>
-                <b>Loja/Boutique:</b> (24) 2222-1482 | (24) 98865-0462
+                <b>Loja/Boutique:</b> <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', marginRight: '3px' }}></i> (24) 2222-1482 | <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', marginRight: '3px' }}></i> (24) 98865-0462
               </p>
               <p style={{ fontSize: '13px', marginBottom: '8px' }}>
-                <b>Restaurante:</b> (24) 2222-1482
+                <b>Restaurante:</b> <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', marginRight: '3px' }}></i> (24) 2222-1482
               </p>
               <p style={{ fontSize: '13px', marginBottom: '8px' }}>
-                <b>Distribuidora:</b> (24) 2223-1945 | (24) 98816-5164
+                <b>Distribuidora:</b> (24) 2223-1945 | <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', marginRight: '3px' }}></i> (24) 98816-5164
               </p>
               <p style={{ fontSize: '13px' }}>
                 <i className="fa-solid fa-envelope" style={{ color: 'var(--primary)', marginRight: '8px' }}></i> loja@antenorefilhos.com.br

@@ -275,38 +275,85 @@ export default function BoutiqueClient() {
                 {filteredProducts.map(product => {
                   const itemsInCart = cartItems.filter(id => id === String(product.id)).length;
                   
+                  const breedCat = product.categories?.find(c => c.type === 'racas_carnes');
+                  const embalagemCat = product.categories?.find(c => c.type === 'embalagem_carnes');
+
+                  let breedLogo = null;
+                  if (breedCat) {
+                    const slug = breedCat.slug.toLowerCase();
+                    if (slug.includes('angus')) {
+                      breedLogo = '/novo/wp-content/uploads/CERTIFICADO-ANGUS.png';
+                    } else if (slug.includes('wagyu')) {
+                      breedLogo = '/novo/wp-content/uploads/WAGYU-BEEF-SELO.png';
+                    }
+                  }
+
                   return (
                     <div className="product-card" key={product.id}>
-                      <div className="product-image-container">
-                        {product.image_url ? (
-                          <img 
-                            src={product.image_url} 
-                            alt={product.title} 
-                            className="product-image"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div style={{ 
-                            width: '100%', 
-                            height: '100%', 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            alignItems: 'center',
-                            backgroundColor: '#232936',
-                            color: 'var(--text-muted)',
-                            fontSize: '12px'
-                          }}>
-                            Sem Foto
-                          </div>
-                        )}
-                        <span className="product-badge">
-                          {product.type === 'carnes_' ? 'Boutique' : 'Adega'}
-                        </span>
-                      </div>
+                      <Link href={`/produtos/${product.slug}`} style={{ display: 'block' }}>
+                        <div className="product-image-container">
+                          {product.image_url ? (
+                            <img 
+                              src={product.image_url} 
+                              alt={product.title} 
+                              className="product-image"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              display: 'flex', 
+                              justifyContent: 'center', 
+                              alignItems: 'center',
+                              backgroundColor: '#232936',
+                              color: 'var(--text-muted)',
+                              fontSize: '12px'
+                            }}>
+                              Sem Foto
+                            </div>
+                          )}
+                          
+                          {/* Breed Seal Tag */}
+                          {breedLogo && (
+                            <img 
+                              src={breedLogo} 
+                              alt={breedCat.name} 
+                              style={{
+                                position: 'absolute',
+                                top: '10px',
+                                left: '10px',
+                                height: '35px',
+                                width: 'auto',
+                                zIndex: 2,
+                                filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))'
+                              }}
+                            />
+                          )}
+
+                          {/* Packaging Badge */}
+                          {embalagemCat && (
+                            <span 
+                              className={`product-badge badge-tag-${embalagemCat.slug.toLowerCase()}`}
+                              style={{
+                                position: 'absolute',
+                                top: '10px',
+                                right: '10px',
+                                left: 'auto',
+                                zIndex: 2
+                              }}
+                            >
+                              {embalagemCat.name}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
                       
                       <div className="product-info">
                         <h3 className="product-title" title={product.title}>
-                          {product.title}
+                          <Link href={`/produtos/${product.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                            {product.title}
+                          </Link>
                         </h3>
                         
                         <p className="product-desc" title={product.description}>

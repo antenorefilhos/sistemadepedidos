@@ -8,6 +8,8 @@ export default function Header() {
   const pathname = usePathname();
   const [activeSeller, setActiveSeller] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [theme, setTheme] = useState('dark');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Update seller from localStorage
   const updateSellerFromStorage = () => {
@@ -42,6 +44,19 @@ export default function Header() {
     updateSellerFromStorage();
     updateCartCountFromStorage();
 
+    // Load initial theme
+    try {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      setTheme(savedTheme);
+      if (savedTheme === 'light') {
+        document.documentElement.classList.add('light-theme');
+      } else {
+        document.documentElement.classList.remove('light-theme');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     // Listen to custom events
     const handleSellerChange = () => updateSellerFromStorage();
     const handleCartChange = () => updateCartCountFromStorage();
@@ -49,7 +64,7 @@ export default function Header() {
     window.addEventListener('seller_changed', handleSellerChange);
     window.addEventListener('cart_changed', handleCartChange);
 
-    // Also check periodically for cart modifications
+    // Check periodically for cart modifications
     const interval = setInterval(() => {
       updateCartCountFromStorage();
     }, 1500);
@@ -61,112 +76,221 @@ export default function Header() {
     };
   }, []);
 
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem('theme', nextTheme);
+      if (nextTheme === 'light') {
+        document.documentElement.classList.add('light-theme');
+      } else {
+        document.documentElement.classList.remove('light-theme');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const clearSeller = () => {
     localStorage.removeItem('ref_seller');
     setActiveSeller(null);
     window.dispatchEvent(new Event('seller_changed'));
   };
 
+  const logoSrc = theme === 'light' 
+    ? '/novo/wp-content/uploads/DELI-LOGO-PRETO.png' 
+    : '/novo/wp-content/uploads/DELI-LOGO-BRANCO.png';
+
+  const menuLinks = [
+    { href: '/', label: 'Início' },
+    { href: '/boutique', label: 'Boutique de Carnes' },
+    { href: '/adega', label: 'Adega de Vinhos' },
+    { href: '/cardapio', label: 'Cardápio' },
+    { href: '/entregas', label: 'Entregas' },
+    { href: '/distribuidora', label: 'Distribuidora' },
+  ];
+
   return (
-    <header className="navbar glass">
-      <div className="container nav-container">
-        <Link href="/" className="logo" style={{ display: 'flex', alignItems: 'center', padding: '5px 0' }}>
-          <img 
-            src="https://antenorefilhos.com.br/img/logo.png" 
-            alt="Antenor & Filhos" 
-            style={{ height: '70px', width: 'auto', display: 'block' }}
-          />
-        </Link>
-        
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-          <ul className="nav-links">
-            <li>
-              <Link href="/" className={pathname === '/' ? 'active' : ''}>
-                Início
-              </Link>
-            </li>
-            <li>
-              <Link href="/boutique" className={pathname === '/boutique' ? 'active' : ''}>
-                Boutique de Carnes
-              </Link>
-            </li>
-            <li>
-              <Link href="/adega" className={pathname === '/adega' ? 'active' : ''}>
-                Adega de Vinhos
-              </Link>
-            </li>
-            <li>
-              <Link href="/cardapio" className={pathname === '/cardapio' ? 'active' : ''}>
-                Cardápio
-              </Link>
-            </li>
-            <li>
-              <Link href="/entregas" className={pathname === '/entregas' ? 'active' : ''}>
-                Entregas
-              </Link>
-            </li>
-            <li>
-              <Link href="/distribuidora" className={pathname === '/distribuidora' ? 'active' : ''}>
-                Distribuidora
-              </Link>
-            </li>
-          </ul>
+    <>
+      <header className="navbar glass">
+        <div className="container nav-container">
+          {/* Logo (local path, responsive to theme) */}
+          <Link href="/" className="logo" style={{ display: 'flex', alignItems: 'center', padding: '5px 0' }} onClick={() => setMobileMenuOpen(false)}>
+            <img 
+              src={logoSrc} 
+              alt="Antenor & Filhos" 
+              style={{ height: '65px', width: 'auto', display: 'block', transition: 'all 0.3s' }}
+            />
+          </Link>
+          
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            {/* Desktop menu */}
+            <ul className="nav-links">
+              {menuLinks.map(link => (
+                <li key={link.href}>
+                  <Link href={link.href} className={pathname === link.href ? 'active' : ''}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
 
-          {activeSeller && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              fontSize: '11px',
-              padding: '6px 12px',
-              backgroundColor: 'var(--primary-light)',
-              border: '1px solid var(--primary)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-primary)'
-            }}>
-              <span>Vendedor: <b>{activeSeller.name}</b></span>
-              <button 
-                onClick={clearSeller}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--danger)',
-                  cursor: 'pointer',
-                  fontSize: '10px',
-                  textTransform: 'uppercase',
-                  fontWeight: 'bold'
-                }}
-                title="Comprar direto com a loja"
-              >
-                (Sair)
-              </button>
-            </div>
-          )}
-
-          <Link href="/carrinho" className="btn btn-secondary" style={{ padding: '8px 16px', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <i className="fa-solid fa-cart-shopping"></i> Orçamento
-            {cartCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-8px',
-                backgroundColor: 'var(--primary)',
-                color: '#111',
-                borderRadius: '50%',
-                width: '18px',
-                height: '18px',
-                fontSize: '11px',
-                fontWeight: 'bold',
+            {/* Seller Badge */}
+            {activeSeller && (
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                {cartCount}
-              </span>
+                gap: '8px',
+                fontSize: '11px',
+                padding: '6px 12px',
+                backgroundColor: 'var(--primary-light)',
+                border: '1px solid var(--primary)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-primary)'
+              }} className="hide-mobile">
+                <span>Vendedor: <b>{activeSeller.name}</b></span>
+                <button 
+                  onClick={clearSeller}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--danger)',
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    fontWeight: 'bold'
+                  }}
+                  title="Comprar direto com a loja"
+                >
+                  (Sair)
+                </button>
+              </div>
             )}
-          </Link>
-        </nav>
-      </div>
-    </header>
+
+            {/* Theme Toggle Switch */}
+            <button 
+              onClick={toggleTheme} 
+              className="theme-toggle-btn"
+              title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? (
+                <i className="fa-solid fa-sun"></i>
+              ) : (
+                <i className="fa-solid fa-moon"></i>
+              )}
+            </button>
+
+            {/* Cart Button (Collapsed to icon on mobile) */}
+            <Link 
+              href="/carrinho" 
+              className="btn btn-secondary" 
+              style={{ 
+                padding: '8px 16px', 
+                position: 'relative', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '8px' 
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <i className="fa-solid fa-cart-shopping"></i>
+              <span className="hide-mobile">Orçamento</span>
+              {cartCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  backgroundColor: 'var(--primary)',
+                  color: '#111',
+                  borderRadius: '50%',
+                  width: '18px',
+                  height: '18px',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Hamburger Button for Mobile */}
+            <button 
+              className="hamburger-btn" 
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <i className="fa-solid fa-bars"></i>
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      {/* Mobile Drawer Overlay */}
+      <div 
+        className={`mobile-drawer-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+      ></div>
+
+      {/* Mobile Drawer */}
+      <aside className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
+        <button 
+          className="mobile-drawer-close"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-label="Fechar menu"
+        >
+          <i className="fa-solid fa-xmark"></i>
+        </button>
+
+        {activeSeller && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            fontSize: '12px',
+            padding: '12px',
+            backgroundColor: 'var(--primary-light)',
+            border: '1px solid var(--primary)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-primary)',
+            marginBottom: '10px'
+          }}>
+            <span>Atendimento por: <b>{activeSeller.name}</b></span>
+            <button 
+              onClick={() => { clearSeller(); setMobileMenuOpen(false); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--danger)',
+                cursor: 'pointer',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                fontWeight: 'bold',
+                textAlign: 'left'
+              }}
+            >
+              Comprar com a loja (Sair)
+            </button>
+          </div>
+        )}
+
+        <ul className="mobile-drawer-links">
+          {menuLinks.map(link => (
+            <li key={link.href}>
+              <Link 
+                href={link.href} 
+                className={pathname === link.href ? 'active' : ''}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </>
   );
 }

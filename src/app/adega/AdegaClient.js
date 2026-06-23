@@ -213,40 +213,92 @@ export default function AdegaClient() {
                 {filteredProducts.map(product => {
                   const itemsInCart = cartItems.filter(id => id === String(product.id)).length;
                   
+                  // Parse multiple ratings (e.g. "RP100 | WS98")
+                  const parsedRatings = [];
+                  if (product.pontuacao) {
+                    product.pontuacao.split('|').forEach(part => {
+                      const match = part.match(/([a-zA-Z\s]+)(\d+)/);
+                      if (match) {
+                        parsedRatings.push({
+                          label: match[1].replace(/[^a-zA-Z]/g, '').trim(),
+                          score: match[2].trim()
+                        });
+                      } else {
+                        const clean = part.replace(/[^\w\s]/g, '').trim();
+                        if (clean) {
+                          parsedRatings.push({ label: '', score: clean });
+                        }
+                      }
+                    });
+                  }
+
                   return (
                     <div className="product-card" key={product.id}>
-                      <div className="product-image-container">
-                        {product.image_url ? (
-                          <img 
-                            src={product.image_url} 
-                            alt={product.title} 
-                            className="product-image"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div style={{ 
-                            width: '100%', 
-                            height: '100%', 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            alignItems: 'center',
-                            backgroundColor: '#232936',
-                            color: 'var(--text-muted)',
-                            fontSize: '12px'
-                          }}>
-                            Sem Foto
-                          </div>
-                        )}
-                        {product.pontuacao && (
-                          <span className="product-badge" style={{ backgroundColor: '#800020', borderColor: 'var(--primary)', color: 'white', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <i className="fa-solid fa-star" style={{ color: 'var(--primary)', fontSize: '11px' }}></i> {product.pontuacao} Pts
-                          </span>
-                        )}
-                      </div>
+                      <Link href={`/produtos/${product.slug}`} style={{ display: 'block' }}>
+                        <div className="product-image-container">
+                          {product.image_url ? (
+                            <img 
+                              src={product.image_url} 
+                              alt={product.title} 
+                              className="product-image"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              display: 'flex', 
+                              justifyContent: 'center', 
+                              alignItems: 'center',
+                              backgroundColor: '#232936',
+                              color: 'var(--text-muted)',
+                              fontSize: '12px'
+                            }}>
+                              Sem Foto
+                            </div>
+                          )}
+                          
+                          {/* Wine Scores Badges */}
+                          {parsedRatings.length > 0 && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '10px',
+                              right: '10px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px',
+                              alignItems: 'flex-end',
+                              zIndex: 2
+                            }}>
+                              {parsedRatings.map((r, idx) => (
+                                <span 
+                                  key={idx} 
+                                  className="product-badge badge-tag-wine"
+                                  style={{
+                                    position: 'static',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '10px',
+                                    padding: '3px 8px',
+                                    border: '1px solid var(--primary)',
+                                    borderRadius: 'var(--radius-sm)'
+                                  }}
+                                >
+                                  <i className="fa-solid fa-award" style={{ color: 'var(--primary)', fontSize: '10px' }}></i>
+                                  {r.label ? `${r.label} ${r.score}` : r.score}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
                       
                       <div className="product-info">
                         <h3 className="product-title" title={product.title}>
-                          {product.title}
+                          <Link href={`/produtos/${product.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                            {product.title}
+                          </Link>
                         </h3>
                         
                         <p className="product-desc" title={product.description}>

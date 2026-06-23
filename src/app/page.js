@@ -133,8 +133,8 @@ export default function Home() {
               <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
                 Para quem deseja degustar no local, nosso restaurante oferece grelhados na brasa preparados na hora por mestres churrasqueiros, acompanhamentos refinados e atendimento diferenciado em ambiente aconchegante.
               </p>
-              <a href="https://wa.me/5524988650462?text=Gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                Reservar uma Mesa &rarr;
+              <a href="https://wa.me/552422221482?text=Gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <i className="fa-brands fa-whatsapp" style={{ color: '#25D366' }}></i> Reservar uma Mesa &rarr;
               </a>
             </div>
           </div>
@@ -169,7 +169,9 @@ export default function Home() {
             </div>
             <div>
               <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '5px' }}>Telefone / WhatsApp:</h4>
-              <p style={{ fontSize: '14px' }}>Fixo: (24) 2222-1482 | WhatsApp: (24) 98865-0462</p>
+              <p style={{ fontSize: '14px' }}>
+                <i className="fa-solid fa-phone" style={{ color: 'var(--primary)', marginRight: '6px' }}></i> Fixo: (24) 2222-1482 | <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', marginRight: '4px' }}></i> WhatsApp: (24) 98865-0462
+              </p>
             </div>
           </div>
           <div style={{
@@ -187,7 +189,9 @@ export default function Home() {
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              background: 'radial-gradient(circle at center, #232936 0%, #14171d 100%)',
+              backgroundImage: 'linear-gradient(rgba(11, 12, 14, 0.75), rgba(11, 12, 14, 0.85)), url("/images/map_dark.png")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
               color: 'var(--text-secondary)',
               padding: '20px',
               textAlign: 'center'

@@ -122,7 +122,7 @@ export default function CardapioPage() {
             Faça sua reserva pelo WhatsApp e garanta sua mesa no restaurante mais aconchegante de Itaipava.
           </p>
           <a 
-            href="https://wa.me/5524988650462?text=Olá,%20gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante!" 
+            href="https://wa.me/552422221482?text=Olá,%20gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante!" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="btn btn-primary"
