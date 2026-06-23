@@ -78,7 +78,7 @@ export default function CardapioPage() {
                 boxShadow: 'var(--shadow-md)'
               }}>
                 <img 
-                  src="https://antenorefilhos.com.br/cardapio/wa_images/alacarte.jpg" 
+                  src="/images/alacarte.jpg" 
                   alt="Cardápio À La Carte Antenor e Filhos" 
                   style={{
                     width: '100%',
@@ -101,7 +101,7 @@ export default function CardapioPage() {
                 boxShadow: 'var(--shadow-md)'
               }}>
                 <img 
-                  src="https://antenorefilhos.com.br/cardapio/wa_images/bebidas.jpg" 
+                  src="/images/bebidas.jpg" 
                   alt="Carta de Bebidas e Adega Antenor e Filhos" 
                   style={{
                     width: '100%',
