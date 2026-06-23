@@ -3,6 +3,32 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+// Map country slugs to flag emojis
+const COUNTRY_FLAG_MAP = {
+  brasil: '🇧🇷',
+  franca: '🇫🇷',
+  italia: '🇮🇹',
+  portugal: '🇵🇹',
+  chile: '🇨🇱',
+  argentina: '🇦🇷',
+  espanha: '🇪🇸',
+  uruguai: '🇺🇾',
+  alemanha: '🇩🇪',
+  eua: '🇺🇸',
+};
+
+const WINE_TYPE_SLUGS = ['tinto', 'branco', 'rose', 'espumante', 'rosé', 'rose-espumante'];
+
+function getCountryBadge(categories) {
+  if (!categories) return null;
+  const countryCat = categories.find(c =>
+    c.type === 'sessoes_vinho_' && !WINE_TYPE_SLUGS.includes(c.slug.toLowerCase())
+  );
+  if (!countryCat) return null;
+  const flag = COUNTRY_FLAG_MAP[countryCat.slug.toLowerCase()] || '🍷';
+  return { flag, name: countryCat.name.replace(/[\u{1F1E0}-\u{1F1FF}]{2}/gu, '').trim() };
+}
+
 export default function AdegaClient() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -312,39 +338,80 @@ export default function AdegaClient() {
                             </div>
                           )}
                           
-                          {/* Wine Scores Badges */}
+                          {/* Wine Scores Badges - top right */}
                           {parsedRatings.length > 0 && (
                             <div style={{
                               position: 'absolute',
-                              top: '10px',
-                              right: '10px',
+                              top: '8px',
+                              right: '8px',
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '6px',
+                              gap: '5px',
                               alignItems: 'flex-end',
                               zIndex: 2
                             }}>
                               {parsedRatings.map((r, idx) => (
-                                <span 
-                                  key={idx} 
-                                  className="product-badge badge-tag-wine"
+                                <div
+                                  key={idx}
+                                  className="wine-score-badge"
                                   style={{
-                                    position: 'static',
-                                    display: 'inline-flex',
+                                    background: idx === 0 ? 'var(--primary)' : 'rgba(20,20,20,0.88)',
+                                    border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.4)',
+                                    color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    width: '48px',
+                                    minHeight: '52px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
-                                    gap: '4px',
-                                    fontSize: '10px',
-                                    padding: '3px 8px',
-                                    border: '1px solid var(--primary)',
-                                    borderRadius: 'var(--radius-sm)'
+                                    justifyContent: 'center',
+                                    gap: '1px',
+                                    padding: '6px 4px 4px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
                                   }}
                                 >
-                                  <i className="fa-solid fa-award" style={{ color: 'var(--primary)', fontSize: '10px' }}></i>
-                                  {r.label ? `${r.label} ${r.score}` : r.score}
-                                </span>
+                                  <span style={{ fontSize: '20px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>
+                                    {r.score}
+                                  </span>
+                                  {r.label && (
+                                    <span style={{ fontSize: '9px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.03em', lineHeight: '1.2', textAlign: 'center' }}>
+                                      {r.label}
+                                    </span>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}
+
+                          {/* Country Flag Badge - top left */}
+                          {(() => {
+                            const country = getCountryBadge(product.categories);
+                            return country ? (
+                              <div style={{
+                                position: 'absolute',
+                                top: '8px',
+                                left: '8px',
+                                zIndex: 2,
+                                background: 'rgba(10,10,10,0.78)',
+                                backdropFilter: 'blur(6px)',
+                                WebkitBackdropFilter: 'blur(6px)',
+                                border: '1px solid rgba(255,255,255,0.12)',
+                                padding: '4px 8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                fontSize: '11px',
+                                color: 'rgba(255,255,255,0.9)',
+                                fontWeight: '500',
+                                letterSpacing: '0.02em',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.35)'
+                              }}>
+                                <span style={{ fontSize: '16px', lineHeight: '1' }}>{country.flag}</span>
+                                <span>{country.name}</span>
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       </Link>
                       

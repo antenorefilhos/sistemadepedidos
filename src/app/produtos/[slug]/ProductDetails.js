@@ -3,6 +3,146 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+// --- Country Flag Helpers ---
+const COUNTRY_FLAG_MAP = {
+  brasil: '🇧🇷',
+  franca: '🇫🇷',
+  italia: '🇮🇹',
+  portugal: '🇵🇹',
+  chile: '🇨🇱',
+  argentina: '🇦🇷',
+  espanha: '🇪🇸',
+  uruguai: '🇺🇾',
+  alemanha: '🇩🇪',
+  eua: '🇺🇸',
+};
+
+const WINE_TYPE_SLUGS = ['tinto', 'branco', 'rose', 'espumante', 'rosé', 'rose-espumante'];
+
+function getCountryBadge(categories) {
+  if (!categories) return null;
+  const countryCat = categories.find(c =>
+    c.type === 'sessoes_vinho_' && !WINE_TYPE_SLUGS.includes(c.slug.toLowerCase())
+  );
+  if (!countryCat) return null;
+  const flag = COUNTRY_FLAG_MAP[countryCat.slug.toLowerCase()] || '🍷';
+  return { flag, name: countryCat.name.replace(/[\u{1F1E0}-\u{1F1FF}]{2}/gu, '').trim(), slug: countryCat.slug };
+}
+
+function getWineType(categories) {
+  if (!categories) return null;
+  const typeCat = categories.find(c =>
+    c.type === 'sessoes_vinho_' && WINE_TYPE_SLUGS.includes(c.slug.toLowerCase())
+  );
+  return typeCat ? typeCat.name : null;
+}
+
+// --- Description Parser for Wine Products ---
+function parseWineDescription(description) {
+  if (!description) return { intro: '', specs: {}, details: {} };
+
+  const raw = description;
+
+  // Extract key: value pairs from structured description text
+  const extractField = (keys) => {
+    for (const key of keys) {
+      // Try "Key: value\n" pattern
+      const pattern = new RegExp(`${key}:\\s*([^\\n]+)`, 'i');
+      const m = raw.match(pattern);
+      if (m) return m[1].trim();
+    }
+    return '';
+  };
+
+  // Extract blocks that span multiple lines (e.g., "Harmonização:\nqueijo\ncarnes")
+  const extractBlock = (key) => {
+    const pattern = new RegExp(`${key}:[\\s\\n]*([\\s\\S]*?)(?:\\n[A-ZÁÉÍÓÚ][a-záéíóú]+:|$)`, 'i');
+    const m = raw.match(pattern);
+    if (m) return m[1].replace(/\n+/g, ' ').trim();
+    return '';
+  };
+
+  const specs = {
+    uvas: extractField(['Uvas?', 'Casta', 'Variedade', 'Cepa']),
+    produtor: extractField(['Produtor', 'Vinícola', 'Winery']),
+    regiao: extractField(['Região', 'Regi.o', 'Appelation', 'DOC', 'AOC']),
+    teor: extractField(['Teor Alcoólico', 'Álcool', 'Alc\\.', 'Graduação']),
+    servico: extractField(['Temperatura de Serviço', 'Temperatura', 'Temp\\..*Serviço']),
+    safra: extractField(['Safra', 'Vintage', 'Colheita']),
+  };
+
+  const details = {
+    vinificacao: extractBlock('Vinificação') || extractBlock('Vinificacao'),
+    maturacao: extractBlock('Maturação') || extractBlock('Maturacao') || extractBlock('Envelhecimento'),
+    aroma: extractBlock('Aroma') || extractBlock('Olfato'),
+    paladar: extractBlock('Paladar') || extractBlock('Gosto') || extractBlock('Sabor'),
+    harmonizacao: extractBlock('Harmonização') || extractBlock('Harmonizacao') || extractBlock('Maridagem'),
+    notas: extractBlock('Notas de Degustação') || extractBlock('Degustação'),
+  };
+
+  // Build clean intro: remove all structured lines, keep free-form paragraphs
+  let intro = raw
+    .replace(/[A-ZÁÉÍÓÚ][a-záéíóúç\s]+:\s*[^\n]+\n?/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  // If intro is too short/empty, use the first sentence of the raw description
+  if (intro.length < 30) {
+    const firstSentence = raw.split(/[.!?]/)[0];
+    intro = firstSentence ? firstSentence.trim() + '.' : raw.substring(0, 300).trim();
+  }
+
+  return { intro, specs, details };
+}
+
+// --- Spec Card Component ---
+function SpecCard({ icon, label, value }) {
+  if (!value) return null;
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+      padding: '14px 12px',
+      background: 'rgba(171,144,112,0.07)',
+      border: '1px solid rgba(171,144,112,0.18)',
+    }}>
+      <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <span style={{ fontSize: '12px' }}>{icon}</span>
+        {label}
+      </span>
+      <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', lineHeight: '1.3' }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// --- Detail Block Component ---
+function DetailBlock({ title, content }) {
+  if (!content) return null;
+  return (
+    <div style={{ marginBottom: '20px' }}>
+      <h4 style={{
+        fontSize: '11px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.12em',
+        color: 'var(--primary)',
+        marginBottom: '8px',
+        fontFamily: 'var(--font-sans)',
+        fontWeight: '600',
+        paddingBottom: '6px',
+        borderBottom: '1px solid rgba(171,144,112,0.2)'
+      }}>
+        {title}
+      </h4>
+      <p style={{ fontSize: '14px', lineHeight: '1.75', color: 'var(--text-muted)' }}>
+        {content}
+      </p>
+    </div>
+  );
+}
+
 export default function ProductDetails({ product, relatedProducts }) {
   const [qty, setQty] = useState(1);
   const [cartItems, setCartItems] = useState([]);
@@ -15,7 +155,6 @@ export default function ProductDetails({ product, relatedProducts }) {
         const ids = cartStr.split(',').filter(id => id.trim() !== '');
         setCartItems(ids);
         
-        // Count how many of this product are in the cart
         const count = ids.filter(id => id === String(product.id)).length;
         if (count > 0) {
           setQty(count);
@@ -43,13 +182,11 @@ export default function ProductDetails({ product, relatedProducts }) {
 
   const updateCartQuantity = (newQty) => {
     if (newQty < 1) {
-      // Remove product from cart
       const updated = cartItems.filter(id => id !== String(product.id));
       localStorage.setItem('jet_engine_store_carrinho', updated.join(','));
       setIsInCart(false);
       setQty(1);
     } else {
-      // Clean previous instances and insert exactly newQty instances
       const baseList = cartItems.filter(id => id !== String(product.id));
       for (let i = 0; i < newQty; i++) {
         baseList.push(String(product.id));
@@ -84,7 +221,7 @@ export default function ProductDetails({ product, relatedProducts }) {
     }
   };
 
-  // Mapear selos/badges dinamicamente
+  // Meat product badges
   const breedCat = product.categories?.find(c => c.type === 'racas_carnes');
   const embalagemCat = product.categories?.find(c => c.type === 'embalagem_carnes');
 
@@ -98,9 +235,14 @@ export default function ProductDetails({ product, relatedProducts }) {
     }
   }
 
-  // Parse scores de vinhos
+  // Wine data
+  const isWine = product.type === 'adega';
+  const countryBadge = isWine ? getCountryBadge(product.categories) : null;
+  const wineType = isWine ? getWineType(product.categories) : null;
+
+  // Parse scores
   const parsedRatings = [];
-  if (product.type === 'adega' && product.pontuacao) {
+  if (isWine && product.pontuacao) {
     product.pontuacao.split('|').forEach(part => {
       const match = part.match(/([a-zA-Z\s]+)(\d+)/);
       if (match) {
@@ -117,6 +259,9 @@ export default function ProductDetails({ product, relatedProducts }) {
     });
   }
 
+  // Parse wine description
+  const wineData = isWine ? parseWineDescription(product.description) : null;
+
   return (
     <div style={{ padding: '40px 0' }}>
       <div className="container">
@@ -125,8 +270,8 @@ export default function ProductDetails({ product, relatedProducts }) {
         <div style={{ marginBottom: '30px', fontSize: '13px', color: 'var(--text-muted)' }}>
           <Link href="/" style={{ color: 'var(--primary)' }}>Início</Link>
           <span style={{ margin: '0 8px' }}>&rsaquo;</span>
-          <Link href={product.type === 'carnes_' ? '/boutique' : '/adega'} style={{ color: 'var(--primary)' }}>
-            {product.type === 'carnes_' ? 'Boutique de Carnes' : 'Adega de Vinhos'}
+          <Link href={isWine ? '/adega' : '/boutique'} style={{ color: 'var(--primary)' }}>
+            {isWine ? 'Adega de Vinhos' : 'Boutique de Carnes'}
           </Link>
           <span style={{ margin: '0 8px' }}>&rsaquo;</span>
           <span style={{ color: 'var(--text-primary)' }}>{product.title}</span>
@@ -157,43 +302,111 @@ export default function ProductDetails({ product, relatedProducts }) {
             </div>
             <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px' }}>
               <i className="fa-solid fa-magnifying-glass" style={{ marginRight: '6px' }}></i>
-              Passe o mouse sobre a imagem para ampliar o corte
+              Passe o mouse sobre a imagem para ampliar
             </p>
           </div>
 
           {/* Right Column: Information & Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            {/* Badges Row */}
-            <div className="product-meta-badge-row">
-              {breedLogo && (
-                <img 
-                  src={breedLogo} 
-                  alt={breedCat.name} 
-                  className="badge-breed-img"
-                  style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))' }}
-                />
-              )}
-              {embalagemCat && (
-                <span className={`badge-tag badge-tag-${embalagemCat.slug.toLowerCase()}`}>
-                  <i className="fa-solid fa-snowflake"></i> {embalagemCat.name}
-                </span>
-              )}
-              {parsedRatings.map((r, idx) => (
-                <span key={idx} className="badge-tag badge-tag-wine">
-                  <i className="fa-solid fa-award"></i> {r.label ? `${r.label} ${r.score}` : r.score}
-                </span>
-              ))}
-            </div>
 
-            {/* Title & EAN */}
-            <h1 style={{ fontSize: 'clamp(28px, 4vw, 38px)', color: 'var(--text-primary)', marginBottom: '15px', fontFamily: 'var(--font-serif)', lineHeight: '1.2' }}>
+            {/* Country Badge (Wine) */}
+            {isWine && countryBadge && (
+              <div style={{ marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'rgba(171,144,112,0.1)',
+                  border: '1px solid rgba(171,144,112,0.3)',
+                  padding: '5px 12px',
+                  fontSize: '12px',
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  fontWeight: '500'
+                }}>
+                  <span style={{ fontSize: '18px' }}>{countryBadge.flag}</span>
+                  {countryBadge.name}
+                </span>
+                {wineType && (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: 'transparent',
+                    border: '1px solid var(--border-color)',
+                    padding: '5px 12px',
+                    fontSize: '11px',
+                    color: 'var(--text-muted)',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}>
+                    <i className="fa-solid fa-wine-glass" style={{ fontSize: '10px' }}></i>
+                    {wineType}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Meat Badges Row */}
+            {!isWine && (
+              <div className="product-meta-badge-row">
+                {breedLogo && (
+                  <img 
+                    src={breedLogo} 
+                    alt={breedCat.name} 
+                    className="badge-breed-img"
+                    style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))' }}
+                  />
+                )}
+                {embalagemCat && (
+                  <span className={`badge-tag badge-tag-${embalagemCat.slug.toLowerCase()}`}>
+                    <i className="fa-solid fa-snowflake"></i> {embalagemCat.name}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Title */}
+            <h1 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', color: 'var(--text-primary)', marginBottom: '12px', fontFamily: 'var(--font-serif)', lineHeight: '1.2' }}>
               {product.title}
             </h1>
 
             {product.sku && (
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-                Código do Produto (EAN): <code style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '2px 6px', color: 'var(--primary-hover)' }}>{product.sku}</code>
+                Código (EAN): <code style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '2px 6px', color: 'var(--primary-hover)' }}>{product.sku}</code>
               </p>
+            )}
+
+            {/* Wine Score Badges (large cards row) */}
+            {isWine && parsedRatings.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                {parsedRatings.map((r, idx) => (
+                  <div key={idx} style={{
+                    background: idx === 0 ? 'var(--primary)' : 'rgba(20,20,20,0.8)',
+                    border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.35)',
+                    color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
+                    width: '60px',
+                    minHeight: '64px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '2px',
+                    padding: '8px 6px 6px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
+                  }}>
+                    <span style={{ fontSize: '24px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>
+                      {r.score}
+                    </span>
+                    {r.label && (
+                      <span style={{ fontSize: '9px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: '1.2', textAlign: 'center' }}>
+                        {r.label}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
 
             {/* Price block */}
@@ -201,7 +414,7 @@ export default function ProductDetails({ product, relatedProducts }) {
               padding: '20px 0', 
               borderTop: '1px solid var(--border-color)', 
               borderBottom: '1px solid var(--border-color)',
-              marginBottom: '30px'
+              marginBottom: '28px'
             }}>
               <span style={{ fontSize: '13px', textTransform: 'uppercase', display: 'block', color: 'var(--text-muted)', marginBottom: '5px' }}>
                 Valor Unitário Estimado
@@ -223,15 +436,17 @@ export default function ProductDetails({ product, relatedProducts }) {
               )}
             </div>
 
-            {/* Description */}
-            <div style={{ marginBottom: '30px' }}>
-              <h3 style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Descrição Detalhada
-              </h3>
-              <p style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-muted)' }}>
-                {product.description || 'Este item de alta qualidade foi criteriosamente selecionado pelos especialistas da Antenor & Filhos para garantir a melhor experiência gastronômica da Serra Imperial. Procedência garantida.'}
-              </p>
-            </div>
+            {/* Description (non-wine only) */}
+            {!isWine && (
+              <div style={{ marginBottom: '30px' }}>
+                <h3 style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Descrição Detalhada
+                </h3>
+                <p style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-muted)' }}>
+                  {product.description || 'Este item de alta qualidade foi criteriosamente selecionado pelos especialistas da Antenor & Filhos para garantir a melhor experiência gastronômica da Serra Imperial. Procedência garantida.'}
+                </p>
+              </div>
+            )}
 
             {/* Actions: Add to Cart */}
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -333,6 +548,153 @@ export default function ProductDetails({ product, relatedProducts }) {
           </div>
         </div>
 
+        {/* ====================================================== */}
+        {/* WINE PREMIUM DESCRIPTION — Mistral-style two columns   */}
+        {/* ====================================================== */}
+        {isWine && wineData && (
+          <div className="wine-description-section">
+            
+            {/* Left Column: Sobre o Vinho + Ficha Técnica */}
+            <div className="wine-desc-left">
+              
+              {/* Intro */}
+              <div style={{ marginBottom: '30px' }}>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontFamily: 'var(--font-serif)',
+                  color: 'var(--text-primary)',
+                  marginBottom: '14px',
+                  paddingBottom: '10px',
+                  borderBottom: '1px solid rgba(171,144,112,0.25)'
+                }}>
+                  Sobre o Vinho
+                </h2>
+                <p style={{ fontSize: '15px', lineHeight: '1.8', color: 'var(--text-muted)' }}>
+                  {wineData.intro || 'Rótulo selecionado com critério pelos especialistas da Antenor & Filhos. Procedência garantida e qualidade certificada pelas principais revistas especializadas do mundo.'}
+                </p>
+              </div>
+
+              {/* Ficha Técnica Grid */}
+              {Object.values(wineData.specs).some(v => v) && (
+                <div>
+                  <h3 style={{
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    color: 'var(--text-muted)',
+                    marginBottom: '14px',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: '600'
+                  }}>
+                    Ficha Técnica
+                  </h3>
+                  <div className="wine-specs-grid">
+                    {countryBadge && (
+                      <SpecCard icon={countryBadge.flag} label="País" value={countryBadge.name} />
+                    )}
+                    {wineType && (
+                      <SpecCard icon="🍷" label="Tipo" value={wineType} />
+                    )}
+                    <SpecCard icon="🫧" label="Uvas" value={wineData.specs.uvas} />
+                    <SpecCard icon="🏭" label="Produtor" value={wineData.specs.produtor} />
+                    <SpecCard icon="📍" label="Região" value={wineData.specs.regiao} />
+                    <SpecCard icon="🌡️" label="Teor Alcoólico" value={wineData.specs.teor} />
+                    <SpecCard icon="❄️" label="Temperatura de Serviço" value={wineData.specs.servico} />
+                    <SpecCard icon="📅" label="Safra" value={wineData.specs.safra} />
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback if no specs found */}
+              {!Object.values(wineData.specs).some(v => v) && (
+                <div>
+                  <h3 style={{
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    color: 'var(--text-muted)',
+                    marginBottom: '14px',
+                    fontWeight: '600'
+                  }}>
+                    Ficha Técnica
+                  </h3>
+                  <div className="wine-specs-grid">
+                    {countryBadge && <SpecCard icon={countryBadge.flag} label="País" value={countryBadge.name} />}
+                    {wineType && <SpecCard icon="🍷" label="Tipo" value={wineType} />}
+                    {product.peso && <SpecCard icon="📦" label="Volume" value={`${product.peso} ${product.unidade_peso || 'ml'}`} />}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Detail blocks */}
+            <div className="wine-desc-right">
+              <h2 style={{
+                fontSize: '20px',
+                fontFamily: 'var(--font-serif)',
+                color: 'var(--text-primary)',
+                marginBottom: '20px',
+                paddingBottom: '10px',
+                borderBottom: '1px solid rgba(171,144,112,0.25)'
+              }}>
+                Notas de Degustação
+              </h2>
+
+              <DetailBlock title="Vinificação" content={wineData.details.vinificacao} />
+              <DetailBlock title="Maturação & Envelhecimento" content={wineData.details.maturacao} />
+              <DetailBlock title="Aroma" content={wineData.details.aroma} />
+              <DetailBlock title="Paladar" content={wineData.details.paladar} />
+              <DetailBlock title="Harmonização" content={wineData.details.harmonizacao} />
+              <DetailBlock title="Notas de Degustação" content={wineData.details.notas} />
+
+              {/* If no detail blocks parsed, show the raw description elegantly */}
+              {!Object.values(wineData.details).some(v => v) && product.description && (
+                <div>
+                  <p style={{ fontSize: '14px', lineHeight: '1.8', color: 'var(--text-muted)' }}>
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Scores in right column (detailed) */}
+              {parsedRatings.length > 0 && (
+                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(171,144,112,0.2)' }}>
+                  <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                    Pontuações da Crítica Especializada
+                  </p>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {parsedRatings.map((r, idx) => (
+                      <div key={idx} style={{
+                        background: idx === 0 ? 'var(--primary)' : 'rgba(171,144,112,0.08)',
+                        border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.3)',
+                        color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
+                        width: '56px',
+                        minHeight: '60px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '2px',
+                        padding: '8px 4px'
+                      }}>
+                        <span style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>
+                          {r.score}
+                        </span>
+                        {r.label && (
+                          <span style={{ fontSize: '9px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center', lineHeight: '1.2' }}>
+                            {r.label}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
         {/* Related Products Showcase */}
         {relatedProducts.length > 0 && (
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '50px', marginTop: '40px' }}>
@@ -349,6 +711,17 @@ export default function ProductDetails({ product, relatedProducts }) {
                   else if (s.includes('wagyu')) logo = '/novo/wp-content/uploads/WAGYU-BEEF-SELO.png';
                 }
                 const embalagem = p.categories?.find(c => c.type === 'embalagem_carnes');
+                const pCountry = getCountryBadge(p.categories);
+
+                // Parse related wine scores
+                const relRatings = [];
+                if (p.type === 'adega' && p.pontuacao) {
+                  p.pontuacao.split('|').forEach(part => {
+                    const match = part.match(/([a-zA-Z\s]+)(\d+)/);
+                    if (match) relRatings.push({ label: match[1].replace(/[^a-zA-Z]/g, '').trim(), score: match[2].trim() });
+                    else { const c = part.replace(/[^\w\s]/g, '').trim(); if (c) relRatings.push({ label: '', score: c }); }
+                  });
+                }
 
                 return (
                   <div className="product-card" key={p.id}>
@@ -364,6 +737,37 @@ export default function ProductDetails({ product, relatedProducts }) {
                         )}
                         {embalagem && (
                           <span className={`product-badge badge-tag-${embalagem.slug.toLowerCase()}`} style={{ position: 'absolute', top: '10px', right: '10px', left: 'auto', zIndex: 2 }}>{embalagem.name}</span>
+                        )}
+                        {/* Wine related: country badge */}
+                        {pCountry && (
+                          <div style={{
+                            position: 'absolute', top: '8px', left: '8px', zIndex: 2,
+                            background: 'rgba(10,10,10,0.78)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+                            border: '1px solid rgba(255,255,255,0.12)', padding: '3px 7px',
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                            fontSize: '10px', color: 'rgba(255,255,255,0.88)'
+                          }}>
+                            <span style={{ fontSize: '14px' }}>{pCountry.flag}</span>
+                            <span>{pCountry.name}</span>
+                          </div>
+                        )}
+                        {/* Wine score badges */}
+                        {relRatings.length > 0 && (
+                          <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end', zIndex: 2 }}>
+                            {relRatings.slice(0, 2).map((r, idx) => (
+                              <div key={idx} style={{
+                                background: idx === 0 ? 'var(--primary)' : 'rgba(20,20,20,0.85)',
+                                border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.4)',
+                                color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
+                                width: '42px', minHeight: '46px',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                gap: '1px', padding: '5px 3px',
+                              }}>
+                                <span style={{ fontSize: '17px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>{r.score}</span>
+                                {r.label && <span style={{ fontSize: '8px', fontWeight: '600', textTransform: 'uppercase', textAlign: 'center', lineHeight: '1.1' }}>{r.label}</span>}
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </Link>

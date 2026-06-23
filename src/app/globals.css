@@ -892,4 +892,47 @@ footer a:hover {
   background-color: #eaecef;
 }
 
+/* ===================================================
+   Wine Premium Description Layout (Mistral-style)
+   =================================================== */
 
+.wine-description-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 50px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 900px) {
+  .wine-description-section {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.wine-desc-left,
+.wine-desc-right {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ficha Técnica 2-column grid */
+.wine-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .wine-specs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Score badge cards */
+.wine-score-badge {
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
