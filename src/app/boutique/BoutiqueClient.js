@@ -403,7 +403,7 @@ export default function BoutiqueClient() {
                                 position: 'absolute',
                                 top: '10px',
                                 left: '10px',
-                                height: '35px',
+                                height: '70px',
                                 width: 'auto',
                                 zIndex: 2,
                                 filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))'
