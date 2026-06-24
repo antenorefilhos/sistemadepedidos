@@ -86,15 +86,7 @@ export default function Home() {
             gap: '30px'
           }}>
             {/* Area 1: Carnes */}
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '40px',
-              transition: 'border-color var(--transition-normal)',
-              position: 'relative',
-              overflow: 'hidden'
-            }} className="operation-card">
+            <div className="glass operation-card">
               <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Boutique de Carnes</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
                 Os cortes mais nobres do mercado nacional e internacional. Raças britânicas Angus e Hereford, cortes Wagyu de alta marmorização, além de carnes exóticas como coelho, jacaré, javali e cordeiro selecionado.
@@ -105,13 +97,7 @@ export default function Home() {
             </div>
 
             {/* Area 2: Adega */}
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '40px',
-              transition: 'border-color var(--transition-normal)'
-            }} className="operation-card">
+            <div className="glass operation-card">
               <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Adega & Delicatessen</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
                 Rótulos selecionados das melhores vinícolas do Velho e Novo Mundo. Do clássico ao exclusivo, nossa adega climatizada harmoniza perfeitamente com a sofisticação de nossos pratos e carnes, além de queijos e antepastos.
@@ -122,13 +108,7 @@ export default function Home() {
             </div>
 
             {/* Area 3: Restaurante */}
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '40px',
-              transition: 'border-color var(--transition-normal)'
-            }} className="operation-card">
+            <div className="glass operation-card">
               <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Restaurante & Brasa</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
                 Para quem deseja degustar no local, nosso restaurante oferece grelhados na brasa preparados na hora por mestres churrasqueiros, acompanhamentos refinados e atendimento diferenciado em ambiente aconchegante.
@@ -174,10 +154,8 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div style={{
+          <div className="glass" style={{
             height: '350px',
-            backgroundColor: '#15181c',
-            border: '1px solid var(--border-color)',
             borderRadius: 'var(--radius-lg)',
             overflow: 'hidden'
           }}>

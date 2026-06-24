@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -10,85 +10,60 @@ export default function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [theme, setTheme] = useState('dark');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Update seller from localStorage
+  // Track scroll for glass intensity
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const updateSellerFromStorage = () => {
     try {
       const stored = localStorage.getItem('ref_seller');
-      if (stored) {
-        setActiveSeller(JSON.parse(stored));
-      } else {
-        setActiveSeller(null);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      setActiveSeller(stored ? JSON.parse(stored) : null);
+    } catch (e) {}
   };
 
-  // Update cart count from localStorage
   const updateCartCountFromStorage = () => {
     try {
       const cartStr = localStorage.getItem('jet_engine_store_carrinho') || '';
-      if (cartStr.trim() === '') {
-        setCartCount(0);
-      } else {
-        const ids = cartStr.split(',').filter(id => id.trim() !== '');
-        setCartCount(ids.length);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      const ids = cartStr.split(',').filter(id => id.trim() !== '');
+      setCartCount(ids.length);
+    } catch (e) {}
   };
 
   useEffect(() => {
     updateSellerFromStorage();
     updateCartCountFromStorage();
 
-    // Load initial theme
     try {
       const savedTheme = localStorage.getItem('theme') || 'dark';
       setTheme(savedTheme);
-      if (savedTheme === 'light') {
-        document.documentElement.classList.add('light-theme');
-      } else {
-        document.documentElement.classList.remove('light-theme');
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      if (savedTheme === 'light') document.documentElement.classList.add('light-theme');
+      else document.documentElement.classList.remove('light-theme');
+    } catch (e) {}
 
-    // Listen to custom events
-    const handleSellerChange = () => updateSellerFromStorage();
-    const handleCartChange = () => updateCartCountFromStorage();
-
-    window.addEventListener('seller_changed', handleSellerChange);
-    window.addEventListener('cart_changed', handleCartChange);
-
-    // Check periodically for cart modifications
-    const interval = setInterval(() => {
-      updateCartCountFromStorage();
-    }, 1500);
+    window.addEventListener('seller_changed', updateSellerFromStorage);
+    window.addEventListener('cart_changed', updateCartCountFromStorage);
+    const interval = setInterval(updateCartCountFromStorage, 1500);
 
     return () => {
-      window.removeEventListener('seller_changed', handleSellerChange);
-      window.removeEventListener('cart_changed', handleCartChange);
+      window.removeEventListener('seller_changed', updateSellerFromStorage);
+      window.removeEventListener('cart_changed', updateCartCountFromStorage);
       clearInterval(interval);
     };
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
     try {
-      localStorage.setItem('theme', nextTheme);
-      if (nextTheme === 'light') {
-        document.documentElement.classList.add('light-theme');
-      } else {
-        document.documentElement.classList.remove('light-theme');
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      localStorage.setItem('theme', next);
+      if (next === 'light') document.documentElement.classList.add('light-theme');
+      else document.documentElement.classList.remove('light-theme');
+    } catch (e) {}
   };
 
   const clearSeller = () => {
@@ -97,12 +72,10 @@ export default function Header() {
     window.dispatchEvent(new Event('seller_changed'));
   };
 
-  const logoSrc = '/novo/wp-content/uploads/DELI-LOGO-PALHA.png';
-
   const menuLinks = [
     { href: '/', label: 'Início' },
-    { href: '/boutique', label: 'Boutique de Carnes' },
-    { href: '/adega', label: 'Adega de Vinhos' },
+    { href: '/boutique', label: 'Boutique' },
+    { href: '/adega', label: 'Adega' },
     { href: '/cardapio', label: 'Cardápio' },
     { href: '/entregas', label: 'Entregas' },
     { href: '/distribuidora', label: 'Distribuidora' },
@@ -110,176 +83,123 @@ export default function Header() {
 
   return (
     <>
-      <header className="navbar glass">
+      <header className={`navbar${scrolled ? ' navbar-scrolled' : ''}`}>
+        {/* Subtle top golden shimmer line */}
+        <div className="navbar-shimmer" />
+
         <div className="container nav-container">
-          {/* Logo (local path, responsive to theme) */}
+          {/* Logo */}
           <Link href="/" className="logo" style={{ display: 'flex', alignItems: 'center', padding: '5px 0' }} onClick={() => setMobileMenuOpen(false)}>
-            <img 
-              src={logoSrc} 
-              alt="Antenor & Filhos" 
+            <img
+              src="/novo/wp-content/uploads/DELI-LOGO-PALHA.png"
+              alt="Antenor & Filhos"
               className="navbar-logo-img"
             />
           </Link>
-          
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {/* Desktop menu */}
-            <ul className="nav-links">
-              {menuLinks.map(link => (
-                <li key={link.href}>
-                  <Link href={link.href} className={pathname === link.href ? 'active' : ''}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+            <ul className="nav-links hide-mobile">
+              {menuLinks.map(link => {
+                const isActive = pathname === link.href;
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className={`nav-link${isActive ? ' active' : ''}`}
+                    >
+                      {link.label}
+                      <span className="nav-link-underline" />
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
+
+            {/* Divider */}
+            <div className="nav-divider hide-mobile" />
 
             {/* Seller Badge */}
             {activeSeller && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '11px',
-                padding: '6px 12px',
-                backgroundColor: 'var(--primary-light)',
-                border: '1px solid var(--primary)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--text-primary)'
-              }} className="hide-mobile">
+              <div className="seller-badge hide-mobile">
+                <span className="seller-dot" />
                 <span>Vendedor: <b>{activeSeller.name}</b></span>
-                <button 
-                  onClick={clearSeller}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--danger)',
-                    cursor: 'pointer',
-                    fontSize: '10px',
-                    textTransform: 'uppercase',
-                    fontWeight: 'bold'
-                  }}
-                  title="Comprar direto com a loja"
-                >
-                  (Sair)
+                <button onClick={clearSeller} className="seller-exit" title="Comprar direto com a loja">
+                  ✕
                 </button>
               </div>
             )}
 
-            {/* Theme Toggle Switch */}
-            <button 
-              onClick={toggleTheme} 
-              className="theme-toggle-btn"
-              title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="nav-icon-btn"
+              title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
               aria-label="Alternar tema"
             >
-              {theme === 'dark' ? (
-                <i className="fa-solid fa-sun"></i>
-              ) : (
-                <i className="fa-solid fa-moon"></i>
-              )}
+              <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
             </button>
 
-            {/* Cart Button (Collapsed to icon on mobile) */}
-            <Link 
-              href="/carrinho" 
-              className="btn btn-secondary" 
-              style={{ 
-                padding: '8px 16px', 
-                position: 'relative', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: '8px' 
-              }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <i className="fa-solid fa-cart-shopping"></i>
+            {/* Cart Button */}
+            <Link href="/carrinho" className="cart-btn" onClick={() => setMobileMenuOpen(false)}>
+              <i className="fa-solid fa-cart-shopping" />
               <span className="hide-mobile">Orçamento</span>
               {cartCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                  backgroundColor: 'var(--primary)',
-                  color: '#111',
-                  borderRadius: '50%',
-                  width: '18px',
-                  height: '18px',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {cartCount}
-                </span>
+                <span className="cart-badge">{cartCount}</span>
               )}
             </Link>
 
-            {/* Hamburger Button for Mobile */}
-            <button 
-              className="hamburger-btn" 
+            {/* Hamburger for Mobile */}
+            <button
+              className="nav-icon-btn show-mobile"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Abrir menu"
             >
-              <i className="fa-solid fa-bars"></i>
+              <i className="fa-solid fa-bars" />
             </button>
           </nav>
         </div>
       </header>
 
       {/* Mobile Drawer Overlay */}
-      <div 
-        className={`mobile-drawer-overlay ${mobileMenuOpen ? 'open' : ''}`}
+      <div
+        className={`mobile-drawer-overlay${mobileMenuOpen ? ' open' : ''}`}
         onClick={() => setMobileMenuOpen(false)}
-      ></div>
+      />
 
       {/* Mobile Drawer */}
-      <aside className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
-        <button 
-          className="mobile-drawer-close"
-          onClick={() => setMobileMenuOpen(false)}
-          aria-label="Fechar menu"
-        >
-          <i className="fa-solid fa-xmark"></i>
-        </button>
+      <aside className={`mobile-drawer${mobileMenuOpen ? ' open' : ''}`}>
+        <div className="mobile-drawer-header">
+          <img
+            src="/novo/wp-content/uploads/DELI-LOGO-PALHA.png"
+            alt="Antenor & Filhos"
+            style={{ height: '36px', width: 'auto' }}
+          />
+          <button
+            className="nav-icon-btn"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Fechar menu"
+          >
+            <i className="fa-solid fa-xmark" />
+          </button>
+        </div>
 
         {activeSeller && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            fontSize: '12px',
-            padding: '12px',
-            backgroundColor: 'var(--primary-light)',
-            border: '1px solid var(--primary)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-primary)',
-            marginBottom: '10px'
-          }}>
-            <span>Atendimento por: <b>{activeSeller.name}</b></span>
-            <button 
+          <div className="seller-badge" style={{ marginBottom: '20px', width: '100%' }}>
+            <span className="seller-dot" />
+            <span style={{ flex: 1 }}>Atendimento: <b>{activeSeller.name}</b></span>
+            <button
               onClick={() => { clearSeller(); setMobileMenuOpen(false); }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--danger)',
-                cursor: 'pointer',
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                fontWeight: 'bold',
-                textAlign: 'left'
-              }}
-            >
-              Comprar com a loja (Sair)
-            </button>
+              className="seller-exit"
+            >✕</button>
           </div>
         )}
 
         <ul className="mobile-drawer-links">
           {menuLinks.map(link => (
             <li key={link.href}>
-              <Link 
-                href={link.href} 
+              <Link
+                href={link.href}
                 className={pathname === link.href ? 'active' : ''}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -288,6 +208,13 @@ export default function Header() {
             </li>
           ))}
         </ul>
+
+        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(171,144,112,0.15)' }}>
+          <button onClick={toggleTheme} className="nav-icon-btn" style={{ gap: '10px', fontSize: '13px', width: '100%', justifyContent: 'flex-start', paddingLeft: 0 }}>
+            <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
+            {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
+          </button>
+        </div>
       </aside>
     </>
   );

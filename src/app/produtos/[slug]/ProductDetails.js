@@ -99,14 +99,7 @@ function parseWineDescription(description) {
 function SpecCard({ icon, label, value }) {
   if (!value) return null;
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '4px',
-      padding: '14px 12px',
-      background: 'rgba(171,144,112,0.07)',
-      border: '1px solid rgba(171,144,112,0.18)',
-    }}>
+    <div className="spec-card">
       <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
         <span style={{ fontSize: '12px' }}>{icon}</span>
         {label}

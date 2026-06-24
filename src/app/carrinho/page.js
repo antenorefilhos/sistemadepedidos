@@ -236,15 +236,7 @@ export default function CartPage() {
                 if (qty === 0) return null;
                 
                 return (
-                  <div key={product.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '20px',
-                    padding: '20px',
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: 'var(--radius-lg)'
-                  }}>
+                  <div key={product.id} className="checkout-item-card">
                     {/* Thumbnail (Exactly 1:1) */}
                     <div style={{ width: '80px', height: '80px', backgroundColor: '#232936', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
                       {product.image_url ? (
