@@ -180,8 +180,8 @@ export default function CartPage() {
         
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${destPhone}&text=${encodeURIComponent(message)}`;
 
-        // 5. Open WhatsApp redirect in new window or same window
-        window.location.href = whatsappUrl;
+        // 5. Open WhatsApp in a new tab
+        window.open(whatsappUrl, '_blank');
 
         // 6. Navigate current page to /obrigado
         router.push('/obrigado');
