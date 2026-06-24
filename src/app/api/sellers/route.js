@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { queryOne } from '@/lib/db';
+import { getSql } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,10 +12,14 @@ export async function GET(request) {
   }
 
   try {
-    const seller = await queryOne(
-      "SELECT id, name, slug, phone, status FROM sellers WHERE slug = ? AND status = 'on'",
-      [slug.toLowerCase()]
-    );
+    const sql = getSql();
+    const rows = await sql`
+      SELECT id, name, slug, phone, status
+      FROM sellers
+      WHERE slug = ${slug.toLowerCase()} AND status = 'on'
+    `;
+
+    const seller = rows[0] || null;
 
     if (!seller) {
       return NextResponse.json({ error: 'Seller not found or inactive' }, { status: 404 });

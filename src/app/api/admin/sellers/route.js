@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { queryAll, execute } from '@/lib/db';
+import { getSql } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,16 +22,16 @@ export async function GET(request) {
   }
 
   try {
-    // Get sellers and count of their orders
-    const sellers = await queryAll(`
+    const sql = getSql();
+    const sellers = await sql`
       SELECT 
-        s.*, 
-        COUNT(o.id) as orders_count
+        s.*,
+        COUNT(o.id)::int as orders_count
       FROM sellers s
       LEFT JOIN orders o ON s.id = o.seller_id
       GROUP BY s.id
       ORDER BY s.name ASC
-    `);
+    `;
 
     return NextResponse.json(sellers);
   } catch (error) {
@@ -53,18 +53,46 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Name and Phone are required' }, { status: 400 });
     }
 
-    const sellerSlug = slug 
+    const sellerSlug = slug
       ? slug.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-      : name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      : name.toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
+          .replace(/[^a-z0-9]+/g, '-');
 
-    await execute(
-      "INSERT OR IGNORE INTO sellers (name, slug, phone) VALUES (?, ?, ?)",
-      [name, sellerSlug, phone]
-    );
+    const sql = getSql();
+    await sql`
+      INSERT INTO sellers (name, slug, phone)
+      VALUES (${name}, ${sellerSlug}, ${phone})
+      ON CONFLICT (slug) DO NOTHING
+    `;
 
-    return NextResponse.json({ success: true, message: 'Seller created' });
+    return NextResponse.json({ success: true, message: 'Seller created', slug: sellerSlug });
   } catch (error) {
     console.error('Error creating seller:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  const role = getRole(request);
+  if (role !== 'admin') {
+    return NextResponse.json({ error: 'Unauthorized (Admin Access Required)' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const sellerId = searchParams.get('id');
+
+    if (!sellerId) {
+      return NextResponse.json({ error: 'Missing seller ID' }, { status: 400 });
+    }
+
+    const sql = getSql();
+    await sql`DELETE FROM sellers WHERE id = ${sellerId}`;
+
+    return NextResponse.json({ success: true, message: 'Seller deleted' });
+  } catch (error) {
+    console.error('Error deleting seller:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

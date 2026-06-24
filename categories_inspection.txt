@@ -1,0 +1,22 @@
+
+=== Categories in items of carnes_export.xml ===
+Found 10 items.
+Domain: sessoes_carnes_
+  Slug: bovinos, Name: Bovinos
+  Slug: carnes, Name: Carnes
+  Slug: cordeiro, Name: Cordeiro
+  Slug: pescados, Name: Pescados
+  Slug: suinos, Name: Suínos
+Domain: embalagem_carnes
+  Slug: congelado, Name: Congelado
+Domain: racas_carnes
+  Slug: angus, Name: Angus
+
+=== Categories in items of adega_export.xml ===
+Found 12 items.
+Domain: sessoes_vinho_
+  Slug: brasil, Name: Brasil 🇧🇷
+  Slug: franca, Name: França 🇫🇷
+  Slug: italia, Name: Itália 🇮🇹
+  Slug: portugal, Name: Portugal 🇵🇹
+  Slug: tinto, Name: Tinto

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { execute, queryOne, getDb } from '@/lib/db';
+import { getSql } from '@/lib/pgDb';
 import nodemailer from 'nodemailer';
 
 export const dynamic = 'force-dynamic';
 
 // Setup email transporter using environment variables or a fallback
 const createTransporter = () => {
-  // Use hostinger SMTP details if provided in env, else a test fallback
   const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
   const port = parseInt(process.env.SMTP_PORT || '465');
   const secure = port === 465;
@@ -47,63 +46,67 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Order must contain at least one item' }, { status: 400 });
     }
 
-    const db = await getDb();
-    
-    // Start SQLite Transaction (using raw sqlite connection since open() wrapper exposes it)
-    await db.run('BEGIN TRANSACTION');
+    const sql = getSql();
 
-    try {
-      // 1. Insert order
-      const orderResult = await db.run(
-        `INSERT INTO orders (customer_name, customer_whatsapp, customer_email, customer_address, notes, seller_id)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [customer_name, customer_whatsapp, customer_email || null, customer_address || null, notes || null, seller_id || null]
-      );
-      
-      const orderId = orderResult.lastID;
+    // 1. Insert order
+    const orderRows = await sql`
+      INSERT INTO orders (customer_name, customer_whatsapp, customer_email, customer_address, notes, seller_id)
+      VALUES (
+        ${customer_name},
+        ${customer_whatsapp},
+        ${customer_email || null},
+        ${customer_address || null},
+        ${notes || null},
+        ${seller_id || null}
+      )
+      RETURNING id
+    `;
+    const orderId = orderRows[0].id;
 
-      // 2. Insert items
-      for (const item of items) {
-        await db.run(
-          `INSERT INTO order_items (order_id, product_id, product_title, sku, quantity, price)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [orderId, item.product_id, item.title, item.sku || null, item.quantity, item.price || null]
-        );
-      }
-
-      await db.run('COMMIT');
-
-      // Fetch seller details if any, to return to frontend
-      let seller = null;
-      if (seller_id) {
-        seller = await queryOne("SELECT id, name, phone FROM sellers WHERE id = ?", [seller_id]);
-      }
-
-      // 3. Send Email Notification in the background
-      const transporter = createTransporter();
-      if (transporter) {
-        sendEmailNotification(transporter, {
-          orderId,
-          customer_name,
-          customer_whatsapp,
-          customer_email,
-          customer_address,
-          notes,
-          seller,
-          items
-        }).catch(err => console.error('Error sending order email:', err));
-      }
-
-      return NextResponse.json({
-        success: true,
-        orderId,
-        seller
-      });
-
-    } catch (dbError) {
-      await db.run('ROLLBACK');
-      throw dbError;
+    // 2. Insert items
+    for (const item of items) {
+      await sql`
+        INSERT INTO order_items (order_id, product_id, product_title, sku, quantity, price)
+        VALUES (
+          ${orderId},
+          ${item.product_id},
+          ${item.title},
+          ${item.sku || null},
+          ${item.quantity},
+          ${item.price || null}
+        )
+      `;
     }
+
+    // 3. Fetch seller details if any
+    let seller = null;
+    if (seller_id) {
+      const sellerRows = await sql`
+        SELECT id, name, phone FROM sellers WHERE id = ${seller_id}
+      `;
+      seller = sellerRows[0] || null;
+    }
+
+    // 4. Send Email Notification in the background
+    const transporter = createTransporter();
+    if (transporter) {
+      sendEmailNotification(transporter, {
+        orderId,
+        customer_name,
+        customer_whatsapp,
+        customer_email,
+        customer_address,
+        notes,
+        seller,
+        items
+      }).catch(err => console.error('Error sending order email:', err));
+    }
+
+    return NextResponse.json({
+      success: true,
+      orderId,
+      seller
+    });
 
   } catch (error) {
     console.error('Error placing order:', error);
@@ -113,12 +116,12 @@ export async function POST(request) {
 
 // Function to compile HTML and send the email
 async function sendEmailNotification(transporter, order) {
-  const adminEmail = process.env.SMTP_USER; // Send to admin themselves or config
+  const adminEmail = process.env.SMTP_USER;
   const notifyEmail = process.env.NOTIFICATION_EMAIL || adminEmail;
 
   if (!notifyEmail) return;
 
-  const sellerText = order.seller 
+  const sellerText = order.seller
     ? `<tr><td><b>Vendedor:</b></td><td>${order.seller.name} (${order.seller.phone})</td></tr>`
     : `<tr><td><b>Vendedor:</b></td><td>Nenhum (Site Direto)</td></tr>`;
 

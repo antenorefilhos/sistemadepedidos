@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { queryAll, execute, getDb } from '@/lib/db';
+import { getSql } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
 // Simple password verification from header or search param
-// Verify credentials and return role ('admin', 'manager', or null)
 const getRole = (request) => {
   const { searchParams } = new URL(request.url);
   const password = searchParams.get('auth') || request.headers.get('Authorization');
@@ -24,18 +23,23 @@ export async function GET(request) {
   }
 
   try {
-    // 1. Fetch all orders
-    const orders = await queryAll(`
-      SELECT o.*, s.name as seller_name, s.phone as seller_phone
+    const sql = getSql();
+
+    // Fetch all orders with seller info
+    const orders = await sql`
+      SELECT 
+        o.*,
+        s.name as seller_name,
+        s.phone as seller_phone
       FROM orders o
       LEFT JOIN sellers s ON o.seller_id = s.id
       ORDER BY o.created_at DESC
-    `);
+    `;
 
-    // 2. Fetch all items
-    const items = await queryAll("SELECT * FROM order_items");
+    // Fetch all items
+    const items = await sql`SELECT * FROM order_items`;
 
-    // 3. Map items to orders
+    // Map items to orders
     const ordersWithItems = orders.map(order => {
       const orderItems = items.filter(item => item.order_id === order.id);
       return {
@@ -64,10 +68,8 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'Missing orderId or status' }, { status: 400 });
     }
 
-    await execute(
-      "UPDATE orders SET status = ? WHERE id = ?",
-      [status, orderId]
-    );
+    const sql = getSql();
+    await sql`UPDATE orders SET status = ${status} WHERE id = ${orderId}`;
 
     return NextResponse.json({ success: true, message: 'Status updated' });
   } catch (error) {
@@ -90,18 +92,11 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Missing order ID' }, { status: 400 });
     }
 
-    const db = await getDb();
-    await db.run('BEGIN TRANSACTION');
+    const sql = getSql();
+    // CASCADE delete handles order_items automatically (FK constraint)
+    await sql`DELETE FROM orders WHERE id = ${orderId}`;
 
-    try {
-      await db.run("DELETE FROM order_items WHERE order_id = ?", [orderId]);
-      await db.run("DELETE FROM orders WHERE id = ?", [orderId]);
-      await db.run('COMMIT');
-      return NextResponse.json({ success: true, message: 'Order deleted' });
-    } catch (dbErr) {
-      await db.run('ROLLBACK');
-      throw dbErr;
-    }
+    return NextResponse.json({ success: true, message: 'Order deleted' });
   } catch (error) {
     console.error('Error deleting order:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

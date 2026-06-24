@@ -3,6 +3,7 @@
   "/_not-found/page": "/_not-found",
   "/adega/page": "/adega",
   "/admin/page": "/admin",
+  "/api/admin/auth/route": "/api/admin/auth",
   "/api/admin/categories/route": "/api/admin/categories",
   "/api/admin/orders/route": "/api/admin/orders",
   "/api/admin/products/route": "/api/admin/products",
@@ -20,5 +21,6 @@
   "/favicon.ico/route": "/favicon.ico",
   "/obrigado/page": "/obrigado",
   "/page": "/",
-  "/politica-de-privacidade-antenor-e-filhos/page": "/politica-de-privacidade-antenor-e-filhos"
+  "/politica-de-privacidade-antenor-e-filhos/page": "/politica-de-privacidade-antenor-e-filhos",
+  "/produtos/[slug]/page": "/produtos/[slug]"
 }

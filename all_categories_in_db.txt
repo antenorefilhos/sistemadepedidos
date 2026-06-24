@@ -1,0 +1,19 @@
+=== Categories ===
+ID: 37, Name: Congelado, Slug: congelado, Type: embalagem_carnes
+ID: 38, Name: Bovinos, Slug: bovinos, Type: sessoes_carnes_
+ID: 39, Name: Carnes, Slug: carnes, Type: sessoes_carnes_
+ID: 40, Name: Pescados, Slug: pescados, Type: sessoes_carnes_
+ID: 41, Name: Angus, Slug: angus, Type: racas_carnes
+ID: 42, Name: Exóticas, Slug: exoticas, Type: sessoes_carnes_
+ID: 43, Name: Resfriado, Slug: resfriado, Type: embalagem_carnes
+ID: 44, Name: Wagyu, Slug: wagyu, Type: racas_carnes
+ID: 45, Name: Cordeiro, Slug: cordeiro, Type: sessoes_carnes_
+ID: 46, Name: Aves, Slug: aves, Type: sessoes_carnes_
+ID: 47, Name: Suínos, Slug: suinos, Type: sessoes_carnes_
+ID: 48, Name: Linguiças, Slug: linguicas, Type: sessoes_carnes_
+ID: 49, Name: Kobe A5, Slug: kobe-a5, Type: racas_carnes
+ID: 50, Name: Brasil 🇧🇷, Slug: brasil, Type: sessoes_vinho_
+ID: 51, Name: Tinto, Slug: tinto, Type: sessoes_vinho_
+ID: 52, Name: França 🇫🇷, Slug: franca, Type: sessoes_vinho_
+ID: 53, Name: Itália 🇮🇹, Slug: italia, Type: sessoes_vinho_
+ID: 54, Name: Portugal 🇵🇹, Slug: portugal, Type: sessoes_vinho_

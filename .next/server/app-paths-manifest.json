@@ -3,6 +3,7 @@
   "/_not-found/page": "app/_not-found/page.js",
   "/adega/page": "app/adega/page.js",
   "/admin/page": "app/admin/page.js",
+  "/api/admin/auth/route": "app/api/admin/auth/route.js",
   "/api/admin/categories/route": "app/api/admin/categories/route.js",
   "/api/admin/orders/route": "app/api/admin/orders/route.js",
   "/api/admin/products/route": "app/api/admin/products/route.js",
@@ -20,5 +21,6 @@
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/obrigado/page": "app/obrigado/page.js",
   "/page": "app/page.js",
-  "/politica-de-privacidade-antenor-e-filhos/page": "app/politica-de-privacidade-antenor-e-filhos/page.js"
+  "/politica-de-privacidade-antenor-e-filhos/page": "app/politica-de-privacidade-antenor-e-filhos/page.js",
+  "/produtos/[slug]/page": "app/produtos/[slug]/page.js"
 }

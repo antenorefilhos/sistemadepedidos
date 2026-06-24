@@ -1,0 +1,13 @@
+=== Wines and their Categories ===
+Title: Vinho Pizzato Allumé Cabernet Sauvignon 750ml
+  Categories: Brasil 🇧🇷 (sessoes_vinho_), Tinto (sessoes_vinho_)
+Title: Vinho Esporão Pé Tinto 750ml
+  Categories: Brasil 🇧🇷 (sessoes_vinho_), Tinto (sessoes_vinho_), Portugal 🇵🇹 (sessoes_vinho_)
+Title: Vinho Solaia Antinori 2017 750ml
+  Categories: Tinto (sessoes_vinho_), Itália 🇮🇹 (sessoes_vinho_)
+Title: Vinho Chateau Le Pin Pomerol 750ml
+  Categories: Tinto (sessoes_vinho_), França 🇫🇷 (sessoes_vinho_)
+Title: Vinho VF Villa Francioni Tinto
+  Categories: Brasil 🇧🇷 (sessoes_vinho_), Tinto (sessoes_vinho_)
+Title: Vinho Villa Francioni VF Francesco 2017
+  Categories: Brasil 🇧🇷 (sessoes_vinho_), Tinto (sessoes_vinho_)
