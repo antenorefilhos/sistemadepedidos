@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function DistribuidoraPage() {
   return (
-    <div style={{ minHeight: '80vh', padding: '60px 0' }}>
+    <div className="page-wrapper" style={{ minHeight: '80vh', padding: '60px 0' }}>
       <div className="container" style={{ maxWidth: '800px' }}>
         
         {/* Header */}

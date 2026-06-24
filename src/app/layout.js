@@ -89,7 +89,7 @@ export default function RootLayout({ children }) {
         <Header />
         
         {/* Main Content Area */}
-        <main style={{ flexGrow: 1, paddingTop: '80px' }}>
+        <main style={{ flexGrow: 1 }}>
           {children}
         </main>
         

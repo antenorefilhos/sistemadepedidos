@@ -11,10 +11,9 @@ export const metadata = {
 export default function Home() {
   return (
     <div>
-      {/* Premium Parallax Hero Section */}
       <section style={{
         position: 'relative',
-        height: 'calc(100vh - 80px)',
+        height: '100vh',
         backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.45), rgba(11, 12, 14, 1)), url("/images/hero.png")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',

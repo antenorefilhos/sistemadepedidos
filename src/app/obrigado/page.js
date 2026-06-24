@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function ObrigadoPage() {
   return (
-    <div style={{
+    <div className="page-wrapper" style={{
       minHeight: '70vh',
       display: 'flex',
       alignItems: 'center',

@@ -110,7 +110,7 @@ export default function BoutiqueClient() {
   const embalagemCategories = categories.filter(c => c.type === 'embalagem_carnes');
 
   return (
-    <div style={{ minHeight: '80vh', padding: '40px 0' }}>
+    <div className="page-wrapper" style={{ minHeight: '80vh', padding: '40px 0' }}>
       <div className="container">
         
         {/* Page Title & Search bar */}

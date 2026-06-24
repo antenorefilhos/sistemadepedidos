@@ -256,7 +256,7 @@ export default function ProductDetails({ product, relatedProducts }) {
   const wineData = isWine ? parseWineDescription(product.description) : null;
 
   return (
-    <div style={{ padding: '40px 0' }}>
+    <div className="page-wrapper" style={{ padding: '40px 0' }}>
       <div className="container">
         
         {/* Breadcrumb */}
@@ -375,20 +375,10 @@ export default function ProductDetails({ product, relatedProducts }) {
             {isWine && parsedRatings.length > 0 && (
               <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 {parsedRatings.map((r, idx) => (
-                  <div key={idx} style={{
-                    background: idx === 0 ? 'var(--primary)' : 'rgba(20,20,20,0.8)',
-                    border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.35)',
-                    color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
-                    width: '60px',
-                    minHeight: '64px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '2px',
-                    padding: '8px 6px 6px',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
-                  }}>
+                  <div
+                    key={idx}
+                    className={`wine-score-badge${idx > 0 ? ' wine-score-badge-secondary' : ''}`}
+                  >
                     <span style={{ fontSize: '24px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>
                       {r.score}
                     </span>
@@ -657,19 +647,10 @@ export default function ProductDetails({ product, relatedProducts }) {
                   </p>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     {parsedRatings.map((r, idx) => (
-                      <div key={idx} style={{
-                        background: idx === 0 ? 'var(--primary)' : 'rgba(171,144,112,0.08)',
-                        border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.3)',
-                        color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
-                        width: '56px',
-                        minHeight: '60px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '2px',
-                        padding: '8px 4px'
-                      }}>
+                      <div
+                        key={idx}
+                        className={`wine-score-badge${idx > 0 ? ' wine-score-badge-secondary' : ''}`}
+                      >
                         <span style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>
                           {r.score}
                         </span>
@@ -748,14 +729,10 @@ export default function ProductDetails({ product, relatedProducts }) {
                         {relRatings.length > 0 && (
                           <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end', zIndex: 2 }}>
                             {relRatings.slice(0, 2).map((r, idx) => (
-                              <div key={idx} style={{
-                                background: idx === 0 ? 'var(--primary)' : 'rgba(20,20,20,0.85)',
-                                border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.4)',
-                                color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
-                                width: '42px', minHeight: '46px',
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                gap: '1px', padding: '5px 3px',
-                              }}>
+                              <div
+                                key={idx}
+                                className={`wine-score-badge${idx > 0 ? ' wine-score-badge-secondary' : ''}`}
+                              >
                                 <span style={{ fontSize: '17px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>{r.score}</span>
                                 {r.label && <span style={{ fontSize: '8px', fontWeight: '600', textTransform: 'uppercase', textAlign: 'center', lineHeight: '1.1' }}>{r.label}</span>}
                               </div>

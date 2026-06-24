@@ -130,7 +130,7 @@ export default function AdegaClient() {
   const wineCountries = adegaCategories.filter(c => !['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
 
   return (
-    <div style={{ minHeight: '80vh', padding: '40px 0' }}>
+    <div className="page-wrapper" style={{ minHeight: '80vh', padding: '40px 0' }}>
       <div className="container">
         
         {/* Page Title & Search bar */}
@@ -353,23 +353,7 @@ export default function AdegaClient() {
                               {parsedRatings.map((r, idx) => (
                                 <div
                                   key={idx}
-                                  className="wine-score-badge"
-                                  style={{
-                                    background: idx === 0 ? 'var(--primary)' : 'rgba(20,20,20,0.88)',
-                                    border: idx === 0 ? 'none' : '1px solid rgba(171,144,112,0.4)',
-                                    color: idx === 0 ? '#0d0d0d' : 'var(--primary)',
-                                    backdropFilter: 'blur(8px)',
-                                    WebkitBackdropFilter: 'blur(8px)',
-                                    width: '48px',
-                                    minHeight: '52px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '1px',
-                                    padding: '6px 4px 4px',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
-                                  }}
+                                  className={`wine-score-badge${idx > 0 ? ' wine-score-badge-secondary' : ''}`}
                                 >
                                   <span style={{ fontSize: '20px', fontWeight: '700', fontFamily: 'var(--font-serif)', lineHeight: '1' }}>
                                     {r.score}
