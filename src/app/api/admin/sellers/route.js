@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getSql } from '@/lib/pgDb';
+import { getSupabase } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
 const getRole = (request) => {
   const { searchParams } = new URL(request.url);
   const password = searchParams.get('auth') || request.headers.get('Authorization');
-  
   const adminPass = process.env.ADMIN_PASSWORD || 'antenor123';
   const managerPass = process.env.MANAGER_PASSWORD || 'manager123';
-  
   if (password === adminPass) return 'admin';
   if (password === managerPass) return 'manager';
   return null;
@@ -17,23 +15,33 @@ const getRole = (request) => {
 
 export async function GET(request) {
   const role = getRole(request);
-  if (!role) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const sql = getSql();
-    const sellers = await sql`
-      SELECT 
-        s.*,
-        COUNT(o.id)::int as orders_count
-      FROM sellers s
-      LEFT JOIN orders o ON s.id = o.seller_id
-      GROUP BY s.id
-      ORDER BY s.name ASC
-    `;
+    const supabase = getSupabase();
 
-    return NextResponse.json(sellers);
+    // Fetch sellers with order count via Supabase join
+    const { data: sellers, error } = await supabase
+      .from('sellers')
+      .select(`
+        *,
+        orders ( id )
+      `)
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+
+    // Map to flat structure with orders_count
+    const result = sellers.map(s => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      phone: s.phone,
+      status: s.status,
+      orders_count: s.orders ? s.orders.length : 0
+    }));
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching admin sellers:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -50,21 +58,22 @@ export async function POST(request) {
     const { name, phone, slug } = await request.json();
 
     if (!name || !phone) {
-      return NextResponse.json({ error: 'Name and Phone are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Nome e Telefone são obrigatórios' }, { status: 400 });
     }
 
     const sellerSlug = slug
       ? slug.toLowerCase().replace(/[^a-z0-9]+/g, '-')
       : name.toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
-          .replace(/[^a-z0-9]+/g, '-');
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
 
-    const sql = getSql();
-    await sql`
-      INSERT INTO sellers (name, slug, phone)
-      VALUES (${name}, ${sellerSlug}, ${phone})
-      ON CONFLICT (slug) DO NOTHING
-    `;
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('sellers')
+      .upsert({ name, slug: sellerSlug, phone }, { onConflict: 'slug', ignoreDuplicates: true });
+
+    if (error) throw error;
 
     return NextResponse.json({ success: true, message: 'Seller created', slug: sellerSlug });
   } catch (error) {
@@ -82,13 +91,15 @@ export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
     const sellerId = searchParams.get('id');
+    if (!sellerId) return NextResponse.json({ error: 'Missing seller ID' }, { status: 400 });
 
-    if (!sellerId) {
-      return NextResponse.json({ error: 'Missing seller ID' }, { status: 400 });
-    }
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('sellers')
+      .delete()
+      .eq('id', sellerId);
 
-    const sql = getSql();
-    await sql`DELETE FROM sellers WHERE id = ${sellerId}`;
+    if (error) throw error;
 
     return NextResponse.json({ success: true, message: 'Seller deleted' });
   } catch (error) {

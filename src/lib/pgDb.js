@@ -1,19 +1,28 @@
-import { neon } from '@neondatabase/serverless';
+import { createClient } from '@supabase/supabase-js';
 
-let _sql = null;
+let _supabase = null;
 
 /**
- * Returns a Neon SQL tagged-template function.
- * Falls back to null if DATABASE_URL is not configured (e.g. local dev).
+ * Returns a singleton Supabase client for server-side use.
+ * Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.
  */
-export function getSql() {
-  if (_sql) return _sql;
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-  if (!url) {
+export function getSupabase() {
+  if (_supabase) return _supabase;
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
     throw new Error(
-      'DATABASE_URL is not set. Please create a Postgres database in Vercel and add the DATABASE_URL environment variable.'
+      'SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY não estão configuradas. ' +
+      'Adicione-as nas variáveis de ambiente da Vercel.'
     );
   }
-  _sql = neon(url);
-  return _sql;
+
+  // service_role key bypasses RLS — safe for server-only usage
+  _supabase = createClient(url, key, {
+    auth: { persistSession: false }
+  });
+
+  return _supabase;
 }

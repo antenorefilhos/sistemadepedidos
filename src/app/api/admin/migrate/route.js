@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSql } from '@/lib/pgDb';
+import { getSupabase } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,65 +11,45 @@ const getRole = (request) => {
   return null;
 };
 
+// The SQL to run in Supabase SQL Editor (for reference)
+// This endpoint just validates the connection and seeds initial sellers.
 export async function POST(request) {
   const role = getRole(request);
-  if (!role) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const sql = getSql();
+    const supabase = getSupabase();
 
-    // Create sellers table
-    await sql`
-      CREATE TABLE IF NOT EXISTS sellers (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        slug TEXT NOT NULL UNIQUE,
-        phone TEXT NOT NULL,
-        status TEXT DEFAULT 'on'
-      )
-    `;
+    // Test connection by querying sellers table
+    const { data, error } = await supabase.from('sellers').select('count').limit(1);
+    if (error) throw error;
 
-    // Create orders table
-    await sql`
-      CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        customer_name TEXT NOT NULL,
-        customer_whatsapp TEXT NOT NULL,
-        customer_email TEXT,
-        customer_address TEXT,
-        notes TEXT,
-        seller_id INTEGER REFERENCES sellers(id) ON DELETE SET NULL,
-        status TEXT DEFAULT 'pending',
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `;
+    // Seed the 10 sellers if not already present
+    const sellers = [
+      { name: 'Débora',   slug: 'debora',   phone: '5524992200191' },
+      { name: 'Rose',     slug: 'rose',     phone: '5524992915221' },
+      { name: 'Maria',    slug: 'maria',    phone: '5524988466860' },
+      { name: 'Junior',   slug: 'junior',   phone: '5524992922869' },
+      { name: 'Odair',    slug: 'odair',    phone: '5524981149339' },
+      { name: 'Levi',     slug: 'levi',     phone: '5524992287221' },
+      { name: 'Jonathan', slug: 'jonathan', phone: '5524993044572' },
+      { name: 'Márcio',   slug: 'marcio',   phone: '5524988139287' },
+      { name: 'Filipe',   slug: 'filipe',   phone: '5524999242588' },
+      { name: 'Thais',    slug: 'thais',    phone: '5524992328619' },
+    ];
 
-    // Create order_items table
-    await sql`
-      CREATE TABLE IF NOT EXISTS order_items (
-        id SERIAL PRIMARY KEY,
-        order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-        product_id INTEGER,
-        product_title TEXT NOT NULL,
-        sku TEXT,
-        quantity INTEGER NOT NULL,
-        price NUMERIC
-      )
-    `;
+    const { error: seedError } = await supabase
+      .from('sellers')
+      .upsert(sellers, { onConflict: 'slug', ignoreDuplicates: true });
 
-    // Create indexes
-    await sql`CREATE INDEX IF NOT EXISTS idx_orders_seller ON orders(seller_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_sellers_slug ON sellers(slug)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id)`;
+    if (seedError) throw seedError;
 
     return NextResponse.json({
       success: true,
-      message: 'Tabelas criadas/verificadas com sucesso no Postgres!'
+      message: 'Conexão OK! Vendedores inseridos/verificados com sucesso.'
     });
   } catch (error) {
-    console.error('Migration error:', error);
+    console.error('Migrate/seed error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

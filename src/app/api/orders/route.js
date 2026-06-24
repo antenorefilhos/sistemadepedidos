@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getSql } from '@/lib/pgDb';
+import { getSupabase } from '@/lib/pgDb';
 import nodemailer from 'nodemailer';
 
 export const dynamic = 'force-dynamic';
 
-// Setup email transporter using environment variables or a fallback
 const createTransporter = () => {
   const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
   const port = parseInt(process.env.SMTP_PORT || '465');
@@ -17,12 +16,7 @@ const createTransporter = () => {
     return null;
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass }
-  });
+  return nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
 };
 
 export async function POST(request) {
@@ -38,53 +32,57 @@ export async function POST(request) {
       items
     } = body;
 
-    // Validation
     if (!customer_name || !customer_whatsapp) {
-      return NextResponse.json({ error: 'Name and WhatsApp are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Nome e WhatsApp são obrigatórios' }, { status: 400 });
     }
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Order must contain at least one item' }, { status: 400 });
+      return NextResponse.json({ error: 'Pedido deve ter ao menos um item' }, { status: 400 });
     }
 
-    const sql = getSql();
+    const supabase = getSupabase();
 
     // 1. Insert order
-    const orderRows = await sql`
-      INSERT INTO orders (customer_name, customer_whatsapp, customer_email, customer_address, notes, seller_id)
-      VALUES (
-        ${customer_name},
-        ${customer_whatsapp},
-        ${customer_email || null},
-        ${customer_address || null},
-        ${notes || null},
-        ${seller_id || null}
-      )
-      RETURNING id
-    `;
-    const orderId = orderRows[0].id;
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        customer_name,
+        customer_whatsapp,
+        customer_email: customer_email || null,
+        customer_address: customer_address || null,
+        notes: notes || null,
+        seller_id: seller_id || null
+      })
+      .select('id')
+      .single();
+
+    if (orderError) throw orderError;
+    const orderId = order.id;
 
     // 2. Insert items
-    for (const item of items) {
-      await sql`
-        INSERT INTO order_items (order_id, product_id, product_title, sku, quantity, price)
-        VALUES (
-          ${orderId},
-          ${item.product_id},
-          ${item.title},
-          ${item.sku || null},
-          ${item.quantity},
-          ${item.price || null}
-        )
-      `;
-    }
+    const itemsPayload = items.map(item => ({
+      order_id: orderId,
+      product_id: item.product_id,
+      product_title: item.title,
+      sku: item.sku || null,
+      quantity: item.quantity,
+      price: item.price || null
+    }));
+
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(itemsPayload);
+
+    if (itemsError) throw itemsError;
 
     // 3. Fetch seller details if any
     let seller = null;
     if (seller_id) {
-      const sellerRows = await sql`
-        SELECT id, name, phone FROM sellers WHERE id = ${seller_id}
-      `;
-      seller = sellerRows[0] || null;
+      const { data } = await supabase
+        .from('sellers')
+        .select('id, name, phone')
+        .eq('id', seller_id)
+        .single();
+      seller = data;
     }
 
     // 4. Send Email Notification in the background
@@ -102,11 +100,7 @@ export async function POST(request) {
       }).catch(err => console.error('Error sending order email:', err));
     }
 
-    return NextResponse.json({
-      success: true,
-      orderId,
-      seller
-    });
+    return NextResponse.json({ success: true, orderId, seller });
 
   } catch (error) {
     console.error('Error placing order:', error);
@@ -114,11 +108,9 @@ export async function POST(request) {
   }
 }
 
-// Function to compile HTML and send the email
 async function sendEmailNotification(transporter, order) {
   const adminEmail = process.env.SMTP_USER;
   const notifyEmail = process.env.NOTIFICATION_EMAIL || adminEmail;
-
   if (!notifyEmail) return;
 
   const sellerText = order.seller
@@ -138,7 +130,6 @@ async function sendEmailNotification(transporter, order) {
       <h2 style="color: #bc9c5f; text-align: center; border-bottom: 2px solid #bc9c5f; padding-bottom: 10px;">
         Novo Orçamento Recebido - #${order.orderId}
       </h2>
-      
       <h3 style="color: #333;">Dados do Cliente</h3>
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <tr><td style="width: 120px; font-weight: bold;">Nome:</td><td>${order.customer_name}</td></tr>
@@ -148,7 +139,6 @@ async function sendEmailNotification(transporter, order) {
         <tr><td style="font-weight: bold;">Observações:</td><td>${order.notes || 'Nenhuma'}</td></tr>
         ${sellerText}
       </table>
-      
       <h3 style="color: #333;">Itens do Pedido</h3>
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <thead>
@@ -158,11 +148,8 @@ async function sendEmailNotification(transporter, order) {
             <th style="padding: 8px; border-bottom: 2px solid #ddd; text-align: center; width: 80px;">Qtd</th>
           </tr>
         </thead>
-        <tbody>
-          ${itemsRows}
-        </tbody>
+        <tbody>${itemsRows}</tbody>
       </table>
-      
       <p style="font-size: 12px; color: #888; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
         Este é um e-mail automático gerado pelo sistema de Orçamentos de Antenor e Filhos.
       </p>
