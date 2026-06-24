@@ -580,15 +580,52 @@ export default function AdminDashboard() {
     return Object.entries(categoriesStats);
   };
 
-  // Chart data: Orders by Seller
-  const getOrdersBySeller = () => {
-    const sellerStats = { 'Site Direto': 0 };
-    sellers.forEach(s => { sellerStats[s.name] = 0; });
+  // Chart data: Complete Performance by Seller (Orders, Total Revenue, Avg Ticket)
+  const getSellersPerformance = () => {
+    const stats = {};
+    
+    // Initialize stats for each registered seller
+    sellers.forEach(s => {
+      stats[s.name] = { count: 0, revenue: 0, pending: 0, completed: 0 };
+    });
+    
+    // Initialize 'Site Direto'
+    stats['Site Direto'] = { count: 0, revenue: 0, pending: 0, completed: 0 };
+
     orders.forEach(o => {
       const name = o.seller_name || 'Site Direto';
-      sellerStats[name] = (sellerStats[name] || 0) + 1;
+      if (!stats[name]) {
+        stats[name] = { count: 0, revenue: 0, pending: 0, completed: 0 };
+      }
+      
+      stats[name].count += 1;
+      if (o.status === 'pending') {
+        stats[name].pending += 1;
+      } else if (o.status === 'completed') {
+        stats[name].completed += 1;
+      }
+      
+      // Calculate order revenue
+      let orderValue = 0;
+      o.items.forEach(i => {
+        if (i.price) {
+          orderValue += (i.price * i.quantity);
+        }
+      });
+      stats[name].revenue += orderValue;
     });
-    return Object.entries(sellerStats).sort((a, b) => b[1] - a[1]);
+
+    return Object.entries(stats).map(([name, data]) => {
+      const avgTicket = data.completed > 0 ? (data.revenue / data.completed) : (data.count > 0 ? (data.revenue / data.count) : 0);
+      return {
+        name,
+        count: data.count,
+        revenue: data.revenue,
+        pending: data.pending,
+        completed: data.completed,
+        avgTicket
+      };
+    }).sort((a, b) => b.revenue - a.revenue);
   };
 
   if (!isAuthenticated) {
@@ -1257,65 +1294,120 @@ export default function AdminDashboard() {
 
             {/* TAB 5: STATS */}
             {activeTab === 'stats' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
-                {/* Chart 1: Sales By Category */}
-                <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-                  <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mapeamento de Demanda por Setor</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {getSalesByCategory().map(([sector, amount]) => {
-                      const totalAmt = calculateTotalRevenue(false) || 1;
-                      const percentage = Math.round((amount / totalAmt) * 100);
-                      return (
-                        <div key={sector}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                            <span style={{ color: 'var(--text-primary)' }}>{sector === 'adega' ? 'Adega' : 'Boutique'}</span>
-                            <span style={{ fontWeight: 'bold' }}>
-                              <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
-                              {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({percentage}%)
-                            </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                
+                {/* Upper Row: Category Demand & Quick Overview */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
+                  {/* Chart 1: Sales By Category */}
+                  <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
+                    <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mapeamento de Demanda por Setor</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {getSalesByCategory().map(([sector, amount]) => {
+                        const totalAmt = calculateTotalRevenue(false) || 1;
+                        const percentage = Math.round((amount / totalAmt) * 100);
+                        return (
+                          <div key={sector}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
+                              <span style={{ color: 'var(--text-primary)' }}>{sector === 'adega' ? 'Adega' : 'Boutique'}</span>
+                              <span style={{ fontWeight: 'bold' }}>
+                                <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                                {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({percentage}%)
+                              </span>
+                            </div>
+                            {/* Visual CSS-bar */}
+                            <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ 
+                                width: `${percentage}%`, 
+                                height: '100%', 
+                                backgroundColor: sector === 'adega' ? '#800020' : 'var(--primary)',
+                                borderRadius: '4px' 
+                              }}></div>
+                            </div>
                           </div>
-                          {/* Visual CSS-bar */}
-                          <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ 
-                              width: `${percentage}%`, 
-                              height: '100%', 
-                              backgroundColor: sector === 'adega' ? '#800020' : 'var(--primary)',
-                              borderRadius: '4px' 
-                            }}></div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Chart 2: Revenue Share by Seller */}
+                  <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
+                    <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Faturamento Estimado por Canal / Vendedor</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '350px', overflowY: 'auto', paddingRight: '5px' }}>
+                      {getSellersPerformance().map((seller) => {
+                        const maxRevenue = Math.max(...getSellersPerformance().map(x => x.revenue)) || 1;
+                        const percentage = Math.round((seller.revenue / maxRevenue) * 100);
+                        return (
+                          <div key={seller.name}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
+                              <span style={{ color: 'var(--text-primary)' }}>{seller.name}</span>
+                              <span style={{ fontWeight: 'bold' }}>
+                                <span style={{ fontSize: '0.75em', fontWeight: 'normal', color: 'var(--text-muted)' }}>R$ </span>
+                                {seller.revenue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
+                              </span>
+                            </div>
+                            {/* Visual CSS-bar */}
+                            <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ 
+                                width: `${percentage}%`, 
+                                height: '100%', 
+                                backgroundColor: seller.name === 'Site Direto' ? 'var(--text-muted)' : 'var(--primary)',
+                                borderRadius: '4px' 
+                              }}></div>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                {/* Chart 2: Orders by Seller */}
+                {/* Performance Dashboard Table */}
                 <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-                  <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ranking de Vendas por Vendedor</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {getOrdersBySeller().map(([name, count]) => {
-                      const maxOrders = Math.max(...getOrdersBySeller().map(x => x[1])) || 1;
-                      const percentage = Math.round((count / maxOrders) * 100);
-                      return (
-                        <div key={name}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                            <span style={{ color: 'var(--text-primary)' }}>{name}</span>
-                            <span style={{ fontWeight: 'bold' }}>{count} {count === 1 ? 'pedido' : 'pedidos'}</span>
-                          </div>
-                          {/* Visual CSS-bar */}
-                          <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ 
-                              width: `${percentage}%`, 
-                              height: '100%', 
-                              backgroundColor: name === 'Site Direto' ? 'var(--text-muted)' : 'var(--primary)',
-                              borderRadius: '4px' 
-                            }}></div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Desempenho Detalhado da Equipe</h4>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Vendedor</th>
+                          <th style={{ textAlign: 'center' }}>Total Pedidos</th>
+                          <th style={{ textAlign: 'center' }}>Pendentes</th>
+                          <th style={{ textAlign: 'center' }}>Concluídos</th>
+                          <th style={{ textAlign: 'right' }}>Faturamento Total</th>
+                          <th style={{ textAlign: 'right' }}>Ticket Médio</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getSellersPerformance().map((seller) => (
+                          <tr key={seller.name}>
+                            <td>
+                              <b style={{ color: seller.name === 'Site Direto' ? 'var(--text-secondary)' : 'white' }}>{seller.name}</b>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>{seller.count}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span style={{ color: seller.pending > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>
+                                {seller.pending}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span style={{ color: seller.completed > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                                {seller.completed}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                              <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', fontWeight: 'normal' }}>R$ </span>
+                              {seller.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td style={{ textAlign: 'right', color: 'var(--primary)' }}>
+                              <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', fontWeight: 'normal' }}>R$ </span>
+                              {seller.avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
+
               </div>
             )}
           </div>
