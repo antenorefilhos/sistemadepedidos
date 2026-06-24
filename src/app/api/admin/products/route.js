@@ -1,49 +1,45 @@
 import { NextResponse } from 'next/server';
-import { queryAll, execute, getDb } from '@/lib/db';
+import { getSupabase } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
-const verifyAdmin = (request) => {
+const getRole = (request) => {
   const { searchParams } = new URL(request.url);
   const password = searchParams.get('auth') || request.headers.get('Authorization');
-  const expectedPassword = process.env.ADMIN_PASSWORD || 'antenor123';
-  return password === expectedPassword;
+  const adminPass = process.env.ADMIN_PASSWORD || 'antenor123';
+  const managerPass = process.env.MANAGER_PASSWORD || 'manager123';
+  if (password === adminPass) return 'admin';
+  if (password === managerPass) return 'manager';
+  return null;
 };
 
 // GET: List all products with their categories
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const auth = searchParams.get('auth') || request.headers.get('Authorization');
-  const adminPass = process.env.ADMIN_PASSWORD || 'antenor123';
-  const managerPass = process.env.MANAGER_PASSWORD || 'manager123';
-
-  if (auth !== adminPass && auth !== managerPass) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const role = getRole(request);
+  if (!role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    // 1. Fetch products
-    const products = await queryAll("SELECT * FROM products ORDER BY id DESC");
-    
-    // 2. Fetch category mappings
-    const mappings = await queryAll(`
-      SELECT pc.product_id, pc.category_id, c.name, c.slug, c.type
-      FROM product_categories pc
-      JOIN categories c ON pc.category_id = c.id
-    `);
+    const supabase = getSupabase();
 
-    // Map categories to products
-    const productsWithCats = products.map(p => {
-      const cats = mappings.filter(m => m.product_id === p.id).map(m => ({
-        id: m.category_id,
-        name: m.name,
-        slug: m.slug,
-        type: m.type
-      }));
-      return { ...p, categories: cats };
-    });
+    const { data: products, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        product_categories (
+          categories ( id, name, slug, type )
+        )
+      `)
+      .order('id', { ascending: false });
 
-    return NextResponse.json(productsWithCats);
+    if (error) throw error;
+
+    const result = products.map(p => ({
+      ...p,
+      categories: (p.product_categories || []).map(pc => pc.categories).filter(Boolean),
+      product_categories: undefined
+    }));
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching admin products:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -52,9 +48,8 @@ export async function GET(request) {
 
 // POST: Create a product (Admin only)
 export async function POST(request) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: 'Unauthorized (Admin Access Required)' }, { status: 401 });
-  }
+  const role = getRole(request);
+  if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const { title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds } = await request.json();
@@ -63,31 +58,34 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const db = await getDb();
-    await db.run('BEGIN TRANSACTION');
+    const supabase = getSupabase();
 
-    try {
-      // Insert product
-      const res = await db.run(`
-        INSERT INTO products (title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [title, slug, description, sku, peso, unidade_peso, preco, status || 'on', image_url, type, pontuacao]);
+    // Insert product
+    const { data: product, error: prodError } = await supabase
+      .from('products')
+      .insert({
+        title, slug, description: description || null,
+        sku: sku || null, peso: peso || null,
+        unidade_peso: unidade_peso || null,
+        preco: preco !== '' && preco != null ? parseFloat(preco) : null,
+        status: status || 'on',
+        image_url: image_url || null,
+        type, pontuacao: pontuacao || null
+      })
+      .select('id')
+      .single();
 
-      const productId = res.lastID;
+    if (prodError) throw prodError;
+    const productId = product.id;
 
-      // Link categories
-      if (categoryIds && Array.isArray(categoryIds)) {
-        for (const catId of categoryIds) {
-          await db.run("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)", [productId, catId]);
-        }
-      }
-
-      await db.run('COMMIT');
-      return NextResponse.json({ success: true, productId });
-    } catch (dbErr) {
-      await db.run('ROLLBACK');
-      throw dbErr;
+    // Link categories
+    if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
+      const catMaps = categoryIds.map(catId => ({ product_id: productId, category_id: catId }));
+      const { error: catError } = await supabase.from('product_categories').insert(catMaps);
+      if (catError) throw catError;
     }
+
+    return NextResponse.json({ success: true, productId });
   } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -96,9 +94,8 @@ export async function POST(request) {
 
 // PUT: Update a product (Admin only)
 export async function PUT(request) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: 'Unauthorized (Admin Access Required)' }, { status: 401 });
-  }
+  const role = getRole(request);
+  if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const { id, title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds } = await request.json();
@@ -107,33 +104,33 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const db = await getDb();
-    await db.run('BEGIN TRANSACTION');
+    const supabase = getSupabase();
 
-    try {
-      // Update product details
-      await db.run(`
-        UPDATE products 
-        SET title = ?, slug = ?, description = ?, sku = ?, peso = ?, unidade_peso = ?, preco = ?, status = ?, image_url = ?, type = ?, pontuacao = ?
-        WHERE id = ?
-      `, [title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, id]);
+    // Update product
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({
+        title, slug, description: description || null,
+        sku: sku || null, peso: peso || null,
+        unidade_peso: unidade_peso || null,
+        preco: preco !== '' && preco != null ? parseFloat(preco) : null,
+        status, image_url: image_url || null,
+        type, pontuacao: pontuacao || null
+      })
+      .eq('id', id);
 
-      // Delete old category mappings
-      await db.run("DELETE FROM product_categories WHERE product_id = ?", [id]);
+    if (updateError) throw updateError;
 
-      // Link new categories
-      if (categoryIds && Array.isArray(categoryIds)) {
-        for (const catId of categoryIds) {
-          await db.run("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)", [id, catId]);
-        }
-      }
+    // Replace category mappings
+    await supabase.from('product_categories').delete().eq('product_id', id);
 
-      await db.run('COMMIT');
-      return NextResponse.json({ success: true });
-    } catch (dbErr) {
-      await db.run('ROLLBACK');
-      throw dbErr;
+    if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
+      const catMaps = categoryIds.map(catId => ({ product_id: id, category_id: catId }));
+      const { error: catError } = await supabase.from('product_categories').insert(catMaps);
+      if (catError) throw catError;
     }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating product:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -142,30 +139,20 @@ export async function PUT(request) {
 
 // DELETE: Delete a product (Admin only)
 export async function DELETE(request) {
-  if (!verifyAdmin(request)) {
-    return NextResponse.json({ error: 'Unauthorized (Admin Access Required)' }, { status: 401 });
-  }
+  const role = getRole(request);
+  if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get('id');
+    if (!productId) return NextResponse.json({ error: 'Missing product ID' }, { status: 400 });
 
-    if (!productId) {
-      return NextResponse.json({ error: 'Missing product ID' }, { status: 400 });
-    }
+    const supabase = getSupabase();
+    // product_categories CASCADE handles mappings
+    const { error } = await supabase.from('products').delete().eq('id', productId);
+    if (error) throw error;
 
-    const db = await getDb();
-    await db.run('BEGIN TRANSACTION');
-
-    try {
-      await db.run("DELETE FROM product_categories WHERE product_id = ?", [productId]);
-      await db.run("DELETE FROM products WHERE id = ?", [productId]);
-      await db.run('COMMIT');
-      return NextResponse.json({ success: true });
-    } catch (dbErr) {
-      await db.run('ROLLBACK');
-      throw dbErr;
-    }
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting product:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { queryAll } from '@/lib/db';
+import { getSupabase } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,49 +10,35 @@ export async function GET(request) {
   const type = searchParams.get('type') || '';
 
   try {
-    let sql = `
-      SELECT p.*, GROUP_CONCAT(c.slug || '||' || c.name || '||' || c.type, ';;') as categories_str
-      FROM products p
-      LEFT JOIN product_categories pc ON p.id = pc.product_id
-      LEFT JOIN categories c ON pc.category_id = c.id
-      WHERE p.status = 'on'
-    `;
-    const params = [];
+    const supabase = getSupabase();
 
-    if (type) {
-      sql += ` AND p.type = ?`;
-      params.push(type);
-    }
+    let query = supabase
+      .from('products')
+      .select(`
+        id, title, slug, description, sku, peso, unidade_peso, preco, image_url, type, pontuacao, status,
+        product_categories (
+          categories ( id, name, slug, type )
+        )
+      `)
+      .eq('status', 'on')
+      .order('id', { ascending: true });
+
+    if (type) query = query.eq('type', type);
 
     if (search) {
-      sql += ` AND (p.title LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)`;
-      const searchLike = `%${search}%`;
-      params.push(searchLike, searchLike, searchLike);
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,sku.ilike.%${search}%`);
     }
 
-    sql += ` GROUP BY p.id`;
+    const { data: products, error } = await query;
+    if (error) throw error;
 
-    // Fetch products
-    let products = await queryAll(sql, params);
+    // Flatten categories
+    let result = products.map(p => {
+      const categories = (p.product_categories || [])
+        .map(pc => pc.categories)
+        .filter(Boolean);
 
-    // Format output and parse categories string
-    products = products.map(p => {
-      const categories = [];
-      if (p.categories_str) {
-        // SQLite GROUP_CONCAT can have duplicates or empty values if not careful, let's parse safely
-        const uniqueCats = new Set();
-        p.categories_str.split(';;').forEach(catStr => {
-          if (catStr && !uniqueCats.has(catStr)) {
-            uniqueCats.add(catStr);
-            const [slug, name, catType] = catStr.split('||');
-            if (slug && name) {
-              categories.push({ slug, name, type: catType });
-            }
-          }
-        });
-      }
-
-      const formatted = {
+      return {
         id: p.id,
         title: p.title,
         slug: p.slug,
@@ -66,17 +52,16 @@ export async function GET(request) {
         pontuacao: p.pontuacao,
         categories
       };
-      return formatted;
     });
 
-    // If filtering by category slug in JS (simpler than SQL JOIN filter for GROUP_CONCAT items)
+    // Filter by category slug if requested
     if (category) {
-      products = products.filter(p => 
-        p.categories.some(cat => cat.slug.toLowerCase() === category.toLowerCase())
+      result = result.filter(p =>
+        p.categories.some(c => c.slug?.toLowerCase() === category.toLowerCase())
       );
     }
 
-    return NextResponse.json(products);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
