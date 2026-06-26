@@ -71,13 +71,13 @@ export async function POST(request) {
     const supabase = getSupabase();
     const { error } = await supabase
       .from('sellers')
-      .upsert({ name, slug: sellerSlug, phone }, { onConflict: 'slug', ignoreDuplicates: true });
+      .upsert({ name, slug: sellerSlug, phone }, { onConflict: 'slug', ignoreDuplicates: false });
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, message: 'Seller created', slug: sellerSlug });
+    return NextResponse.json({ success: true, message: 'Seller created or updated', slug: sellerSlug });
   } catch (error) {
-    console.error('Error creating seller:', error);
+    console.error('Error creating/updating seller:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -94,6 +94,13 @@ export async function DELETE(request) {
     if (!sellerId) return NextResponse.json({ error: 'Missing seller ID' }, { status: 400 });
 
     const supabase = getSupabase();
+    
+    // Set seller_id to null in referencing orders to avoid foreign key violations
+    await supabase
+      .from('orders')
+      .update({ seller_id: null })
+      .eq('seller_id', sellerId);
+
     const { error } = await supabase
       .from('sellers')
       .delete()

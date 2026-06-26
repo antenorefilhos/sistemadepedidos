@@ -630,7 +630,7 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+      <div className="page-wrapper" style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
         <form onSubmit={handleLogin} className="glass" style={{ maxWidth: '400px', width: '100%', padding: '40px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <h2 style={{ color: 'var(--primary)', textAlign: 'center', marginBottom: '10px', fontFamily: 'var(--font-serif)' }}>Painel Gerencial</h2>
           <div className="form-group">
@@ -653,7 +653,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div style={{ minHeight: '90vh', display: 'flex' }}>
+    <div className="page-wrapper" style={{ minHeight: '90vh', display: 'flex' }}>
       
       {/* Redesigned Premium Sidebar Panel */}
       <aside style={{ 
