@@ -495,7 +495,7 @@ export default function BoutiqueClient() {
       </div>
 
       {/* Floating Cart Bar */}
-      <div className={`cart-floating-bar glass ${cartItems.length > 0 ? 'active' : ''}`}>
+      <div className={`cart-floating-bar ${cartItems.length > 0 ? 'active' : ''}`}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <i className="fa-solid fa-cart-shopping" style={{ fontSize: '20px', color: 'var(--primary)' }}></i>
           <div>
