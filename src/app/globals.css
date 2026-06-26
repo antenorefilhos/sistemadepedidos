@@ -1164,11 +1164,11 @@ footer a:hover {
 }
 /* ── Page Wrapper (Padding top to prevent fixed header overlap) ─ */
 .page-wrapper {
-  padding-top: 72px;
+  padding-top: 72px !important;
 }
 @media (max-width: 768px) {
   .page-wrapper {
-    padding-top: 64px;
+    padding-top: 64px !important;
   }
 }
 
