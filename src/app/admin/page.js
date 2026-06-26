@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   
   const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'products', 'categories', 'sellers', 'stats'
   const [loading, setLoading] = useState(false);
-  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   
   // Pagination/Search/Filters for products and orders
   const [prodSearch, setProdSearch] = useState('');
@@ -918,127 +918,77 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredOrders.map(order => {
-                          const isExpanded = expandedOrderId === order.id;
-                          return (
-                            <tr key={order.id} style={{ borderBottom: isExpanded ? 'none' : '1px solid var(--border-color)' }}>
-                              <td>#{order.id}</td>
-                              <td>{formatDate(order.created_at)}</td>
-                              <td>
-                                <b>{order.customer_name}</b>
-                                {order.customer_address && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Entrega: {order.customer_address}</div>}
-                              </td>
-                              <td>
-                                <a 
-                                  href={`https://wa.me/${order.customer_whatsapp.replace(/\D/g, '')}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        {filteredOrders.map(order => (
+                          <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td>#{order.id}</td>
+                            <td>{formatDate(order.created_at)}</td>
+                            <td>
+                              <b>{order.customer_name}</b>
+                              {order.customer_address && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Entrega: {order.customer_address}</div>}
+                            </td>
+                            <td>
+                              <a 
+                                href={`https://wa.me/${order.customer_whatsapp.replace(/\D/g, '')}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <i className="fa-brands fa-whatsapp" style={{ color: '#25D366' }}></i>
+                                {order.customer_whatsapp}
+                              </a>
+                            </td>
+                            <td>{order.seller_name || <span style={{ color: 'var(--text-muted)' }}>Site Direto</span>}</td>
+                            <td>
+                              <select 
+                                value={order.status}
+                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                style={{
+                                  backgroundColor: '#1a1e26',
+                                  color: order.status === 'pending' ? 'var(--warning)' : 
+                                         order.status === 'completed' ? 'var(--success)' : 
+                                         order.status === 'cancelled' ? 'var(--danger)' : 'white',
+                                  border: '1px solid var(--border-color)',
+                                  padding: '6px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: '600'
+                                }}
+                              >
+                                <option value="pending">Pendente</option>
+                                <option value="viewed">Visualizado</option>
+                                <option value="completed">Finalizado</option>
+                                <option value="cancelled">Cancelado</option>
+                              </select>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button 
+                                  onClick={() => setSelectedOrder(order)}
+                                  className="btn btn-secondary" 
+                                  style={{ padding: '6px 12px', fontSize: '11px' }}
                                 >
-                                  <i className="fa-brands fa-whatsapp" style={{ color: '#25D366' }}></i>
-                                  {order.customer_whatsapp}
-                                </a>
-                              </td>
-                              <td>{order.seller_name || <span style={{ color: 'var(--text-muted)' }}>Site Direto</span>}</td>
-                              <td>
-                                <select 
-                                  value={order.status}
-                                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                  style={{
-                                    backgroundColor: '#1a1e26',
-                                    color: order.status === 'pending' ? 'var(--warning)' : 
-                                           order.status === 'completed' ? 'var(--success)' : 
-                                           order.status === 'cancelled' ? 'var(--danger)' : 'white',
-                                    border: '1px solid var(--border-color)',
-                                    padding: '6px 10px',
-                                    fontSize: '12px',
-                                    fontWeight: '600'
-                                  }}
+                                  Ver Detalhes
+                                </button>
+                                <button 
+                                  onClick={() => handlePrintOrder(order)}
+                                  className="btn btn-secondary" 
+                                  style={{ padding: '6px 10px', fontSize: '11px', borderColor: 'var(--primary)' }}
+                                  title="Imprimir Cupom de Expedição"
                                 >
-                                  <option value="pending">Pendente</option>
-                                  <option value="viewed">Visualizado</option>
-                                  <option value="completed">Finalizado</option>
-                                  <option value="cancelled">Cancelado</option>
-                                </select>
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <i className="fa-solid fa-print"></i>
+                                </button>
+                                {role === 'admin' && (
                                   <button 
-                                    onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                                    className="btn btn-secondary" 
-                                    style={{ padding: '6px 12px', fontSize: '11px' }}
+                                    onClick={() => handleDeleteOrder(order.id)}
+                                    className="btn btn-danger" 
+                                    style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}
                                   >
-                                    {isExpanded ? 'Recolher' : 'Ver Detalhes'}
+                                    Excluir
                                   </button>
-                                  <button 
-                                    onClick={() => handlePrintOrder(order)}
-                                    className="btn btn-secondary" 
-                                    style={{ padding: '6px 10px', fontSize: '11px', borderColor: 'var(--primary)' }}
-                                    title="Imprimir Cupom de Expedição"
-                                  >
-                                    <i className="fa-solid fa-print"></i>
-                                  </button>
-                                  {role === 'admin' && (
-                                    <button 
-                                      onClick={() => handleDeleteOrder(order.id)}
-                                      className="btn btn-danger" 
-                                      style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}
-                                    >
-                                      Excluir
-                                    </button>
-                                  )}
-                                </div>
-
-                                {isExpanded && (
-                                  <div style={{
-                                    position: 'absolute',
-                                    left: 20,
-                                    right: 20,
-                                    backgroundColor: '#111317',
-                                    border: '1px solid var(--border-hover)',
-                                    padding: '24px',
-                                    marginTop: '10px',
-                                    zIndex: 10,
-                                    borderRadius: 'var(--radius-lg)'
-                                  }}>
-                                    <h5 style={{ color: 'white', marginBottom: '15px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cortes & Vinhos Requisitados:</h5>
-                                    <ul style={{ listStyle: 'none', paddingLeft: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                      {order.items.map(item => {
-                                        const matchProd = products.find(p => p.title === item.product_title);
-                                        return (
-                                          <li key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingBottom: '10px', borderBottom: '1px solid #1c212a', fontSize: '13px' }}>
-                                            {matchProd?.image_url && (
-                                              <img src={matchProd.image_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                                            )}
-                                            <div style={{ flexGrow: 1 }}>
-                                              <b>{item.quantity}x</b> {item.product_title}
-                                              {item.sku ? <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '10px' }}>EAN: {item.sku}</span> : ''}
-                                            </div>
-                                            <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                                              {item.price ? (
-                                                <>
-                                                  <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
-                                                  {(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </>
-                                              ) : (
-                                                'Preço sob consulta'
-                                              )}
-                                            </span>
-                                          </li>
-                                        );
-                                      })}
-                                    </ul>
-                                    {order.notes && (
-                                      <div style={{ marginTop: '15px', padding: '12px', backgroundColor: 'rgba(0,0,0,0.3)', fontSize: '13px', borderRadius: '4px', borderLeft: '3px solid var(--primary)' }}>
-                                        <b>Observações da Expedição:</b> {order.notes}
-                                      </div>
-                                    )}
-                                  </div>
                                 )}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -1599,6 +1549,204 @@ export default function AdminDashboard() {
           </form>
         </div>
       )}
+
+      {/* ── Order Details Modal ─────────────────────────── */}
+      {selectedOrder && (() => {
+        const order = selectedOrder;
+        const totalPrice = order.items.reduce((sum, item) => item.price ? sum + item.price * item.quantity : sum, 0);
+        const hasPrice = order.items.some(item => item.price);
+        const statusLabels = { pending: 'Pendente', viewed: 'Visualizado', completed: 'Finalizado', cancelled: 'Cancelado' };
+        const statusColors = { pending: 'var(--warning)', viewed: '#60a5fa', completed: 'var(--success)', cancelled: 'var(--danger)' };
+        return (
+          <div
+            onClick={() => setSelectedOrder(null)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              backgroundColor: 'rgba(0,0,0,0.75)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '20px'
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                backgroundColor: '#0d0f14',
+                border: '1px solid rgba(171,144,112,0.25)',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '680px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(171,144,112,0.1)',
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                padding: '24px 28px 20px',
+                borderBottom: '1px solid rgba(171,144,112,0.15)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                position: 'sticky', top: 0, backgroundColor: '#0d0f14', zIndex: 1,
+                borderRadius: '16px 16px 0 0'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '22px', fontWeight: '700', color: 'white' }}>Pedido #{order.id}</span>
+                    <span style={{
+                      fontSize: '11px', fontWeight: '700', letterSpacing: '0.06em',
+                      padding: '3px 10px', borderRadius: '20px',
+                      backgroundColor: `${statusColors[order.status]}22`,
+                      color: statusColors[order.status],
+                      border: `1px solid ${statusColors[order.status]}55`
+                    }}>
+                      {statusLabels[order.status] || order.status}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatDate(order.created_at)}</span>
+                </div>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  style={{
+                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'white', borderRadius: '8px', width: '32px', height: '32px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: '16px', flexShrink: 0
+                  }}
+                >✕</button>
+              </div>
+
+              <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+                {/* Origin */}
+                <div style={{
+                  padding: '14px 18px', borderRadius: '10px',
+                  backgroundColor: order.seller_name ? 'rgba(171,144,112,0.08)' : 'rgba(96,165,250,0.06)',
+                  border: `1px solid ${order.seller_name ? 'rgba(171,144,112,0.25)' : 'rgba(96,165,250,0.2)'}`,
+                  display: 'flex', alignItems: 'center', gap: '12px'
+                }}>
+                  <span style={{ fontSize: '24px' }}>{order.seller_name ? '🤝' : '🌐'}</span>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>Origem do Pedido</div>
+                    <div style={{ fontSize: '15px', fontWeight: '600', color: order.seller_name ? 'var(--primary)' : '#60a5fa' }}>
+                      {order.seller_name ? `Indicação de ${order.seller_name}` : 'Site Direto (sem indicação)'}
+                    </div>
+                    {order.seller_name && (
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Este pedido veio através de link de vendedor</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Client Info */}
+                <div>
+                  <h4 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '12px' }}>Dados do Cliente</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>NOME</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'white' }}>{order.customer_name}</div>
+                    </div>
+                    <div style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>WHATSAPP</div>
+                      <a href={`https://wa.me/${order.customer_whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: '14px', fontWeight: '600', color: '#25D366', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+                        <i className="fa-brands fa-whatsapp"></i>{order.customer_whatsapp}
+                      </a>
+                    </div>
+                    {order.customer_address && (
+                      <div style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', gridColumn: '1 / -1' }}>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>ENDEREÇO DE ENTREGA</div>
+                        <div style={{ fontSize: '14px', color: 'white' }}>{order.customer_address}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Items */}
+                <div>
+                  <h4 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                    Itens do Pedido ({order.items.length} {order.items.length === 1 ? 'item' : 'itens'})
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {order.items.map((item, idx) => {
+                      const matchProd = products.find(p => p.title === item.product_title);
+                      return (
+                        <div key={item.id || idx} style={{
+                          display: 'flex', alignItems: 'center', gap: '14px',
+                          padding: '12px 16px',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: '8px'
+                        }}>
+                          {matchProd?.image_url ? (
+                            <img src={matchProd.image_url} alt="" style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                          ) : (
+                            <div style={{ width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🥩</div>
+                          )}
+                          <div style={{ flexGrow: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '3px' }}>
+                              <span style={{ color: 'var(--primary)', marginRight: '6px' }}>{item.quantity}×</span>{item.product_title}
+                            </div>
+                            {item.sku && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>EAN: {item.sku}</div>}
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            {item.price ? (
+                              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--primary)' }}>
+                                R$ {(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sob consulta</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {hasPrice && (
+                    <div style={{
+                      marginTop: '12px', padding: '14px 16px',
+                      backgroundColor: 'rgba(171,144,112,0.06)',
+                      border: '1px solid rgba(171,144,112,0.2)',
+                      borderRadius: '8px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                    }}>
+                      <span style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total (itens com preço)</span>
+                      <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary)' }}>
+                        R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Notes */}
+                {order.notes && (
+                  <div style={{
+                    padding: '14px 16px',
+                    backgroundColor: 'rgba(255,200,50,0.04)',
+                    border: '1px solid rgba(255,200,50,0.15)',
+                    borderRadius: '8px',
+                    borderLeft: '3px solid rgba(255,200,50,0.5)'
+                  }}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,200,50,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Observações do Cliente</div>
+                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.6' }}>{order.notes}</div>
+                  </div>
+                )}
+
+                {/* Footer Actions */}
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+                  <button onClick={() => handlePrintOrder(order)} className="btn btn-secondary"
+                    style={{ padding: '10px 20px', fontSize: '13px', borderColor: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="fa-solid fa-print"></i> Imprimir Cupom
+                  </button>
+                  <button onClick={() => setSelectedOrder(null)} className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '13px' }}>
+                    Fechar
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
+
