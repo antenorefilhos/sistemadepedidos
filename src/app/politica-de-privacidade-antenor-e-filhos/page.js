@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function PoliticaPrivacidadePage() {
   return (
-    <div className="page-wrapper" style={{ minHeight: '80vh', padding: '60px 0' }}>
+    <div className="page-wrapper" style={{ minHeight: '80vh', paddingBottom: '60px' }}>
       <div className="container" style={{ maxWidth: '800px' }}>
         
         {/* Header */}

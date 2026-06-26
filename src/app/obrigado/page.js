@@ -7,7 +7,9 @@ export default function ObrigadoPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '40px 20px'
+      paddingBottom: '40px',
+      paddingLeft: '20px',
+      paddingRight: '20px'
     }}>
       <div className="glass" style={{
         maxWidth: '550px',

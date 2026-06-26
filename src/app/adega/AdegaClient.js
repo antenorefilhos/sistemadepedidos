@@ -130,7 +130,7 @@ export default function AdegaClient() {
   const wineCountries = adegaCategories.filter(c => !['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
 
   return (
-    <div className="page-wrapper" style={{ minHeight: '80vh', padding: '40px 0' }}>
+    <div className="page-wrapper" style={{ minHeight: '80vh', paddingBottom: '40px' }}>
       <div className="container">
         
         {/* Page Title & Search bar */}

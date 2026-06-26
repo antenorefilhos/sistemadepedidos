@@ -218,7 +218,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="page-wrapper" style={{ padding: '40px 0' }}>
+    <div className="page-wrapper" style={{ paddingBottom: '40px' }}>
       <div className="container">
         <h1 style={{ fontSize: '32px', color: 'white', marginBottom: '30px' }}>Conferência de Orçamento</h1>
         

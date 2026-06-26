@@ -256,7 +256,7 @@ export default function ProductDetails({ product, relatedProducts }) {
   const wineData = isWine ? parseWineDescription(product.description) : null;
 
   return (
-    <div className="page-wrapper" style={{ padding: '40px 0' }}>
+    <div className="page-wrapper" style={{ paddingBottom: '40px' }}>
       <div className="container">
         
         {/* Breadcrumb */}
