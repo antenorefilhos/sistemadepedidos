@@ -82,6 +82,30 @@ export default function RootLayout({ children }) {
         </Script>
       </head>
       <body>
+        {/* Blur Progressivo no Topo */}
+        <div className="progressive-blur-container progressive-blur-top">
+          <div className="progressive-blur-layer p-blur-top-1" />
+          <div className="progressive-blur-layer p-blur-top-2" />
+          <div className="progressive-blur-layer p-blur-top-3" />
+          <div className="progressive-blur-layer p-blur-top-4" />
+          <div className="progressive-blur-layer p-blur-top-5" />
+          <div className="progressive-blur-layer p-blur-top-6" />
+          <div className="progressive-blur-layer p-blur-top-7" />
+          <div className="progressive-blur-layer p-blur-top-8" />
+        </div>
+
+        {/* Blur Progressivo no Rodapé */}
+        <div className="progressive-blur-container progressive-blur-bottom">
+          <div className="progressive-blur-layer p-blur-bottom-1" />
+          <div className="progressive-blur-layer p-blur-bottom-2" />
+          <div className="progressive-blur-layer p-blur-bottom-3" />
+          <div className="progressive-blur-layer p-blur-bottom-4" />
+          <div className="progressive-blur-layer p-blur-bottom-5" />
+          <div className="progressive-blur-layer p-blur-bottom-6" />
+          <div className="progressive-blur-layer p-blur-bottom-7" />
+          <div className="progressive-blur-layer p-blur-bottom-8" />
+        </div>
+
         {/* Track seller links (?ref=vendedor_slug) and save details */}
         <SellerReferralTracker />
         

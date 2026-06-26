@@ -241,12 +241,25 @@ p {
   height: 72px;
   display: flex;
   align-items: center;
-  background-color: rgba(5, 6, 10, 0.45) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border-bottom: 1px solid rgba(171, 144, 112, 0.12);
   box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.3);
-  transition: background-color 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  background: transparent !important;
+}
+
+.navbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(5, 6, 10, 0.45);
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  z-index: -1;
+  transition: background-color 0.35s ease, backdrop-filter 0.35s ease;
+  pointer-events: none;
 }
 
 /* Shimmer line at top edge */
@@ -260,10 +273,13 @@ p {
   opacity: 0.6;
 }
 
-.navbar-scrolled {
-  background-color: rgba(4, 5, 8, 0.7) !important;
+.navbar-scrolled::before {
+  background-color: rgba(4, 5, 8, 0.7);
   backdrop-filter: blur(32px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+}
+
+.navbar-scrolled {
   border-bottom-color: rgba(171, 144, 112, 0.2);
   box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 12px 40px rgba(0,0,0,0.5);
 }
@@ -641,17 +657,28 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* Glassmorphism */
-  background: rgba(6, 7, 10, 0.55);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  background: transparent !important;
   border: 1px solid rgba(171, 144, 112, 0.35);
   box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(171, 144, 112, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 8px 40px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(171, 144, 112, 0.08);
   transition: transform var(--transition-slow), opacity 0.3s ease;
   opacity: 0;
+}
+
+.cart-floating-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: rgba(6, 7, 10, 0.65);
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .cart-floating-bar.active {
@@ -1240,3 +1267,57 @@ footer a:hover {
   min-height: 60px;
   padding: 8px 4px;
 }
+
+/* ===================================================
+   Blur Progressivo (Gradient Blur) - Datacrazy / Skiper UI Style
+   =================================================== */
+
+.progressive-blur-container {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 85; /* Sits behind navbar (100) and cart floating bar (90) but above content */
+}
+
+.progressive-blur-top {
+  top: 0;
+  height: 140px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.progressive-blur-bottom {
+  bottom: 0;
+  height: 180px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.progressive-blur-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-backdrop-filter: var(--blur-val);
+  backdrop-filter: var(--blur-val);
+  -webkit-mask-image: var(--mask-val);
+  mask-image: var(--mask-val);
+}
+
+/* Camadas de desfoque gradiente para o topo (forte no topo, suave embaixo) */
+.p-blur-top-1 { --blur-val: blur(1px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 12.5%); }
+.p-blur-top-2 { --blur-val: blur(2px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 12.5%, rgba(0,0,0,0) 25%); }
+.p-blur-top-3 { --blur-val: blur(4px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 12.5%, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 37.5%); }
+.p-blur-top-4 { --blur-val: blur(8px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 25%, rgba(0,0,0,1) 37.5%, rgba(0,0,0,0) 50%); }
+.p-blur-top-5 { --blur-val: blur(16px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 37.5%, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 62.5%); }
+.p-blur-top-6 { --blur-val: blur(24px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,1) 62.5%, rgba(0,0,0,0) 75%); }
+.p-blur-top-7 { --blur-val: blur(32px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 62.5%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 87.5%); }
+.p-blur-top-8 { --blur-val: blur(40px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 75%, rgba(0,0,0,1) 87.5%, rgba(0,0,0,1) 100%); }
+
+/* Camadas de desfoque gradiente para o rodapé (forte embaixo, suave em cima) */
+.p-blur-bottom-1 { --blur-val: blur(1px);   --mask-val: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 12.5%); }
+.p-blur-bottom-2 { --blur-val: blur(2px);   --mask-val: linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 12.5%, rgba(0,0,0,0) 25%); }
+.p-blur-bottom-3 { --blur-val: blur(4px);   --mask-val: linear-gradient(to top, rgba(0,0,0,0) 12.5%, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 37.5%); }
+.p-blur-bottom-4 { --blur-val: blur(8px);   --mask-val: linear-gradient(to top, rgba(0,0,0,0) 25%, rgba(0,0,0,1) 37.5%, rgba(0,0,0,0) 50%); }
+.p-blur-bottom-5 { --blur-val: blur(16px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 37.5%, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 62.5%); }
+.p-blur-bottom-6 { --blur-val: blur(24px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 50%, rgba(0,0,0,1) 62.5%, rgba(0,0,0,0) 75%); }
+.p-blur-bottom-7 { --blur-val: blur(32px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 62.5%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 87.5%); }
+.p-blur-bottom-8 { --blur-val: blur(40px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 75%, rgba(0,0,0,1) 87.5%, rgba(0,0,0,1) 100%); }
