@@ -1283,41 +1283,69 @@ footer a:hover {
 .progressive-blur-top {
   top: 0;
   height: 140px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
 }
 
 .progressive-blur-bottom {
   bottom: 0;
   height: 180px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
 }
 
 .progressive-blur-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  -webkit-backdrop-filter: var(--blur-val);
-  backdrop-filter: var(--blur-val);
-  -webkit-mask-image: var(--mask-val);
-  mask-image: var(--mask-val);
 }
 
-/* Camadas de desfoque gradiente para o topo (forte no topo, suave embaixo) */
-.p-blur-top-1 { --blur-val: blur(1px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 12.5%); }
-.p-blur-top-2 { --blur-val: blur(2px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 12.5%, rgba(0,0,0,0) 25%); }
-.p-blur-top-3 { --blur-val: blur(4px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 12.5%, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 37.5%); }
-.p-blur-top-4 { --blur-val: blur(8px);   --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 25%, rgba(0,0,0,1) 37.5%, rgba(0,0,0,0) 50%); }
-.p-blur-top-5 { --blur-val: blur(16px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 37.5%, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 62.5%); }
-.p-blur-top-6 { --blur-val: blur(24px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,1) 62.5%, rgba(0,0,0,0) 75%); }
-.p-blur-top-7 { --blur-val: blur(32px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 62.5%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 87.5%); }
-.p-blur-top-8 { --blur-val: blur(40px);  --mask-val: linear-gradient(to bottom, rgba(0,0,0,0) 75%, rgba(0,0,0,1) 87.5%, rgba(0,0,0,1) 100%); }
+/* Camadas de desfoque gradiente para o topo (fade completo e suave) */
+.p-blur-top-1 {
+  backdrop-filter: blur(4px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(4px) saturate(140%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+}
+.p-blur-top-2 {
+  backdrop-filter: blur(8px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
+}
+.p-blur-top-3 {
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
+}
+.p-blur-top-4 {
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
+}
 
-/* Camadas de desfoque gradiente para o rodapé (forte embaixo, suave em cima) */
-.p-blur-bottom-1 { --blur-val: blur(1px);   --mask-val: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 12.5%); }
-.p-blur-bottom-2 { --blur-val: blur(2px);   --mask-val: linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 12.5%, rgba(0,0,0,0) 25%); }
-.p-blur-bottom-3 { --blur-val: blur(4px);   --mask-val: linear-gradient(to top, rgba(0,0,0,0) 12.5%, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 37.5%); }
-.p-blur-bottom-4 { --blur-val: blur(8px);   --mask-val: linear-gradient(to top, rgba(0,0,0,0) 25%, rgba(0,0,0,1) 37.5%, rgba(0,0,0,0) 50%); }
-.p-blur-bottom-5 { --blur-val: blur(16px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 37.5%, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 62.5%); }
-.p-blur-bottom-6 { --blur-val: blur(24px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 50%, rgba(0,0,0,1) 62.5%, rgba(0,0,0,0) 75%); }
-.p-blur-bottom-7 { --blur-val: blur(32px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 62.5%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 87.5%); }
-.p-blur-bottom-8 { --blur-val: blur(40px);  --mask-val: linear-gradient(to top, rgba(0,0,0,0) 75%, rgba(0,0,0,1) 87.5%, rgba(0,0,0,1) 100%); }
+/* Camadas de desfoque gradiente para o rodapé (fade completo e suave) */
+.p-blur-bottom-1 {
+  backdrop-filter: blur(4px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(4px) saturate(140%) !important;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+}
+.p-blur-bottom-2 {
+  backdrop-filter: blur(8px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
+}
+.p-blur-bottom-3 {
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
+}
+.p-blur-bottom-4 {
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
+}
