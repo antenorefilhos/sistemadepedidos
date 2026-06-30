@@ -5,6 +5,8 @@
   "/admin/page": "/admin",
   "/api/admin/auth/route": "/api/admin/auth",
   "/api/admin/categories/route": "/api/admin/categories",
+  "/api/admin/import-catalog/route": "/api/admin/import-catalog",
+  "/api/admin/migrate/route": "/api/admin/migrate",
   "/api/admin/orders/route": "/api/admin/orders",
   "/api/admin/products/route": "/api/admin/products",
   "/api/admin/sellers/route": "/api/admin/sellers",

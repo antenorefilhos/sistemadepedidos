@@ -5,6 +5,8 @@
   "/admin/page": "app/admin/page.js",
   "/api/admin/auth/route": "app/api/admin/auth/route.js",
   "/api/admin/categories/route": "app/api/admin/categories/route.js",
+  "/api/admin/import-catalog/route": "app/api/admin/import-catalog/route.js",
+  "/api/admin/migrate/route": "app/api/admin/migrate/route.js",
   "/api/admin/orders/route": "app/api/admin/orders/route.js",
   "/api/admin/products/route": "app/api/admin/products/route.js",
   "/api/admin/sellers/route": "app/api/admin/sellers/route.js",

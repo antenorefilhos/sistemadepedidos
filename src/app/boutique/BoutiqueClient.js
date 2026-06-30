@@ -431,14 +431,18 @@ export default function BoutiqueClient() {
                       
                       <div className="product-info">
                         <h3 className="product-title" title={product.title}>
-                          <Link href={`/produtos/${product.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                            {product.title}
-                          </Link>
+                          <Link 
+                            href={`/produtos/${product.slug}`} 
+                            style={{ color: 'inherit', textDecoration: 'none' }} 
+                            dangerouslySetInnerHTML={{ __html: product.title }} 
+                          />
                         </h3>
                         
-                        <p className="product-desc" title={product.description}>
-                          {product.description || 'Produto artesanal selecionado de altíssima qualidade.'}
-                        </p>
+                        <div 
+                          className="product-desc" 
+                          title={product.description}
+                          dangerouslySetInnerHTML={{ __html: product.description || 'Produto artesanal selecionado de altíssima qualidade.' }}
+                        />
                         
                         <div className="product-meta">
                           <span className="product-weight">
@@ -481,7 +485,7 @@ export default function BoutiqueClient() {
                             onClick={() => addToCart(product.id)}
                             className="btn btn-primary product-action"
                           >
-                            Incluir no Orçamento
+                            Incluir
                           </button>
                         )}
                       </div>

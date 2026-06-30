@@ -619,21 +619,25 @@ p {
 .product-meta {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-top: auto;
   padding-top: 15px;
   border-top: 1px solid var(--border-color);
+  gap: 10px;
 }
 
 .product-weight {
   font-size: 12px;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .product-price {
   font-size: 16px;
   font-weight: 600;
   color: var(--primary);
+  text-align: right;
+  line-height: 1.2;
 }
 
 .product-action {
@@ -1198,13 +1202,13 @@ footer a:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(171, 144, 112, 0.08);
 }
-/* ── Page Wrapper (Padding top to prevent fixed header overlap) ─ */
+/* ── Page Wrapper (Padding top to prevent fixed header overlap and add breathing room) ─ */
 .page-wrapper {
-  padding-top: 72px !important;
+  padding-top: 140px !important;
 }
 @media (max-width: 768px) {
   .page-wrapper {
-    padding-top: 64px !important;
+    padding-top: 110px !important;
   }
 }
 
@@ -1349,3 +1353,69 @@ footer a:hover {
   mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
   -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
 }
+
+/* ===================================================
+   Mobile Button Tweaks & Hero Adjustments
+   =================================================== */
+
+.hero-buttons-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+.hero-btn {
+  padding: 14px 32px;
+  font-size: 15px;
+}
+
+@media (max-width: 768px) {
+  .btn {
+    padding: 10px 24px;
+    font-size: 13px;
+  }
+  .hero-buttons-container {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .hero-btn {
+    width: 100%;
+    padding: 12px 24px; /* Slightly larger hit area on mobile than default btn but not as wide */
+  }
+}
+
+/* ===================================================
+   Seller Badge Styles
+   =================================================== */
+.seller-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(171, 144, 112, 0.15);
+  border: 1px solid rgba(171, 144, 112, 0.3);
+  padding: 6px 12px;
+  border-radius: var(--radius-round);
+  font-size: 13px;
+  color: var(--primary);
+  margin-right: 15px;
+}
+.seller-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+}
+.seller-exit {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color var(--transition-fast);
+}
+.seller-exit:hover {
+  color: var(--danger);
+}
+

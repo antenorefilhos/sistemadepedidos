@@ -267,7 +267,7 @@ export default function ProductDetails({ product, relatedProducts }) {
             {isWine ? 'Adega de Vinhos' : 'Boutique de Carnes'}
           </Link>
           <span style={{ margin: '0 8px' }}>&rsaquo;</span>
-          <span style={{ color: 'var(--text-primary)' }}>{product.title}</span>
+          <span style={{ color: 'var(--text-primary)' }} dangerouslySetInnerHTML={{ __html: product.title }} />
         </div>
 
         {/* Product Details Section */}
@@ -361,9 +361,10 @@ export default function ProductDetails({ product, relatedProducts }) {
             )}
 
             {/* Title */}
-            <h1 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', color: 'var(--text-primary)', marginBottom: '12px', fontFamily: 'var(--font-serif)', lineHeight: '1.2' }}>
-              {product.title}
-            </h1>
+            <h1 
+              style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', color: 'var(--text-primary)', marginBottom: '12px', fontFamily: 'var(--font-serif)', lineHeight: '1.2' }}
+              dangerouslySetInnerHTML={{ __html: product.title }}
+            />
 
             {product.sku && (
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>
@@ -522,7 +523,7 @@ export default function ProductDetails({ product, relatedProducts }) {
                     style={{ width: '100%', height: '48px', fontSize: '13px' }}
                   >
                     <i className="fa-solid fa-cart-plus" style={{ marginRight: '8px' }}></i>
-                    Incluir no Orçamento
+                    Incluir
                   </button>
                 )}
               </div>
@@ -633,9 +634,10 @@ export default function ProductDetails({ product, relatedProducts }) {
               {/* If no detail blocks parsed, show the raw description elegantly */}
               {!Object.values(wineData.details).some(v => v) && product.description && (
                 <div>
-                  <p style={{ fontSize: '14px', lineHeight: '1.8', color: 'var(--text-muted)' }}>
-                    {product.description}
-                  </p>
+                  <div 
+                    style={{ fontSize: '14px', lineHeight: '1.8', color: 'var(--text-muted)' }}
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
                 </div>
               )}
 
@@ -743,7 +745,11 @@ export default function ProductDetails({ product, relatedProducts }) {
                     </Link>
                     <div className="product-info" style={{ padding: '15px' }}>
                       <h3 className="product-title" style={{ fontSize: '14px', height: '38px' }}>
-                        <Link href={`/produtos/${p.slug}`} style={{ color: 'inherit' }}>{p.title}</Link>
+                        <Link 
+                          href={`/produtos/${p.slug}`} 
+                          style={{ color: 'inherit', textDecoration: 'none' }}
+                          dangerouslySetInnerHTML={{ __html: p.title }}
+                        />
                       </h3>
                       <div className="product-meta" style={{ marginTop: '10px' }}>
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.peso ? `${p.peso} ${p.unidade_peso}` : ''}</span>

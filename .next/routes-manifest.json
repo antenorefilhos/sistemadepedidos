@@ -75,6 +75,18 @@
       "namedRegex": "^/api/admin/categories(?:/)?$"
     },
     {
+      "page": "/api/admin/import-catalog",
+      "regex": "^/api/admin/import\\-catalog(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/import\\-catalog(?:/)?$"
+    },
+    {
+      "page": "/api/admin/migrate",
+      "regex": "^/api/admin/migrate(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/migrate(?:/)?$"
+    },
+    {
       "page": "/api/admin/orders",
       "regex": "^/api/admin/orders(?:/)?$",
       "routeKeys": {},

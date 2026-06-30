@@ -33,7 +33,7 @@ export default function Home() {
             display: 'block',
             marginBottom: '15px'
           }}>
-            Itaipava &bull; Petrópolis
+            O CORAÇÃO DA SERRA FLUMINENSE
           </span>
           <h1 style={{
             fontSize: 'clamp(40px, 6vw, 68px)',
@@ -43,7 +43,7 @@ export default function Home() {
             marginBottom: '20px',
             textShadow: '0 4px 10px rgba(0,0,0,0.5)'
           }}>
-            Experiência Gastronômica Exclusiva
+            O Padrão Ouro em Carnes Nobres e Vinhos
           </h1>
           <p style={{
             color: 'var(--text-secondary)',
@@ -53,13 +53,13 @@ export default function Home() {
             maxWidth: '600px',
             margin: '0 auto 35px auto'
           }}>
-            Boutique de carnes nobres e exóticas, adega de vinhos selecionados e restaurante premium na serra fluminense.
+            Da seleção rigorosa de cortes exclusivos à nossa adega premiada. Viva uma experiência sensorial inesquecível em Itaipava.
           </p>
-          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-            <Link href="/boutique" className="btn btn-primary" style={{ padding: '14px 32px', fontSize: '15px' }}>
-              Ver Catálogo de Pedidos
+          <div className="hero-buttons-container">
+            <Link href="/boutique" className="btn btn-primary hero-btn">
+              Fazer um Pedido
             </Link>
-            <a href="#operation" className="btn btn-secondary" style={{ padding: '14px 32px', fontSize: '15px' }}>
+            <a href="#operation" className="btn btn-secondary hero-btn">
               Conhecer a Casa
             </a>
           </div>
@@ -71,11 +71,11 @@ export default function Home() {
         <div className="container">
           <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 60px auto' }}>
             <h2 style={{ fontSize: '36px', color: 'white', marginBottom: '20px' }}>
-              Nossa Operação
+              Nossas Frentes de Excelência
             </h2>
             <div style={{ width: '60px', height: '3px', backgroundColor: 'var(--primary)', margin: '0 auto 20px auto' }}></div>
             <p>
-              Oferecemos uma experiência completa com qualidade e procedência garantida em cada detalhe. Conheça as frentes da nossa casa em Itaipava.
+              Três experiências distintas, guiadas por um único princípio: qualidade inegociável. Descubra nossas especialidades em Itaipava.
             </p>
           </div>
 
@@ -88,7 +88,7 @@ export default function Home() {
             <div className="glass operation-card">
               <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Boutique de Carnes</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
-                Os cortes mais nobres do mercado nacional e internacional. Raças britânicas Angus e Hereford, cortes Wagyu de alta marmorização, além de carnes exóticas como coelho, jacaré, javali e cordeiro selecionado.
+                A seleção definitiva para os paladares mais exigentes. Cortes premium britânicos, marmorização impecável do Wagyu e exóticas exclusivas.
               </p>
               <Link href="/boutique" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                 Fazer Pedido de Carnes &rarr;
@@ -99,7 +99,7 @@ export default function Home() {
             <div className="glass operation-card">
               <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Adega & Delicatessen</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
-                Rótulos selecionados das melhores vinícolas do Velho e Novo Mundo. Do clássico ao exclusivo, nossa adega climatizada harmoniza perfeitamente com a sofisticação de nossos pratos e carnes, além de queijos e antepastos.
+                O casamento perfeito para a sua carne. Rótulos garimpados das melhores safras mundiais, harmonizando perfeitamente com nossos queijos e antepastos finos.
               </p>
               <Link href="/adega" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                 Fazer Pedido de Vinhos &rarr;
@@ -110,7 +110,7 @@ export default function Home() {
             <div className="glass operation-card">
               <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Restaurante & Brasa</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
-                Para quem deseja degustar no local, nosso restaurante oferece grelhados na brasa preparados na hora por mestres churrasqueiros, acompanhamentos refinados e atendimento diferenciado em ambiente aconchegante.
+                O domínio do fogo. Permita que nossos mestres churrasqueiros transformem nossos cortes exclusivos em obras-primas grelhadas, servidas com excelência.
               </p>
               <a href="https://wa.me/552422221482?text=Gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                 <i className="fa-brands fa-whatsapp" style={{ color: '#25D366' }}></i> Reservar uma Mesa &rarr;

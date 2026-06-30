@@ -23,9 +23,14 @@ export default function CartPage() {
 
   useEffect(() => {
     // 1. Load active seller
-    const storedSeller = localStorage.getItem('ref_seller');
-    if (storedSeller) {
-      setActiveSeller(JSON.parse(storedSeller));
+    try {
+      const storedSeller = localStorage.getItem('ref_seller');
+      if (storedSeller) {
+        setActiveSeller(JSON.parse(storedSeller));
+      }
+    } catch (e) {
+      console.warn('Invalid seller in storage, clearing...');
+      localStorage.removeItem('ref_seller');
     }
 
     // 2. Load cart items
@@ -250,7 +255,10 @@ export default function CartPage() {
                     <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {/* Top: Description (takes full width) */}
                       <div>
-                        <h4 style={{ color: 'white', fontSize: '15px', marginBottom: '2px', fontWeight: '500' }}>{product.title}</h4>
+                        <h4 
+                          style={{ color: 'white', fontSize: '15px', marginBottom: '2px', fontWeight: '500' }}
+                          dangerouslySetInnerHTML={{ __html: product.title }}
+                        />
                         <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                           {product.sku ? `EAN: ${product.sku}` : ''} 
                           {product.peso ? ` | Peso: ${product.peso} ${product.unidade_peso}` : ''}
