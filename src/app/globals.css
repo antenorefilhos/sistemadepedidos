@@ -1419,3 +1419,17 @@ footer a:hover {
   color: var(--danger);
 }
 
+/* ===================================================
+   Checkout Layout
+   =================================================== */
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+@media (min-width: 992px) {
+  .checkout-layout {
+    grid-template-columns: 1fr 400px;
+  }
+}
+

@@ -227,7 +227,7 @@ export default function CartPage() {
       <div className="container">
         <h1 style={{ fontSize: '32px', color: 'white', marginBottom: '30px' }}>Conferência de Orçamento</h1>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '40px' }} className="checkout-layout">
+        <div className="checkout-layout">
           
           {/* Cart Items List */}
           <main>
