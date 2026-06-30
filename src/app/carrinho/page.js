@@ -181,7 +181,8 @@ export default function CartPage() {
         // 4. Determine destination WhatsApp number
         // If selling through a validated seller, redirect to the seller's specific WhatsApp!
         // Else, redirect to store main WhatsApp.
-        const destPhone = activeSeller ? activeSeller.phone : '5524988650462';
+        const rawPhone = activeSeller ? activeSeller.phone : '5524988650462';
+        const destPhone = rawPhone.replace(/\D/g, ''); // Garante que só tenha números
         
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${destPhone}&text=${encodeURIComponent(message)}`;
 
