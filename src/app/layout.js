@@ -5,15 +5,23 @@ import Script from "next/script";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Antenor e Filhos | Boutique de Carnes Nobres e Delicatessen em Itaipava",
-  description: "Boutique de Carnes Nobres, Exóticas, Adega de Vinhos Finos e Delicatessen em Itaipava, Petrópolis. Faça seu pedido de orçamento online e receba no WhatsApp.",
+  title: "Antenor & Filhos | Boutique de Carnes & Adega",
+  description: "Descubra o mais alto padrão em carnes nobres (Angus, Wagyu, Exóticas) e vinhos premiados em Itaipava. Monte seu pedido online e garanta momentos inesquecíveis!",
   keywords: "boutique de carnes, itaipava, carnes exóticas, adega de vinhos, petropolis, delicatessen, vpj angus, cordeiro, salmao, churrasco",
   robots: "index, follow",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Antenor e Filhos"
+    title: "Antenor & Filhos"
+  },
+  openGraph: {
+    title: "Antenor & Filhos | Boutique de Carnes & Adega",
+    description: "Descubra o mais alto padrão em carnes nobres (Angus, Wagyu, Exóticas) e vinhos premiados em Itaipava. Monte seu pedido online e garanta momentos inesquecíveis!",
+    url: "https://antenorefilhos.com.br",
+    siteName: "Antenor & Filhos",
+    locale: "pt_BR",
+    type: "website",
   }
 };
 
