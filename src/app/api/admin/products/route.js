@@ -52,7 +52,11 @@ export async function POST(request) {
   if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds } = await request.json();
+    const { 
+      title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds, 
+      uva, safra, origem, produtor, teor_alcoolico, temperatura,
+      enologo, volume, amadurecimento, potencial_guarda, visual, olfativo, gustativo, harmonizacao
+    } = await request.json();
 
     if (!title || !slug || !type) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -70,7 +74,12 @@ export async function POST(request) {
         preco: preco !== '' && preco != null ? parseFloat(preco) : null,
         status: status || 'on',
         image_url: image_url || null,
-        type, pontuacao: pontuacao || null
+        type, pontuacao: pontuacao || null,
+        uva: uva || null, safra: safra || null, origem: origem || null,
+        produtor: produtor || null, teor_alcoolico: teor_alcoolico || null, temperatura: temperatura || null,
+        enologo: enologo || null, volume: volume || null, amadurecimento: amadurecimento || null,
+        potencial_guarda: potencial_guarda || null, visual: visual || null, olfativo: olfativo || null,
+        gustativo: gustativo || null, harmonizacao: harmonizacao || null
       })
       .select('id')
       .single();
@@ -98,7 +107,11 @@ export async function PUT(request) {
   if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { id, title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds } = await request.json();
+    const { 
+      id, title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds, 
+      uva, safra, origem, produtor, teor_alcoolico, temperatura,
+      enologo, volume, amadurecimento, potencial_guarda, visual, olfativo, gustativo, harmonizacao
+    } = await request.json();
 
     if (!id || !title || !slug || !type) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -115,7 +128,12 @@ export async function PUT(request) {
         unidade_peso: unidade_peso || null,
         preco: preco !== '' && preco != null ? parseFloat(preco) : null,
         status, image_url: image_url || null,
-        type, pontuacao: pontuacao || null
+        type, pontuacao: pontuacao || null,
+        uva: uva || null, safra: safra || null, origem: origem || null,
+        produtor: produtor || null, teor_alcoolico: teor_alcoolico || null, temperatura: temperatura || null,
+        enologo: enologo || null, volume: volume || null, amadurecimento: amadurecimento || null,
+        potencial_guarda: potencial_guarda || null, visual: visual || null, olfativo: olfativo || null,
+        gustativo: gustativo || null, harmonizacao: harmonizacao || null
       })
       .eq('id', id);
 

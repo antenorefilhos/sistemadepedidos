@@ -16,6 +16,8 @@ export async function GET(request) {
       .from('products')
       .select(`
         id, title, slug, description, sku, peso, unidade_peso, preco, image_url, type, pontuacao, status,
+        uva, safra, origem, produtor, teor_alcoolico, temperatura,
+        enologo, volume, amadurecimento, potencial_guarda, visual, olfativo, gustativo, harmonizacao,
         product_categories (
           categories ( id, name, slug, type )
         )
@@ -50,6 +52,20 @@ export async function GET(request) {
         image_url: p.image_url,
         type: p.type,
         pontuacao: p.pontuacao,
+        uva: p.uva,
+        safra: p.safra,
+        origem: p.origem,
+        produtor: p.produtor,
+        teor_alcoolico: p.teor_alcoolico,
+        temperatura: p.temperatura,
+        enologo: p.enologo,
+        volume: p.volume,
+        amadurecimento: p.amadurecimento,
+        potencial_guarda: p.potencial_guarda,
+        visual: p.visual,
+        olfativo: p.olfativo,
+        gustativo: p.gustativo,
+        harmonizacao: p.harmonizacao,
         categories
       };
     });

@@ -110,6 +110,27 @@
   margin: 0;
 }
 
+/* Custom Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2); 
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-light); 
+  border-radius: 4px;
+  border: 1px solid rgba(171, 144, 112, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary); 
+}
+
 a {
   text-decoration: none !important;
   color: inherit;
@@ -1431,5 +1452,30 @@ footer a:hover {
   .checkout-layout {
     grid-template-columns: 1fr 400px;
   }
+}
+
+/* ===================================================
+   Custom Scrollbar (Global & Admin)
+   =================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) rgba(0, 0, 0, 0.2);
 }
 

@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import LiveOrdersMonitor from './components/LiveOrdersMonitor';
+import ProductEditor from './components/ProductEditor';
+import HermesDashboard from './components/HermesDashboard';
+import SolidconIntegration from './components/SolidconIntegration';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -739,7 +743,36 @@ export default function AdminDashboard() {
                 cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
               }}
             >
-              <i className="fa-solid fa-chart-pie" style={{ width: '16px' }}></i> Estatísticas
+              <i className="fa-solid fa-brain" style={{ width: '16px' }}></i> Inteligência AI
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={() => setActiveTab('monitor')} 
+              style={{
+                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                backgroundColor: activeTab === 'monitor' ? 'var(--primary-light)' : 'transparent',
+                color: activeTab === 'monitor' ? 'var(--primary)' : 'var(--text-muted)',
+                border: activeTab === 'monitor' ? '1px solid var(--primary)' : '1px solid transparent',
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}
+            >
+              <i className="fa-solid fa-desktop" style={{ width: '16px' }}></i> Monitor Ao Vivo
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={() => setActiveTab('solidcon')} 
+              style={{
+                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                backgroundColor: activeTab === 'solidcon' ? 'var(--primary-light)' : 'transparent',
+                color: activeTab === 'solidcon' ? 'var(--primary)' : 'var(--text-muted)',
+                border: activeTab === 'solidcon' ? '1px solid var(--primary)' : '1px solid transparent',
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginTop: '15px'
+              }}
+            >
+              <i className="fa-solid fa-cloud-arrow-down" style={{ width: '16px' }}></i> Integração ERP
             </button>
           </li>
         </ul>
@@ -793,8 +826,11 @@ export default function AdminDashboard() {
             <option value="categories">🏷️ Categorias ({categories.length})</option>
             <option value="sellers">👥 Vendedores ({sellers.length})</option>
             <option value="stats">📈 Estatísticas & Relatórios</option>
+            <option value="monitor">🖥️ Monitor Ao Vivo</option>
           </select>
         </div>
+
+        {activeTab === 'monitor' && <LiveOrdersMonitor password={password} />}
 
         {/* Dashboard Widgets Row (Visible in stats/orders) */}
         {(activeTab === 'orders' || activeTab === 'stats') && (
@@ -1242,272 +1278,36 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* TAB 5: STATS */}
+            {/* TAB 5: INTELIGÊNCIA IA */}
             {activeTab === 'stats' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                
-                {/* Upper Row: Category Demand & Quick Overview */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
-                  {/* Chart 1: Sales By Category */}
-                  <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-                    <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mapeamento de Demanda por Setor</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      {getSalesByCategory().map(([sector, amount]) => {
-                        const totalAmt = calculateTotalRevenue(false) || 1;
-                        const percentage = Math.round((amount / totalAmt) * 100);
-                        return (
-                          <div key={sector}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                              <span style={{ color: 'var(--text-primary)' }}>{sector === 'adega' ? 'Adega' : 'Boutique'}</span>
-                              <span style={{ fontWeight: 'bold' }}>
-                                <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
-                                {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({percentage}%)
-                              </span>
-                            </div>
-                            {/* Visual CSS-bar */}
-                            <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div style={{ 
-                                width: `${percentage}%`, 
-                                height: '100%', 
-                                backgroundColor: sector === 'adega' ? '#800020' : 'var(--primary)',
-                                borderRadius: '4px' 
-                              }}></div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+              <HermesDashboard 
+                orders={orders}
+                sellers={sellers}
+                products={products}
+                password={password}
+              />
+            )}
 
-                  {/* Chart 2: Revenue Share by Seller */}
-                  <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-                    <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Faturamento Estimado por Canal / Vendedor</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '350px', overflowY: 'auto', paddingRight: '5px' }}>
-                      {getSellersPerformance().map((seller) => {
-                        const maxRevenue = Math.max(...getSellersPerformance().map(x => x.revenue)) || 1;
-                        const percentage = Math.round((seller.revenue / maxRevenue) * 100);
-                        return (
-                          <div key={seller.name}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                              <span style={{ color: 'var(--text-primary)' }}>{seller.name}</span>
-                              <span style={{ fontWeight: 'bold' }}>
-                                <span style={{ fontSize: '0.75em', fontWeight: 'normal', color: 'var(--text-muted)' }}>R$ </span>
-                                {seller.revenue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
-                              </span>
-                            </div>
-                            {/* Visual CSS-bar */}
-                            <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div style={{ 
-                                width: `${percentage}%`, 
-                                height: '100%', 
-                                backgroundColor: seller.name === 'Site Direto' ? 'var(--text-muted)' : 'var(--primary)',
-                                borderRadius: '4px' 
-                              }}></div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Performance Dashboard Table */}
-                <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-                  <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Desempenho Detalhado da Equipe</h4>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>Vendedor</th>
-                          <th style={{ textAlign: 'center' }}>Total Pedidos</th>
-                          <th style={{ textAlign: 'center' }}>Pendentes</th>
-                          <th style={{ textAlign: 'center' }}>Concluídos</th>
-                          <th style={{ textAlign: 'right' }}>Faturamento Total</th>
-                          <th style={{ textAlign: 'right' }}>Ticket Médio</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getSellersPerformance().map((seller) => (
-                          <tr key={seller.name}>
-                            <td>
-                              <b style={{ color: seller.name === 'Site Direto' ? 'var(--text-secondary)' : 'white' }}>{seller.name}</b>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>{seller.count}</td>
-                            <td style={{ textAlign: 'center' }}>
-                              <span style={{ color: seller.pending > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>
-                                {seller.pending}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <span style={{ color: seller.completed > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
-                                {seller.completed}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                              <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', fontWeight: 'normal' }}>R$ </span>
-                              {seller.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                            <td style={{ textAlign: 'right', color: 'var(--primary)' }}>
-                              <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', fontWeight: 'normal' }}>R$ </span>
-                              {seller.avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-              </div>
+            {/* TAB 6: SOLIDCON ERP */}
+            {activeTab === 'solidcon' && (
+              <SolidconIntegration password={password} />
             )}
           </div>
         )}
       </main>
 
       {/* PRODUCT FORM MODAL */}
+      {/* PRODUCT FORM MODAL */}
       {showProductModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <form onSubmit={handleSaveProduct} className="glass" style={{ maxWidth: '600px', width: '100%', padding: '30px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ color: 'white', marginBottom: '20px' }}>{productForm.id ? 'Editar Produto' : 'Cadastrar Novo Produto'}</h3>
-            
-            <div className="form-group">
-              <label className="form-label">Nome do Produto</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="Ex: Picanha Black Angus" 
-                className="form-control"
-                value={productForm.title}
-                onChange={(e) => handleProductTitleChange(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <div className="form-group">
-                <label className="form-label">EAN (SKU)</label>
-                <input 
-                  type="text" 
-                  placeholder="Código de barras" 
-                  className="form-control"
-                  value={productForm.sku}
-                  onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Preço (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  placeholder="Ex: 129.90" 
-                  className="form-control"
-                  value={productForm.preco}
-                  onChange={(e) => setProductForm({ ...productForm, preco: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <div className="form-group">
-                <label className="form-label">Peso / Volume</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: 500" 
-                  className="form-control"
-                  value={productForm.peso}
-                  onChange={(e) => setProductForm({ ...productForm, peso: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Unidade de Peso</label>
-                <select 
-                  className="form-control"
-                  value={productForm.unidade_peso}
-                  onChange={(e) => setProductForm({ ...productForm, unidade_peso: e.target.value })}
-                >
-                  <option value="g">Gramas (g)</option>
-                  <option value="kg">Quilos (kg)</option>
-                  <option value="ml">Mililitros (ml)</option>
-                  <option value="un">Unidade (un)</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <div className="form-group">
-                <label className="form-label">Setor / Tipo</label>
-                <select 
-                  className="form-control"
-                  value={productForm.type}
-                  onChange={(e) => setProductForm({ ...productForm, type: e.target.value })}
-                >
-                  <option value="carnes_">Boutique de Carnes</option>
-                  <option value="adega">Adega de Vinhos</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Pontuação / Classificação (Se Adega)</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: RP95 | WS92" 
-                  className="form-control"
-                  value={productForm.pontuacao}
-                  onChange={(e) => setProductForm({ ...productForm, pontuacao: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">URL da Imagem</label>
-              <input 
-                type="text" 
-                placeholder="Ex: /novo/wp-content/uploads/imagem.jpg" 
-                className="form-control"
-                value={productForm.image_url}
-                onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Categorias Associadas</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxHeight: '120px', overflowY: 'auto', padding: '10px', border: '1px solid var(--border-color)' }}>
-                {categories.map(cat => {
-                  const isChecked = productForm.categoryIds.includes(cat.id);
-                  return (
-                    <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={isChecked}
-                        onChange={() => {
-                          const updated = isChecked 
-                            ? productForm.categoryIds.filter(id => id !== cat.id)
-                            : [...productForm.categoryIds, cat.id];
-                          setProductForm({ ...productForm, categoryIds: updated });
-                        }}
-                      />
-                      {cat.name} <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>({cat.type})</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Descrição detalhada</label>
-              <textarea 
-                rows="3"
-                placeholder="Detalhes adicionais do corte ou vinho" 
-                className="form-control"
-                value={productForm.description}
-                onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-              ></textarea>
-            </div>
-
-            <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
-              <button type="submit" className="btn btn-primary" style={{ flexGrow: 1 }}>Salvar Alterações</button>
-              <button type="button" onClick={() => setShowProductModal(false)} className="btn btn-secondary">Cancelar</button>
-            </div>
-          </form>
-        </div>
+        <ProductEditor 
+          productForm={productForm}
+          setProductForm={setProductForm}
+          categories={categories}
+          handleSaveProduct={handleSaveProduct}
+          onClose={() => setShowProductModal(false)}
+          handleProductTitleChange={handleProductTitleChange}
+          password={password}
+        />
       )}
 
       {/* CATEGORY FORM MODAL */}

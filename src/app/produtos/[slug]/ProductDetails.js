@@ -38,61 +38,29 @@ function getWineType(categories) {
 }
 
 // --- Description Parser for Wine Products ---
-function parseWineDescription(description) {
-  if (!description) return { intro: '', specs: {}, details: {} };
-
-  const raw = description;
-
-  // Extract key: value pairs from structured description text
-  const extractField = (keys) => {
-    for (const key of keys) {
-      // Try "Key: value\n" pattern
-      const pattern = new RegExp(`${key}:\\s*([^\\n]+)`, 'i');
-      const m = raw.match(pattern);
-      if (m) return m[1].trim();
-    }
-    return '';
-  };
-
-  // Extract blocks that span multiple lines (e.g., "Harmonização:\nqueijo\ncarnes")
-  const extractBlock = (key) => {
-    const pattern = new RegExp(`${key}:[\\s\\n]*([\\s\\S]*?)(?:\\n[A-ZÁÉÍÓÚ][a-záéíóú]+:|$)`, 'i');
-    const m = raw.match(pattern);
-    if (m) return m[1].replace(/\n+/g, ' ').trim();
-    return '';
-  };
-
+function parseWineDescription(product) {
+  // Now relies exclusively on structured database fields
   const specs = {
-    uvas: extractField(['Uvas?', 'Casta', 'Variedade', 'Cepa']),
-    produtor: extractField(['Produtor', 'Vinícola', 'Winery']),
-    regiao: extractField(['Região', 'Regi.o', 'Appelation', 'DOC', 'AOC']),
-    teor: extractField(['Teor Alcoólico', 'Álcool', 'Alc\\.', 'Graduação']),
-    servico: extractField(['Temperatura de Serviço', 'Temperatura', 'Temp\\..*Serviço']),
-    safra: extractField(['Safra', 'Vintage', 'Colheita']),
+    uvas: product.uva,
+    produtor: product.produtor,
+    regiao: product.origem,
+    teor: product.teor_alcoolico,
+    servico: product.temperatura,
+    safra: product.safra,
+    enologo: product.enologo,
+    volume: product.volume,
+    potencial_guarda: product.potencial_guarda,
+    amadurecimento: product.amadurecimento
   };
 
   const details = {
-    vinificacao: extractBlock('Vinificação') || extractBlock('Vinificacao'),
-    maturacao: extractBlock('Maturação') || extractBlock('Maturacao') || extractBlock('Envelhecimento'),
-    aroma: extractBlock('Aroma') || extractBlock('Olfato'),
-    paladar: extractBlock('Paladar') || extractBlock('Gosto') || extractBlock('Sabor'),
-    harmonizacao: extractBlock('Harmonização') || extractBlock('Harmonizacao') || extractBlock('Maridagem'),
-    notas: extractBlock('Notas de Degustação') || extractBlock('Degustação'),
+    visual: product.visual,
+    olfativo: product.olfativo,
+    gustativo: product.gustativo,
+    harmonizacao: product.harmonizacao
   };
 
-  // Build clean intro: remove all structured lines, keep free-form paragraphs
-  let intro = raw
-    .replace(/[A-ZÁÉÍÓÚ][a-záéíóúç\s]+:\s*[^\n]+\n?/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-
-  // If intro is too short/empty, use the first sentence of the raw description
-  if (intro.length < 30) {
-    const firstSentence = raw.split(/[.!?]/)[0];
-    intro = firstSentence ? firstSentence.trim() + '.' : raw.substring(0, 300).trim();
-  }
-
-  return { intro, specs, details };
+  return { specs, details };
 }
 
 // --- Spec Card Component ---
@@ -253,7 +221,7 @@ export default function ProductDetails({ product, relatedProducts }) {
   }
 
   // Parse wine description
-  const wineData = isWine ? parseWineDescription(product.description) : null;
+  const wineData = isWine ? parseWineDescription(product) : null;
 
   return (
     <div className="page-wrapper" style={{ paddingBottom: '40px' }}>
@@ -370,6 +338,57 @@ export default function ProductDetails({ product, relatedProducts }) {
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>
                 Código (EAN): <code style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '2px 6px', color: 'var(--primary-hover)' }}>{product.sku}</code>
               </p>
+            )}
+
+            {/* WINE TOP DETAILS LIST */}
+            {isWine && wineData && (
+              <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {wineData.specs.produtor && (
+                  <div style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                      <i className="fa-solid fa-leaf"></i> Produtor
+                    </span>
+                    <span style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: '500' }}>{wineData.specs.produtor}</span>
+                  </div>
+                )}
+                {wineData.specs.regiao && (
+                  <div style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                      <i className="fa-solid fa-globe"></i> Origem
+                    </span>
+                    <span style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: '500' }}>{wineData.specs.regiao}</span>
+                  </div>
+                )}
+                {wineData.specs.uvas && (
+                  <div style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                      <i className="fa-solid fa-seedling"></i> Uvas
+                    </span>
+                    <span style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: '500' }}>{wineData.specs.uvas}</span>
+                  </div>
+                )}
+                {wineData.specs.enologo && (
+                  <div style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                      <i className="fa-solid fa-user-tie"></i> Enólogo
+                    </span>
+                    <span style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: '500' }}>{wineData.specs.enologo}</span>
+                  </div>
+                )}
+                
+                {/* Volume Badge */}
+                {wineData.specs.volume && (
+                  <div style={{ marginTop: '10px' }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      background: 'transparent', border: '1px solid var(--primary)',
+                      padding: '6px 14px', borderRadius: '99px', fontSize: '12px', color: 'var(--primary)'
+                    }}>
+                      <i className="fa-solid fa-wine-bottle"></i> {wineData.specs.volume}
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Wine Score Badges (large cards row) */}
@@ -553,9 +572,13 @@ export default function ProductDetails({ product, relatedProducts }) {
                 }}>
                   Sobre o Vinho
                 </h2>
-                <p style={{ fontSize: '15px', lineHeight: '1.8', color: 'var(--text-muted)' }}>
-                  {wineData.intro || 'Rótulo selecionado com critério pelos especialistas da Antenor & Filhos. Procedência garantida e qualidade certificada pelas principais revistas especializadas do mundo.'}
-                </p>
+                <div 
+                  className="html-description-content"
+                  style={{ fontSize: '15px', lineHeight: '1.8', color: 'var(--text-muted)' }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: product.description || 'Rótulo selecionado com critério pelos especialistas da Antenor & Filhos. Procedência garantida e qualidade certificada pelas principais revistas especializadas do mundo.'
+                  }}
+                />
               </div>
 
               {/* Ficha Técnica Grid */}
@@ -573,18 +596,16 @@ export default function ProductDetails({ product, relatedProducts }) {
                     Ficha Técnica
                   </h3>
                   <div className="wine-specs-grid">
-                    {countryBadge && (
-                      <SpecCard icon={countryBadge.flag} label="País" value={countryBadge.name} />
-                    )}
                     {wineType && (
                       <SpecCard icon="🍷" label="Tipo" value={wineType} />
                     )}
                     <SpecCard icon="🫧" label="Uvas" value={wineData.specs.uvas} />
-                    <SpecCard icon="🏭" label="Produtor" value={wineData.specs.produtor} />
-                    <SpecCard icon="📍" label="Região" value={wineData.specs.regiao} />
-                    <SpecCard icon="🌡️" label="Teor Alcoólico" value={wineData.specs.teor} />
-                    <SpecCard icon="❄️" label="Temperatura de Serviço" value={wineData.specs.servico} />
+                    <SpecCard icon="🌡️" label="Temp. de Serviço" value={wineData.specs.servico} />
                     <SpecCard icon="📅" label="Safra" value={wineData.specs.safra} />
+                    <SpecCard icon="⌛" label="Amadurecimento" value={wineData.specs.amadurecimento ? (wineData.specs.amadurecimento.length > 50 ? wineData.specs.amadurecimento.substring(0, 50) + '...' : wineData.specs.amadurecimento) : null} />
+                    <SpecCard icon="⏳" label="Potencial de Guarda" value={wineData.specs.potencial_guarda} />
+                    <SpecCard icon="🔥" label="Teor Alcoólico" value={wineData.specs.teor} />
+                    <SpecCard icon="🍾" label="Volume" value={wineData.specs.volume} />
                   </div>
                 </div>
               )}
@@ -603,9 +624,8 @@ export default function ProductDetails({ product, relatedProducts }) {
                     Ficha Técnica
                   </h3>
                   <div className="wine-specs-grid">
-                    {countryBadge && <SpecCard icon={countryBadge.flag} label="País" value={countryBadge.name} />}
                     {wineType && <SpecCard icon="🍷" label="Tipo" value={wineType} />}
-                    {product.peso && <SpecCard icon="📦" label="Volume" value={`${product.peso} ${product.unidade_peso || 'ml'}`} />}
+                    {wineData.specs.volume && <SpecCard icon="🍾" label="Volume" value={wineData.specs.volume} />}
                   </div>
                 </div>
               )}
@@ -624,12 +644,11 @@ export default function ProductDetails({ product, relatedProducts }) {
                 Notas de Degustação
               </h2>
 
-              <DetailBlock title="Vinificação" content={wineData.details.vinificacao} />
-              <DetailBlock title="Maturação & Envelhecimento" content={wineData.details.maturacao} />
-              <DetailBlock title="Aroma" content={wineData.details.aroma} />
-              <DetailBlock title="Paladar" content={wineData.details.paladar} />
+              <DetailBlock title="Amadurecimento" content={wineData.specs.amadurecimento} />
+              <DetailBlock title="Visual" content={wineData.details.visual} />
+              <DetailBlock title="Olfativo" content={wineData.details.olfativo} />
+              <DetailBlock title="Gustativo" content={wineData.details.gustativo} />
               <DetailBlock title="Harmonização" content={wineData.details.harmonizacao} />
-              <DetailBlock title="Notas de Degustação" content={wineData.details.notas} />
 
               {/* If no detail blocks parsed, show the raw description elegantly */}
               {!Object.values(wineData.details).some(v => v) && product.description && (
