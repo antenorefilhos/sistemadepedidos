@@ -165,7 +165,7 @@ export default function ProductEditor({
             {renderTabButton('geral', <i className="fa-solid fa-align-left"></i>, 'Informações', 'Nome, EAN e Descrição')}
             {renderTabButton('preco', <i className="fa-solid fa-tag"></i>, 'Preços & Pesos', 'Valores e dimensões')}
             {renderTabButton('midia', <i className="fa-regular fa-image"></i>, 'Mídia Visual', 'Fotos do produto')}
-            {productForm.type === 'adega_' && renderTabButton('vinho', <i className="fa-solid fa-wine-glass"></i>, 'Ficha Técnica', 'Atributos de Vinhos')}
+            {productForm.type === 'adega' && renderTabButton('vinho', <i className="fa-solid fa-wine-glass"></i>, 'Ficha Técnica', 'Atributos de Vinhos')}
             {renderTabButton('categoria', <i className="fa-solid fa-layer-group"></i>, 'Classificação', 'Setores e categorias')}
             {renderTabButton('seo', <i className="fa-solid fa-globe"></i>, 'Visibilidade', 'Status e links diretos')}
           </div>

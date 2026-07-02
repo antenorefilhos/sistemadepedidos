@@ -61,9 +61,31 @@ export async function POST(request) {
         // Regra de Negócio de Preço:
         // vl_produto_normal = Preço original
         // vl_produto = Preço com desconto (se houver)
-        const precoNormal = parseFloat(sp.vl_produto_normal || 0);
-        const precoAtual = parseFloat(sp.vl_produto || 0);
+        let precoNormal = parseFloat(sp.vl_produto_normal || 0);
+        let precoAtual = parseFloat(sp.vl_produto || 0);
         const estoque = parseFloat(sp.qtd_produto || 0);
+        
+        let peso = null;
+        let unidadePeso = null;
+
+        // Regra de Produtos Fracionados (Ex: Carnes)
+        // Se for fracionado e a embalagem base for KG, o preço da "peça" é o preço do quilo multiplicado pelo fator de fracionamento.
+        if (sp.fracionado && sp.emb === 'KG' && sp.fracionamento) {
+          const fator = parseFloat(sp.fracionamento);
+          if (fator > 0) {
+            precoNormal = precoNormal * fator;
+            precoAtual = precoAtual * fator;
+            
+            // Vamos formatar o peso para salvar no banco de forma legível
+            if (fator < 1) {
+              peso = fator * 1000;
+              unidadePeso = 'g';
+            } else {
+              peso = fator;
+              unidadePeso = 'kg';
+            }
+          }
+        }
 
         let precoFinal = precoNormal;
         let precoPromocional = null;
@@ -74,39 +96,45 @@ export async function POST(request) {
           precoFinal = precoAtual > 0 ? precoAtual : precoNormal;
         }
 
-        updates.push({
+        let updateObj = {
           id: localProd.id,
           preco: precoFinal,
           // Tentar atualizar estoque e preço promocional (se as colunas existirem no banco)
           estoque: estoque,
           preco_promocional: precoPromocional
-        });
+        };
+
+        if (peso !== null && unidadePeso !== null) {
+          updateObj.peso = peso.toString();
+          updateObj.unidade_peso = unidadePeso;
+        }
+
+        updates.push(updateObj);
       }
     });
 
     // 4. Salvar no Supabase (Atualização em lote)
-    // O Supabase upsert permite atualizar múltiplos registros se a chave primária for fornecida.
     if (updates.length > 0) {
-      // O upsert falhará se as colunas estoque e preco_promocional não existirem.
-      // O usuário precisa ter rodado o SQL do plano de implementação.
-      const { error: upsertError } = await supabase
-        .from('products')
-        .upsert(updates, { onConflict: 'id' });
-        
-      if (upsertError) {
-        console.error("Erro no upsert:", upsertError);
-        // Fallback: se der erro (ex: coluna não existe), atualiza apenas o preço um por um
-        if (upsertError.message.includes('column') && upsertError.message.includes('does not exist')) {
-           for (const up of updates) {
-             await supabase.from('products').update({ preco: up.preco }).eq('id', up.id);
-             updatedCount++;
-           }
-        } else {
-          throw upsertError;
-        }
-      } else {
-        updatedCount = updates.length;
+      // Usa Promise.all com blocos de tamanho razoável para evitar travamentos
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < updates.length; i += BATCH_SIZE) {
+        const batch = updates.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(up => {
+            let updatePayload = {
+              preco: up.preco,
+              estoque: up.estoque,
+              preco_promocional: up.preco_promocional
+            };
+            if (up.peso && up.unidade_peso) {
+              updatePayload.peso = up.peso;
+              updatePayload.unidade_peso = up.unidade_peso;
+            }
+            return supabase.from('products').update(updatePayload).eq('id', up.id);
+          })
+        );
       }
+      updatedCount = updates.length;
     }
 
     return NextResponse.json({ 

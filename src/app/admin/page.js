@@ -284,7 +284,21 @@ export default function AdminDashboard() {
         image_url: prod.image_url || '',
         type: prod.type || 'carnes_',
         pontuacao: prod.pontuacao || '',
-        categoryIds: prod.categories ? prod.categories.map(c => c.id) : []
+        categoryIds: prod.categories ? prod.categories.map(c => c.id) : [],
+        uva: prod.uva || '',
+        safra: prod.safra || '',
+        origem: prod.origem || '',
+        produtor: prod.produtor || '',
+        teor_alcoolico: prod.teor_alcoolico || '',
+        temperatura: prod.temperatura || '',
+        enologo: prod.enologo || '',
+        volume: prod.volume || '',
+        amadurecimento: prod.amadurecimento || '',
+        potencial_guarda: prod.potencial_guarda || '',
+        visual: prod.visual || '',
+        olfativo: prod.olfativo || '',
+        gustativo: prod.gustativo || '',
+        harmonizacao: prod.harmonizacao || ''
       });
     } else {
       setProductForm({
@@ -300,22 +314,32 @@ export default function AdminDashboard() {
         image_url: '',
         type: 'carnes_',
         pontuacao: '',
-        categoryIds: []
+        categoryIds: [],
+        uva: '',
+        safra: '',
+        origem: '',
+        produtor: '',
+        teor_alcoolico: '',
+        temperatura: '',
+        enologo: '',
+        volume: '',
+        amadurecimento: '',
+        potencial_guarda: '',
+        visual: '',
+        olfativo: '',
+        gustativo: '',
+        harmonizacao: ''
       });
     }
     setShowProductModal(true);
   };
 
   const handleProductTitleChange = (val) => {
-    if (!productForm.id) {
-      const slugVal = val.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      setProductForm({ ...productForm, title: val, slug: slugVal });
-    } else {
-      setProductForm({ ...productForm, title: val });
-    }
+    const slugVal = val.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    setProductForm({ ...productForm, title: val, slug: slugVal });
   };
 
   const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';

@@ -1,14 +1,20 @@
-import { queryOne, queryAll } from '@/lib/db';
+import { getSupabase } from '@/lib/pgDb';
 import { notFound } from 'next/navigation';
 import ProductDetails from './ProductDetails';
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   
-  const product = await queryOne(
-    `SELECT title, description, image_url FROM products WHERE slug = ? AND status = 'on'`,
-    [slug]
-  );
+  const supabase = getSupabase();
+  const encodedSlug = encodeURIComponent(slug).toLowerCase();
+  
+  const { data: product } = await supabase
+    .from('products')
+    .select('title, description, image_url')
+    .or(`slug.eq.${slug},slug.eq.${encodedSlug}`)
+    .eq('status', 'on')
+    .limit(1)
+    .single();
   
   if (!product) {
     return {
@@ -32,90 +38,57 @@ export default async function ProductDetailPage({ params }) {
   const { slug } = await params;
   
   // 1. Fetch main product details with joined categories
-  const p = await queryOne(
-    `SELECT p.*, GROUP_CONCAT(c.id || '||' || c.slug || '||' || c.name || '||' || c.type, ';;') as categories_str
-     FROM products p
-     LEFT JOIN product_categories pc ON p.id = pc.product_id
-     LEFT JOIN categories c ON pc.category_id = c.id
-     WHERE p.slug = ? AND p.status = 'on'
-     GROUP BY p.id`,
-    [slug]
-  );
+  const supabase = getSupabase();
+  const encodedSlug = encodeURIComponent(slug).toLowerCase();
+
+  const { data: p } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_categories (
+        categories ( id, name, slug, type )
+      )
+    `)
+    .or(`slug.eq.${slug},slug.eq.${encodedSlug}`)
+    .eq('status', 'on')
+    .limit(1)
+    .single();
 
   if (!p) {
     notFound();
   }
 
-  // Parse categories string safely
-  const categories = [];
-  if (p.categories_str) {
-    const uniqueCats = new Set();
-    p.categories_str.split(';;').forEach(catStr => {
-      if (catStr && !uniqueCats.has(catStr)) {
-        uniqueCats.add(catStr);
-        const [id, cSlug, name, catType] = catStr.split('||');
-        if (cSlug && name) {
-          categories.push({ id: Number(id), slug: cSlug, name, type: catType });
-        }
-      }
-    });
-  }
+  // Parse categories safely
+  const categories = (p.product_categories || [])
+    .map(pc => pc.categories)
+    .filter(Boolean);
 
   const formattedProduct = {
-    id: p.id,
-    title: p.title,
-    slug: p.slug,
-    description: p.description,
-    sku: p.sku,
-    peso: p.peso,
-    unidade_peso: p.unidade_peso,
-    preco: p.preco,
-    image_url: p.image_url,
-    type: p.type,
-    pontuacao: p.pontuacao,
+    ...p,
     categories
   };
 
-  // 2. Fetch related products of the same type and categories if possible
-  // To keep it fast, we fetch other active products of the same type, excluding current
-  let related = await queryAll(
-    `SELECT p.*, GROUP_CONCAT(c.id || '||' || c.slug || '||' || c.name || '||' || c.type, ';;') as categories_str
-     FROM products p
-     LEFT JOIN product_categories pc ON p.id = pc.product_id
-     LEFT JOIN categories c ON pc.category_id = c.id
-     WHERE p.type = ? AND p.id != ? AND p.status = 'on'
-     GROUP BY p.id
-     ORDER BY RANDOM()
-     LIMIT 4`,
-    [p.type, p.id]
-  );
+  // 2. Fetch related products of the same type
+  const { data: related } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_categories (
+        categories ( id, name, slug, type )
+      )
+    `)
+    .eq('type', p.type)
+    .neq('id', p.id)
+    .eq('status', 'on')
+    .limit(4);
 
-  const formattedRelated = related.map(rp => {
-    const rCats = [];
-    if (rp.categories_str) {
-      const uniqueCats = new Set();
-      rp.categories_str.split(';;').forEach(catStr => {
-        if (catStr && !uniqueCats.has(catStr)) {
-          uniqueCats.add(catStr);
-          const [id, cSlug, name, catType] = catStr.split('||');
-          if (cSlug && name) {
-            rCats.push({ id: Number(id), slug: cSlug, name, type: catType });
-          }
-        }
-      });
-    }
+  const formattedRelated = (related || []).map(rp => {
+    const rCats = (rp.product_categories || [])
+      .map(pc => pc.categories)
+      .filter(Boolean);
+    
     return {
-      id: rp.id,
-      title: rp.title,
-      slug: rp.slug,
-      description: rp.description,
-      sku: rp.sku,
-      peso: rp.peso,
-      unidade_peso: rp.unidade_peso,
-      preco: rp.preco,
-      image_url: rp.image_url,
-      type: rp.type,
-      pontuacao: rp.pontuacao,
+      ...rp,
       categories: rCats
     };
   });

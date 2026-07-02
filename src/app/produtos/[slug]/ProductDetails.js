@@ -223,6 +223,19 @@ export default function ProductDetails({ product, relatedProducts }) {
   // Parse wine description
   const wineData = isWine ? parseWineDescription(product) : null;
 
+  // Calculate Price per KG for meats
+  let precoPorKg = null;
+  if (!isWine && product.preco && product.peso) {
+    const pesoNum = parseFloat(product.peso);
+    if (!isNaN(pesoNum) && pesoNum > 0) {
+      if (product.unidade_peso?.toLowerCase() === 'g') {
+        precoPorKg = (product.preco / pesoNum) * 1000;
+      } else if (product.unidade_peso?.toLowerCase() === 'kg') {
+        precoPorKg = product.preco / pesoNum;
+      }
+    }
+  }
+
   return (
     <div className="page-wrapper" style={{ paddingBottom: '40px' }}>
       <div className="container">
@@ -432,11 +445,29 @@ export default function ProductDetails({ product, relatedProducts }) {
                   'Preço sob consulta'
                 )}
               </span>
-              {product.peso && (
+              {precoPorKg && (
+                <span style={{ fontSize: '14px', color: 'var(--text-muted)', marginLeft: '12px', fontWeight: '500' }}>
+                  (R$ {precoPorKg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / kg)
+                </span>
+              )}
+              {product.peso && !isWine ? (
+                <div style={{ marginTop: '12px' }}>
+                  <span style={{ 
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    backgroundColor: 'rgba(171, 144, 112, 0.15)',
+                    border: '1px solid rgba(171, 144, 112, 0.3)',
+                    color: 'var(--primary)', padding: '6px 12px',
+                    borderRadius: '6px', fontSize: '12px', fontWeight: '500'
+                  }}>
+                    <i className="fa-solid fa-scale-balanced"></i>
+                    Peça com peso aproximado de {product.peso} {product.unidade_peso}
+                  </span>
+                </div>
+              ) : product.peso ? (
                 <span style={{ fontSize: '14px', color: 'var(--text-muted)', marginLeft: '10px' }}>
                   ({product.peso} {product.unidade_peso})
                 </span>
-              )}
+              ) : null}
             </div>
 
             {/* Description (non-wine only) */}
@@ -445,9 +476,12 @@ export default function ProductDetails({ product, relatedProducts }) {
                 <h3 style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Descrição Detalhada
                 </h3>
-                <p style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-muted)' }}>
-                  {product.description || 'Este item de alta qualidade foi criteriosamente selecionado pelos especialistas da Antenor & Filhos para garantir a melhor experiência gastronômica da Serra Imperial. Procedência garantida.'}
-                </p>
+                <div 
+                  style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-muted)' }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: product.description || 'Este item de alta qualidade foi criteriosamente selecionado pelos especialistas da Antenor & Filhos para garantir a melhor experiência gastronômica da Serra Imperial. Procedência garantida.'
+                  }}
+                />
               </div>
             )}
 
@@ -650,15 +684,7 @@ export default function ProductDetails({ product, relatedProducts }) {
               <DetailBlock title="Gustativo" content={wineData.details.gustativo} />
               <DetailBlock title="Harmonização" content={wineData.details.harmonizacao} />
 
-              {/* If no detail blocks parsed, show the raw description elegantly */}
-              {!Object.values(wineData.details).some(v => v) && product.description && (
-                <div>
-                  <div 
-                    style={{ fontSize: '14px', lineHeight: '1.8', color: 'var(--text-muted)' }}
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                  />
-                </div>
-              )}
+              {/* Empty state or specific notes like Amadurecimento are handled above */}
 
               {/* Scores in right column (detailed) */}
               {parsedRatings.length > 0 && (
