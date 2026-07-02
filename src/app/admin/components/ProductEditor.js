@@ -2,9 +2,8 @@
 
 import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+const Editor = dynamic(() => import('react-simple-wysiwyg'), { ssr: false });
 
 export default function ProductEditor({ 
   productForm, 
@@ -208,26 +207,14 @@ export default function ProductEditor({
                   <div className="form-group">
                     <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Descrição / Notas de Degustação</label>
                     <style>{`
-                      .ql-toolbar.ql-snow { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px 8px 0 0; }
-                      .ql-container.ql-snow { border: 1px solid rgba(255,255,255,0.1); border-radius: 0 0 8px 8px; border-top: none; }
-                      .ql-editor { min-height: 160px; font-family: var(--font-sans); font-size: 15px; }
-                      .ql-snow .ql-stroke { stroke: var(--text-primary); }
-                      .ql-snow .ql-fill, .ql-snow .ql-stroke.ql-fill { fill: var(--text-primary); }
-                      .ql-snow .ql-picker { color: var(--text-primary); }
-                      .ql-snow .ql-tooltip { background-color: var(--background); border: 1px solid var(--border-color); color: var(--text-primary); }
-                      .ql-snow .ql-tooltip input[type=text] { background-color: var(--background); border: 1px solid var(--border-color); color: var(--text-primary); }
+                      .rsw-editor { min-height: 160px; font-family: var(--font-sans); font-size: 15px; border: 1px solid rgba(255,255,255,0.1) !important; color: white; background-color: rgba(255,255,255,0.02) !important; }
+                      .rsw-toolbar { border-bottom: 1px solid rgba(255,255,255,0.1) !important; background-color: rgba(0,0,0,0.2) !important; }
+                      .rsw-btn { color: white !important; }
+                      .rsw-btn:hover { background-color: rgba(255,255,255,0.1) !important; }
                     `}</style>
-                    <ReactQuill 
-                      theme="snow"
+                    <Editor 
                       value={productForm.description || ''} 
-                      onChange={(content) => setProductForm({ ...productForm, description: content })}
-                      modules={{
-                        toolbar: [
-                          ['bold', 'italic', 'underline', 'strike'],
-                          [{ 'list': 'bullet' }],
-                          ['clean']
-                        ]
-                      }}
+                      onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                     />
                   </div>
                 </div>
