@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function ProductEditor({ 
   productForm, 
@@ -203,12 +207,27 @@ export default function ProductEditor({
 
                   <div className="form-group">
                     <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Descrição / Notas de Degustação</label>
-                    <textarea 
-                      placeholder="Conte a história do produto, modo de preparo ou harmonização..." 
-                      className="form-control"
-                      style={{ minHeight: '160px', resize: 'vertical', padding: '16px' }}
-                      value={productForm.description}
-                      onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                    <style>{`
+                      .ql-toolbar.ql-snow { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px 8px 0 0; }
+                      .ql-container.ql-snow { border: 1px solid rgba(255,255,255,0.1); border-radius: 0 0 8px 8px; border-top: none; }
+                      .ql-editor { min-height: 160px; font-family: var(--font-sans); font-size: 15px; }
+                      .ql-snow .ql-stroke { stroke: var(--text-primary); }
+                      .ql-snow .ql-fill, .ql-snow .ql-stroke.ql-fill { fill: var(--text-primary); }
+                      .ql-snow .ql-picker { color: var(--text-primary); }
+                      .ql-snow .ql-tooltip { background-color: var(--background); border: 1px solid var(--border-color); color: var(--text-primary); }
+                      .ql-snow .ql-tooltip input[type=text] { background-color: var(--background); border: 1px solid var(--border-color); color: var(--text-primary); }
+                    `}</style>
+                    <ReactQuill 
+                      theme="snow"
+                      value={productForm.description || ''} 
+                      onChange={(content) => setProductForm({ ...productForm, description: content })}
+                      modules={{
+                        toolbar: [
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{ 'list': 'bullet' }],
+                          ['clean']
+                        ]
+                      }}
                     />
                   </div>
                 </div>
