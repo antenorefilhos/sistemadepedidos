@@ -13,6 +13,7 @@ export default function CartPage() {
   const [activeSeller, setActiveSeller] = useState(null);
 
   // Form Fields
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     whatsapp: '',
@@ -111,9 +112,10 @@ export default function CartPage() {
     if (cartIds.length === 0) return;
 
     if (!formData.name || !formData.whatsapp) {
-      alert('Nome e WhatsApp são obrigatórios!');
+      setFormError('Preencha seu nome e WhatsApp para continuar.');
       return;
     }
+    setFormError('');
 
     setSubmitting(true);
 
@@ -192,11 +194,11 @@ export default function CartPage() {
         // 6. Navigate current page to /obrigado
         router.push('/obrigado');
       } else {
-        alert('Erro ao enviar o orçamento. Por favor, tente novamente.');
+        setFormError('Não foi possível enviar seu orçamento. Verifique sua conexão e tente novamente.');
       }
     } catch (err) {
       console.error('Error submitting checkout:', err);
-      alert('Houve um erro técnico. Por favor, tente novamente.');
+      setFormError('Ocorreu um erro inesperado. Tente novamente em alguns instantes.');
     } finally {
       setSubmitting(false);
     }
@@ -205,7 +207,7 @@ export default function CartPage() {
   if (loading) {
     return (
       <div className="container" style={{ padding: '80px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
-        <h2>Carregando seu orçamento...</h2>
+        <h2>Carregando sua lista...</h2>
       </div>
     );
   }
@@ -214,10 +216,10 @@ export default function CartPage() {
     return (
       <div className="container" style={{ padding: '80px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
         <span style={{ fontSize: '48px', display: 'block', marginBottom: '20px' }}>🛒</span>
-        <h2 style={{ color: 'white', marginBottom: '15px' }}>Seu Orçamento está Vazio</h2>
-        <p style={{ marginBottom: '30px' }}>Nenhum produto foi adicionado à sua lista.</p>
+        <h2 style={{ color: 'white', marginBottom: '15px' }}>Sua lista está vazia</h2>
+        <p style={{ marginBottom: '30px' }}>Adicione produtos da boutique ou adega para montar seu orçamento.</p>
         <Link href="/boutique" className="btn btn-primary">
-          Ver Boutique & Adega
+          Explorar Boutique & Adega
         </Link>
       </div>
     );
@@ -226,7 +228,7 @@ export default function CartPage() {
   return (
     <div className="page-wrapper" style={{ paddingBottom: '40px' }}>
       <div className="container">
-        <h1 style={{ fontSize: '32px', color: 'white', marginBottom: '30px' }}>Conferência de Orçamento</h1>
+        <h1 style={{ fontSize: '32px', color: 'white', marginBottom: '30px' }}>Revise seu Orçamento</h1>
         
         <div className="checkout-layout">
           
@@ -311,7 +313,7 @@ export default function CartPage() {
           <aside>
             <div className="glass" style={{ padding: '30px', borderRadius: 'var(--radius-lg)' }}>
               <h3 style={{ color: 'white', fontSize: '18px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-                Dados para Envio
+               Suas Informações de Contato
               </h3>
               
               <form onSubmit={handleSubmit}>
@@ -391,13 +393,26 @@ export default function CartPage() {
                   </div>
                 )}
 
+                {formError && (
+                  <p style={{
+                    color: 'var(--danger)',
+                    fontSize: 'var(--text-sm)',
+                    marginBottom: 'var(--space-4)',
+                    padding: 'var(--space-3) var(--space-4)',
+                    background: 'rgba(176, 0, 32, 0.08)',
+                    border: '1px solid rgba(176, 0, 32, 0.3)',
+                  }}>
+                    {formError}
+                  </p>
+                )}
+
                 <button 
                   type="submit" 
                   disabled={submitting}
                   className="btn btn-primary" 
                   style={{ width: '100%', padding: '14px', fontSize: '15px' }}
                 >
-                  {submitting ? 'Salvando Pedido...' : 'Enviar Orçamento via WhatsApp'}
+                  {submitting ? 'Enviando orçamento...' : 'Solicitar Orçamento via WhatsApp'}
                 </button>
               </form>
             </div>

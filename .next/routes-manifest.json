@@ -75,6 +75,30 @@
       "namedRegex": "^/api/admin/categories(?:/)?$"
     },
     {
+      "page": "/api/admin/hermes",
+      "regex": "^/api/admin/hermes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/hermes(?:/)?$"
+    },
+    {
+      "page": "/api/admin/hermes/config",
+      "regex": "^/api/admin/hermes/config(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/hermes/config(?:/)?$"
+    },
+    {
+      "page": "/api/admin/hermes/messages",
+      "regex": "^/api/admin/hermes/messages(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/hermes/messages(?:/)?$"
+    },
+    {
+      "page": "/api/admin/hermes/sessions",
+      "regex": "^/api/admin/hermes/sessions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/hermes/sessions(?:/)?$"
+    },
+    {
       "page": "/api/admin/import-catalog",
       "regex": "^/api/admin/import\\-catalog(?:/)?$",
       "routeKeys": {},
@@ -103,6 +127,18 @@
       "regex": "^/api/admin/sellers(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/admin/sellers(?:/)?$"
+    },
+    {
+      "page": "/api/admin/solidcon",
+      "regex": "^/api/admin/solidcon(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/solidcon(?:/)?$"
+    },
+    {
+      "page": "/api/admin/upload",
+      "regex": "^/api/admin/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/upload(?:/)?$"
     },
     {
       "page": "/api/categories",
@@ -135,6 +171,12 @@
       "namedRegex": "^/api/sync(?:/)?$"
     },
     {
+      "page": "/apple-icon.png",
+      "regex": "^/apple\\-icon\\.png(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/apple\\-icon\\.png(?:/)?$"
+    },
+    {
       "page": "/boutique",
       "regex": "^/boutique(?:/)?$",
       "routeKeys": {},
@@ -165,16 +207,22 @@
       "namedRegex": "^/entregas(?:/)?$"
     },
     {
-      "page": "/favicon.ico",
-      "regex": "^/favicon\\.ico(?:/)?$",
+      "page": "/icon.png",
+      "regex": "^/icon\\.png(?:/)?$",
       "routeKeys": {},
-      "namedRegex": "^/favicon\\.ico(?:/)?$"
+      "namedRegex": "^/icon\\.png(?:/)?$"
     },
     {
       "page": "/obrigado",
       "regex": "^/obrigado(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/obrigado(?:/)?$"
+    },
+    {
+      "page": "/opengraph-image.jpg",
+      "regex": "^/opengraph\\-image\\.jpg(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/opengraph\\-image\\.jpg(?:/)?$"
     },
     {
       "page": "/politica-de-privacidade-antenor-e-filhos",

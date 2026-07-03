@@ -25,7 +25,7 @@ export default function ObrigadoPage() {
           fontFamily: 'var(--font-serif)',
           marginBottom: '20px'
         }}>
-          Orçamento Enviado!
+          Pedido Recebido com Sucesso!
         </h1>
         <p style={{
           color: 'var(--text-secondary)',
@@ -33,15 +33,16 @@ export default function ObrigadoPage() {
           lineHeight: '1.6',
           marginBottom: '35px'
         }}>
-          Sua lista foi registrada com sucesso no nosso sistema e você foi redirecionado para o WhatsApp para atendimento. Nossa equipe irá conferir a disponibilidade dos itens em estoque e entrará em contato para finalizar sua compra.
+          Sua lista foi registrada e o WhatsApp foi aberto para finalizar o atendimento.
+          Nossa equipe irá confirmar a disponibilidade e os preços antes de concluir a compra.
         </p>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <Link href="/boutique" className="btn btn-primary" style={{ padding: '12px', fontWeight: 'bold' }}>
-            Voltar para a Boutique
+            Continuar Comprando
           </Link>
           <Link href="/" className="btn btn-secondary" style={{ padding: '12px' }}>
-            Ir para a Página Inicial
+            Ir para o Início
           </Link>
         </div>
       </div>

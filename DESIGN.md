@@ -14,16 +14,44 @@ typography:
   display:
     fontFamily: "FuturaLT, Inter, sans-serif"
     fontWeight: 300
-    letterSpacing: "0.05em"
+    letterSpacing: "var(--ls-wide)"
+    lineHeight: "var(--lh-tight)"
+    fontSize: "var(--text-display)"
   title:
     fontFamily: "FuturaLT, Inter, sans-serif"
     fontWeight: 600
+    letterSpacing: "var(--ls-wide)"
+    lineHeight: "var(--lh-snug)"
   body:
     fontFamily: "FuturaLT, Inter, sans-serif"
     fontWeight: 400
+    fontSize: "var(--text-base)"
+    lineHeight: "var(--lh-normal)"
+    letterSpacing: "var(--ls-normal)"
   script:
     fontFamily: "Blesing, cursive, serif"
     fontWeight: 400
+    lineHeight: 1.1
+typeScale:
+  xs: "0.75rem"       # 12px — captions, badges
+  sm: "0.875rem"      # 14px — metadata, labels, nav
+  base: "1rem"        # 16px — body copy
+  lg: "1.25rem"       # 20px — lead, card titles
+  xl: "1.5625rem"     # 25px — sub-headings
+  2xl: "1.953rem"     # 31px — section headings (h2)
+  3xl: "2.441rem"     # 39px — page headings (h1)
+  display: "clamp(2.441rem, 5vw + 1rem, 4.25rem)"    # fluid hero h1
+  display-sm: "clamp(1.953rem, 3.5vw + 0.5rem, 2.8rem)" # fluid section h2
+lineHeights:
+  tight: 1.1    # display headings
+  snug: 1.25    # card titles
+  normal: 1.65  # body (dark-bg compensation +0.05)
+  relaxed: 1.8  # long-form passages
+letterSpacing:
+  tight: "-0.02em"  # large display
+  normal: "0.01em"  # body dark-bg
+  wide: "0.05em"    # headings, uppercase
+  wider: "0.10em"   # buttons, eyebrow
 rounded:
   sm: "0px"
   md: "0px"

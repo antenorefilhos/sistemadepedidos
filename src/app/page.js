@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import styles from './page.module.css';
 
 export const metadata = {
   title: "Antenor e Filhos | Boutique de Carnes Nobres, Adega e Restaurante em Itaipava",
@@ -11,178 +12,121 @@ export const metadata = {
 export default function Home() {
   return (
     <div>
-      <section style={{
-        position: 'relative',
-        height: '100vh',
-        backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.45), rgba(11, 12, 14, 1)), url("/images/hero.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '0 20px'
-      }}>
-        <div style={{ maxWidth: '800px', zIndex: 2 }}>
-          <span style={{
-            color: 'var(--primary)',
-            textTransform: 'uppercase',
-            fontSize: '13px',
-            fontWeight: '600',
-            letterSpacing: '0.2em',
-            display: 'block',
-            marginBottom: '15px'
-          }}>
+      {/* ── Hero ─────────────────────────────────────────────────── */}
+      <section className={styles.hero}>
+        <div className={styles.heroContent}>
+          <span className={styles.heroEyebrow}>
             O CORAÇÃO DA SERRA FLUMINENSE
           </span>
-          <h1 style={{
-            fontSize: 'clamp(40px, 6vw, 68px)',
-            fontFamily: 'var(--font-serif)',
-            color: 'white',
-            lineHeight: '1.1',
-            marginBottom: '20px',
-            textShadow: '0 4px 10px rgba(0,0,0,0.5)'
-          }}>
+          <h1 className={styles.heroTitle}>
             O Padrão Ouro em Carnes Nobres e Vinhos
           </h1>
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: 'clamp(16px, 2.5vw, 19px)',
-            marginBottom: '35px',
-            lineHeight: '1.6',
-            maxWidth: '600px',
-            margin: '0 auto 35px auto'
-          }}>
+          <p className={styles.heroBody}>
             Da seleção rigorosa de cortes exclusivos à nossa adega premiada. Viva uma experiência sensorial inesquecível em Itaipava.
           </p>
-          <div className="hero-buttons-container">
-            <Link href="/boutique" className="btn btn-primary hero-btn">
+          <div className={styles.heroButtons}>
+            <Link href="/boutique" className="btn btn-primary">
               Fazer um Pedido
             </Link>
-            <a href="#operation" className="btn btn-secondary hero-btn">
+            <a href="#operation" className="btn btn-secondary">
               Conhecer a Casa
             </a>
           </div>
         </div>
       </section>
 
-      {/* Corporate Info / Business Areas */}
+      {/* ── Frentes de Excelência ────────────────────────────────── */}
       <section id="operation" className="section" style={{ backgroundColor: 'var(--bg-main)', position: 'relative' }}>
         <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 60px auto' }}>
-            <h2 style={{ fontSize: '36px', color: 'white', marginBottom: '20px' }}>
-              Nossas Frentes de Excelência
-            </h2>
-            <div style={{ width: '60px', height: '3px', backgroundColor: 'var(--primary)', margin: '0 auto 20px auto' }}></div>
+          <div className={styles.sectionHeader}>
+            <h2>Nossas Frentes de Excelência</h2>
+            <div className={styles.sectionDivider} />
             <p>
               Três experiências distintas, guiadas por um único princípio: qualidade inegociável. Descubra nossas especialidades em Itaipava.
             </p>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '30px'
-          }}>
-            {/* Area 1: Carnes */}
-            <div className="glass operation-card">
-              <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Boutique de Carnes</h3>
-              <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
+          <div className={styles.operationGrid}>
+            {/* Carnes */}
+            <div className={`glass ${styles.operationCard}`}>
+              <h3 className={styles.operationCardTitle}>Boutique de Carnes</h3>
+              <p className={styles.operationCardBody}>
                 A seleção definitiva para os paladares mais exigentes. Cortes premium britânicos, marmorização impecável do Wagyu e exóticas exclusivas.
               </p>
-              <Link href="/boutique" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <Link href="/boutique" className={styles.operationCardLink}>
                 Fazer Pedido de Carnes &rarr;
               </Link>
             </div>
 
-            {/* Area 2: Adega */}
-            <div className="glass operation-card">
-              <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Adega & Delicatessen</h3>
-              <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
+            {/* Adega */}
+            <div className={`glass ${styles.operationCard}`}>
+              <h3 className={styles.operationCardTitle}>Adega &amp; Delicatessen</h3>
+              <p className={styles.operationCardBody}>
                 O casamento perfeito para a sua carne. Rótulos garimpados das melhores safras mundiais, harmonizando perfeitamente com nossos queijos e antepastos finos.
               </p>
-              <Link href="/adega" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <Link href="/adega" className={styles.operationCardLink}>
                 Fazer Pedido de Vinhos &rarr;
               </Link>
             </div>
 
-            {/* Area 3: Restaurante */}
-            <div className="glass operation-card">
-              <h3 style={{ fontSize: '22px', color: 'white', marginBottom: '15px' }}>Restaurante & Brasa</h3>
-              <p style={{ fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
+            {/* Restaurante */}
+            <div className={`glass ${styles.operationCard}`}>
+              <h3 className={styles.operationCardTitle}>Restaurante &amp; Brasa</h3>
+              <p className={styles.operationCardBody}>
                 O domínio do fogo. Permita que nossos mestres churrasqueiros transformem nossos cortes exclusivos em obras-primas grelhadas, servidas com excelência.
               </p>
-              <a href="https://wa.me/552422221482?text=Gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-              <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)' }}></i> Reservar uma Mesa &rarr;
+              <a
+                href="https://wa.me/552422221482?text=Gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.operationCardLink}
+              >
+                <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)' }}></i>
+                {' '}Reservar uma Mesa &rarr;
               </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Local Store Map and Address Banner */}
-      <section className="section" style={{
-        backgroundImage: 'linear-gradient(rgba(11, 12, 14, 0.95), rgba(11, 12, 14, 0.95)), url("/images/hero.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        borderTop: '1px solid var(--border-color)',
-        borderBottom: '1px solid var(--border-color)'
-      }}>
-        <div className="container" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '50px',
-          alignItems: 'center'
-        }}>
+      {/* ── Localização ──────────────────────────────────────────── */}
+      <section className={`section ${styles.locationSection}`}>
+        <div className={`container ${styles.locationGrid}`}>
           <div>
-            <h2 style={{ fontSize: '32px', color: 'white', marginBottom: '20px', fontFamily: 'var(--font-serif)' }}>
+            <h2 className={styles.locationTitle}>
               Visite nossa Loja Física
             </h2>
-            <p style={{ marginBottom: '25px', fontSize: '15px' }}>
+            <p className={styles.locationBody}>
               Estamos localizados no coração de Itaipava, em Petrópolis. Venha conhecer nossa boutique de carnes, escolher seus vinhos direto na adega e desfrutar do nosso espaço gourmet de restaurante.
             </p>
-            <div style={{ marginBottom: '15px' }}>
-              <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '5px' }}>Endereço:</h4>
-              <p style={{ fontSize: '14px' }}>Estrada União Indústria, 12273 - Itaipava, Petrópolis - RJ</p>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Em frente ao Armazém do Grão)</p>
+            <div className={styles.locationInfoGroup}>
+              <h4 className={styles.locationInfoLabel}>Endereço</h4>
+              <p className={styles.locationInfoText}>Estrada União Indústria, 12273 - Itaipava, Petrópolis - RJ</p>
+              <p className={styles.locationInfoMuted}>(Em frente ao Armazém do Grão)</p>
             </div>
-            <div>
-              <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '5px' }}>Telefone / WhatsApp:</h4>
-              <p style={{ fontSize: '14px' }}>
-                <i className="fa-solid fa-phone" style={{ color: 'var(--primary)', marginRight: '6px' }}></i> Fixo: (24) 2222-1482 | <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)', marginRight: '4px' }}></i> WhatsApp: (24) 98865-0462
+            <div className={styles.locationInfoGroup}>
+              <h4 className={styles.locationInfoLabel}>Telefone / WhatsApp</h4>
+              <p className={styles.locationInfoText}>
+                <i className="fa-solid fa-phone" style={{ color: 'var(--primary)', marginRight: '6px' }}></i>
+                Fixo: (24) 2222-1482
+                {' | '}
+                <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)', marginRight: '4px' }}></i>
+                WhatsApp: (24) 98865-0462
               </p>
             </div>
           </div>
-          <div className="glass" style={{
-            height: '350px',
-            borderRadius: 'var(--radius-lg)',
-            overflow: 'hidden'
-          }}>
-            {/* Simple Leaflet/Google Maps iframe representation placeholder since we don't have active API key, rendering a stylized map block */}
-            <div style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundImage: 'linear-gradient(rgba(11, 12, 14, 0.75), rgba(11, 12, 14, 0.85)), url("/images/map_dark.png")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              color: 'var(--text-secondary)',
-              padding: '20px',
-              textAlign: 'center'
-            }}>
-              <h4 style={{ color: 'white', marginBottom: '10px' }}>Localização em Itaipava</h4>
-              <p style={{ fontSize: '13px', maxWidth: '300px', marginBottom: '20px' }}>
+
+          <div className={`glass ${styles.mapCard}`}>
+            <div className={styles.mapInner}>
+              <h4 className={styles.mapTitle}>Localização em Itaipava</h4>
+              <p className={styles.mapBody}>
                 Clique abaixo para abrir as coordenadas direto no Google Maps.
               </p>
-              <a 
-                href="https://maps.google.com/?q=Antenor+e+Filhos+Itaipava" 
-                target="_blank" 
+              <a
+                href="https://maps.google.com/?q=Antenor+e+Filhos+Itaipava"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-secondary" 
-                style={{ padding: '10px 20px', fontSize: '13px' }}
+                className="btn btn-secondary"
               >
                 Como Chegar
               </a>
@@ -192,7 +136,7 @@ export default function Home() {
       </section>
 
       {/* LocalBusiness JSON-LD Schema Markup */}
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({

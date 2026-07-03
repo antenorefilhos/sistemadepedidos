@@ -1,16 +1,17 @@
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+- This version has breaking changes — APIs, conventions, and file structure may all differ from your training data.
+- Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
 <!-- BEGIN:obsidian-rules -->
-Documente tudo sempre nessa valt obsidian:
+- Documente tudo sempre nessa valt obsidian:
 D:\NOVA ORGANIZAÇÃO\PROJETOS\Obsidian\Antenor e Filhos\Sistema de Pedidos (antenorefilhos.com.br)
 <!-- END:obsidian-rules -->
 
 <!-- BEGIN:claude-rules -->
- Regras Operacionais do Agente
+- Regras Operacionais do Agente
 
 ## 1. Pense Antes de Agir
 
@@ -37,3 +38,9 @@ D:\NOVA ORGANIZAÇÃO\PROJETOS\Obsidian\Antenor e Filhos\Sistema de Pedidos (ant
 - Se o resultado não atingir os critérios, reitere automaticamente até atingi-los.
 - Não encerre a tarefa enquanto os critérios não forem satisfeitos.
 <!-- END:claude-rules -->
+
+<!-- BEGIN:commit-rules -->
+
+- A cada nova implementação, cite no chat a descrição/resumo do commit em pt-br
+
+<!-- END:commit-rules -->

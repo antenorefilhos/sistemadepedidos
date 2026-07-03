@@ -63,6 +63,57 @@
   --font-serif: 'Playfair Display', Georgia, Cambria, serif;
   --font-script: 'Blesing', cursive, serif;
   
+  /* ── Type Scale — Major Third (×1.25) ──────────────────────────
+   * Semantic tokens; use these everywhere, never bare px in components.
+   * Body and smaller sizes use fixed rem. Display sizes use clamp()
+   * for smooth viewport scaling (marketing register, not app UI).
+   * ──────────────────────────────────────────────────────────────── */
+  --text-xs:      0.75rem;    /* 12px — captions, legal, badges     */
+  --text-sm:      0.875rem;   /* 14px — metadata, labels, nav items */
+  --text-base:    1rem;       /* 16px — body copy                   */
+  --text-lg:      1.25rem;    /* 20px — lead text, card titles      */
+  --text-xl:      1.5625rem;  /* 25px — section sub-headings        */
+  --text-2xl:     1.953rem;   /* 31px — section headings (h2)       */
+  --text-3xl:     2.441rem;   /* 39px — page headings (h1)          */
+  /* Fluid display sizes — scale smoothly between viewports */
+  --text-display:      clamp(2.441rem, 5vw + 1rem, 4.25rem);   /* hero h1   */
+  --text-display-sm:   clamp(1.953rem, 3.5vw + 0.5rem, 2.8rem); /* section h2 */
+  
+  /* Line-heights — tighter for headings, looser for body on dark bg */
+  --lh-tight:   1.1;   /* display headings */
+  --lh-snug:    1.25;  /* card titles, subheadings */
+  --lh-normal:  1.65;  /* body copy (bumped +0.05 vs light bg for dark-mode legibility) */
+  --lh-relaxed: 1.8;   /* long-form passages */
+  
+  /* Letter-spacing — presets for common patterns */
+  --ls-tight:    -0.02em; /* large display type */
+  --ls-normal:    0.01em; /* body on dark bg compensation */
+  --ls-wide:      0.05em; /* headings, uppercase labels */
+  --ls-wider:     0.10em; /* buttons, eyebrow text, small caps */
+  
+  /* ── Spacing Scale — 4pt base ────────────────────────────────
+   * Use gap/padding/margin only from this scale. Never arbitrary px.
+   * xs=4, sm=8, md=12, base=16, lg=24, xl=32, 2xl=48, 3xl=64, 4xl=96
+   * ──────────────────────────────────────────────────────────────── */
+  --space-1:   0.25rem;  /*  4px */
+  --space-2:   0.5rem;   /*  8px */
+  --space-3:   0.75rem;  /* 12px */
+  --space-4:   1rem;     /* 16px */
+  --space-5:   1.25rem;  /* 20px */
+  --space-6:   1.5rem;   /* 24px */
+  --space-8:   2rem;     /* 32px */
+  --space-10:  2.5rem;   /* 40px */
+  --space-12:  3rem;     /* 48px */
+  --space-16:  4rem;     /* 64px */
+  --space-20:  5rem;     /* 80px */
+  --space-24:  6rem;     /* 96px */
+  /* Semantic aliases */
+  --section-gap:        var(--space-20);  /* between page sections (80px) */
+  --container-px:       var(--space-6);   /* container side padding (24px) */
+  --card-gap:           var(--space-8);   /* between cards in a grid (32px) */
+  --card-pad:           var(--space-6);   /* inner card padding (24px) */
+  --heading-gap-below:  var(--space-6);   /* space below a section heading (24px) */
+
   /* Shadows */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -153,43 +204,64 @@ body {
   background-repeat: repeat;
   color: var(--text-primary);
   font-family: var(--font-sans);
+  font-size: var(--text-base);       /* explicit 1rem / 16px */
+  line-height: var(--lh-normal);     /* 1.65 — compensated for light-on-dark */
+  letter-spacing: var(--ls-normal);  /* 0.01em — dark-bg compensation */
+  font-kerning: normal;
+  font-optical-sizing: auto;
   min-height: 100%;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.6;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Layout Utilities */
 .container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding-left: max(var(--container-px), env(safe-area-inset-left));
+  padding-right: max(var(--container-px), env(safe-area-inset-right));
 }
 
 .section {
-  padding: 80px 0;
+  padding: var(--section-gap) 0;
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
   font-weight: 300; /* Original site uses Light titles */
-  letter-spacing: 0.05em;
+  letter-spacing: var(--ls-wide);    /* 0.05em — uppercase breathing room */
   text-transform: uppercase;
+  line-height: var(--lh-tight);      /* 1.1 — headings sit closer */
   color: var(--text-primary);
 }
+
+h1 { font-size: var(--text-display);    }
+h2 { font-size: var(--text-display-sm); }
+h3 { font-size: var(--text-2xl);        }
+h4 { font-size: var(--text-xl);         }
+h5 { font-size: var(--text-lg);         }
+h6 { font-size: var(--text-base);       }
 
 .title-script {
   font-family: var(--font-script);
   text-transform: none;
   font-weight: 400;
   color: var(--primary);
-  line-height: 0.8;
+  line-height: 1.1; /* was 0.8 — corrected: descenders were clipping */
+  letter-spacing: 0;  /* script fonts look best without extra tracking */
 }
 
+/* Scope max-width to content contexts only — not admin/data tables */
+body:not(.admin-layout) p:not([class]) {
+  max-width: 70ch;
+}
 p {
   color: var(--text-muted);
+  line-height: var(--lh-normal);
 }
 
 /* Buttons - Square styles from original site */
@@ -198,7 +270,7 @@ p {
   align-items: center;
   justify-content: center;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--text-sm);    /* 0.875rem / 14px — small but uppercase+spaced reads well */
   font-weight: 400;
   padding: 8px 35px; /* Exact padding from original site */
   border-radius: var(--radius-md);
@@ -207,7 +279,9 @@ p {
   transition: all var(--transition-normal);
   text-decoration: none;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--ls-wider); /* 0.10em — uppercase buttons need breathing room */
+  min-height: 44px; /* Touch target minimum (Adapt) */
+  touch-action: manipulation; /* Disable double-tap zoom for fast touch interactions */
 }
 
 .btn-primary {
@@ -560,14 +634,20 @@ p {
     inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
-.product-card:hover {
-  transform: translateY(-6px);
-  background: linear-gradient(135deg, rgba(171, 144, 112, 0.06) 0%, rgba(9, 10, 13, 0.55) 100%);
-  border-color: rgba(171, 144, 112, 0.45);
-  box-shadow: 
-    0 12px 35px rgba(171, 144, 112, 0.12),
-    0 20px 48px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+@media (hover: hover) {
+  .product-card:hover {
+    transform: translateY(-6px);
+    background: linear-gradient(135deg, rgba(171, 144, 112, 0.06) 0%, rgba(9, 10, 13, 0.55) 100%);
+    border-color: rgba(171, 144, 112, 0.45);
+    box-shadow: 
+      0 12px 35px rgba(171, 144, 112, 0.12),
+      0 20px 48px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .product-card:hover .product-image {
+    transform: scale(1.03);
+  }
 }
 
 .product-image-container {
@@ -584,10 +664,6 @@ p {
   height: 100%;
   object-fit: cover;
   transition: transform var(--transition-slow);
-}
-
-.product-card:hover .product-image {
-  transform: scale(1.03);
 }
 
 .product-badge {
@@ -735,7 +811,7 @@ p {
   padding: 12px 16px;
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--text-base); /* 16px min for iOS to prevent input zoom */
   transition: all var(--transition-fast);
 }
 
