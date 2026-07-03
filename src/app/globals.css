@@ -188,6 +188,12 @@ a {
   transition: color var(--transition-fast);
 }
 
+a:focus-visible, .btn:focus-visible, .form-control:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
 a:hover {
   text-decoration: none !important;
 }
@@ -281,6 +287,15 @@ p {
   letter-spacing: var(--ls-wider); /* 0.10em — uppercase buttons need breathing room */
   min-height: 44px; /* Touch target minimum (Adapt) */
   touch-action: manipulation; /* Disable double-tap zoom for fast touch interactions */
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn-primary {
@@ -817,6 +832,11 @@ p {
 .form-control:focus {
   border-color: var(--primary);
   outline: none;
+}
+
+.form-control:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
 }
 
 /* Table Design for Admin */

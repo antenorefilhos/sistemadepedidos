@@ -749,12 +749,12 @@ export default function ProductDetails({ product, relatedProducts }) {
                     <Link href={`/produtos/${p.slug}`}>
                       <div className="product-image-container">
                         {p.image_url ? (
-                          <img src={p.image_url} alt={p.title} className="product-image" loading="lazy" />
+                          <img src={p.image_url} alt={`Imagem do produto ${p.title}`} className="product-image" loading="lazy" />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#232936', fontSize: '12px', color: 'var(--text-muted)' }}>Sem Foto</div>
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--border-color)', fontSize: '12px', color: 'var(--text-muted)' }}>Sem Foto</div>
                         )}
                         {logo && (
-                          <img src={logo} alt="" style={{ position: 'absolute', top: '10px', left: '10px', height: '60px', width: 'auto', zIndex: 2 }} />
+                          <img src={logo} alt="" aria-hidden="true" style={{ position: 'absolute', top: '10px', left: '10px', height: '60px', width: 'auto', zIndex: 2 }} />
                         )}
                         {embalagem && (
                           <span className={`product-badge badge-tag-${embalagem.slug.toLowerCase()}`} style={{ position: 'absolute', top: '10px', right: '10px', left: 'auto', zIndex: 2 }}>{embalagem.name}</span>

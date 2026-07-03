@@ -315,12 +315,12 @@ export default function ProductEditor({
                           <span style={{ fontWeight: '600' }}>Enviando arquivo...</span>
                         </div>
                       ) : productForm.image_url ? (
-                        <>
-                          <img src={productForm.image_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '20px' }} />
-                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.85)', padding: '16px', textAlign: 'center', fontSize: '13px', color: 'white', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '200px', backgroundColor: '#090a0d', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+                          <img src={productForm.image_url} alt="Pré-visualização do produto" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '20px' }} />
+                          <button style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.85)', padding: '16px', textAlign: 'center', fontSize: '13px', color: 'white', display: 'flex', justifyContent: 'center', gap: '10px' }}>
                             <i className="fa-solid fa-upload"></i> Clique ou Arraste nova imagem para substituir
-                          </div>
-                        </>
+                          </button>
+                        </div>
                       ) : (
                         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <div style={{ width: '80px', height: '80px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>

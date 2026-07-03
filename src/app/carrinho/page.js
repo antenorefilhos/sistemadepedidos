@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
@@ -246,9 +247,9 @@ export default function CartPage() {
                 return (
                   <div key={product.id} className="checkout-item-card">
                     {/* Thumbnail (Exactly 1:1) */}
-                    <div style={{ width: '80px', height: '80px', backgroundColor: '#232936', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                    <div style={{ position: 'relative', width: '80px', height: '80px', backgroundColor: 'var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Image src={product.image_url} alt={product.title} fill sizes="80px" style={{ objectFit: 'cover' }} />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: 'var(--text-muted)' }}>Sem foto</div>
                       )}

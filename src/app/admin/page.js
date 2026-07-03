@@ -1107,7 +1107,7 @@ export default function AdminDashboard() {
                         <tr key={p.id}>
                           <td>
                             {p.image_url ? (
-                              <img src={p.image_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+                              <img src={p.image_url} alt={`Miniatura de ${p.title}`} style={{ width: '40px', height: '40px', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
                             ) : (
                               <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Sem foto</span>
                             )}
@@ -1501,9 +1501,9 @@ export default function AdminDashboard() {
                           borderRadius: '8px'
                         }}>
                           {matchProd?.image_url ? (
-                            <img src={matchProd.image_url} alt="" style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                            <img src={matchProd.image_url} alt={`Miniatura de ${matchProd.title}`} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
                           ) : (
-                            <div style={{ width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🥩</div>
+                            <div aria-hidden="true" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🥩</div>
                           )}
                           <div style={{ flexGrow: 1, minWidth: 0 }}>
                             <div style={{ fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '3px' }}>

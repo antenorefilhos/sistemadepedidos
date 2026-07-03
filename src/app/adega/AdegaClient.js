@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // Map country slugs to flag emojis
 const COUNTRY_FLAG_MAP = {
@@ -317,11 +318,13 @@ export default function AdegaClient() {
                       <Link href={`/produtos/${product.slug}`} style={{ display: 'block' }}>
                         <div className="product-image-container">
                           {product.image_url ? (
-                            <img 
+                            <Image 
                               src={product.image_url} 
                               alt={product.title} 
                               className="product-image"
-                              loading="lazy"
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              style={{ objectFit: 'cover' }}
                             />
                           ) : (
                             <div style={{ 
@@ -330,7 +333,7 @@ export default function AdegaClient() {
                               display: 'flex', 
                               justifyContent: 'center', 
                               alignItems: 'center',
-                              backgroundColor: '#232936',
+                              backgroundColor: 'var(--border-color)',
                               color: 'var(--text-muted)',
                               fontSize: '12px'
                             }}>
