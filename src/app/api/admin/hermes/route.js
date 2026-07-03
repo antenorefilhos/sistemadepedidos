@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getSupabase } from '@/lib/pgDb';
+import fs from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,11 +38,20 @@ export async function POST(request) {
       }, { status: 500 });
     }
 
+    // 1. Ler a Knowledge Base
+    let knowledgeBase = '';
+    try {
+      const kbPath = path.join(process.cwd(), 'src', 'lib', 'hermes_knowledge.md');
+      knowledgeBase = fs.readFileSync(kbPath, 'utf8');
+    } catch (e) {
+      console.error("Knowledge base não encontrada no disco. Ignorando.");
+    }
+
     const { prompt, dataContext } = await request.json();
 
-    // Context formatting
+    // 2. Contexto Diário / Tempo Real
     const contextStr = `
-CONTEXTO DO E-COMMERCE (ANTENOR E FILHOS):
+[CONTEXTO EM TEMPO REAL DA LOJA (ANTENOR E FILHOS)]
 - Total de Pedidos: ${dataContext.ordersCount}
 - Faturamento Total (Aproximado): R$ ${dataContext.revenue.toFixed(2)}
 - Ticket Médio: R$ ${dataContext.avgTicket.toFixed(2)}
@@ -49,29 +60,82 @@ CONTEXTO DO E-COMMERCE (ANTENOR E FILHOS):
 - Categorias de Destaque: ${dataContext.topCategories.join(', ')}
     `;
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const customSystemPrompt = (dbConfig && dbConfig.system_prompt) ? `[INSTRUÇÕES TEMPORÁRIAS DO GESTOR HOJE]\n${dbConfig.system_prompt}\n` : '';
 
-    const defaultPrompt = `Você é o Hermes, o agente de Inteligência Artificial Especialista em Negócios e Varejo da Antenor e Filhos (um e-commerce de Carnes Premium e Vinhos). Seu objetivo é analisar os dados em tempo real da loja e fornecer insights úteis, sugestões de marketing, alertas de estoque/vendas ou responder perguntas do gestor de forma concisa e proativa.\n\nUse um tom profissional, moderno, encorajador e direto. Retorne a resposta formatada em Markdown. Se o gestor fizer uma pergunta, responda usando os dados abaixo. Se não for uma pergunta, faça um relatório de insights (máximo de 3 tópicos importantes).`;
+    const finalSystemInstruction = `
+${knowledgeBase}
 
-    const customPrompt = (dbConfig && dbConfig.system_prompt) || defaultPrompt;
-
-    const fullPrompt = `${customPrompt}
-
-
+${customSystemPrompt}
 ${contextStr}
+    `;
 
-Mensagem/Comando do Gestor:
-${prompt}
-`;
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Configura o modelo com Tools (Function Calling)
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      systemInstruction: finalSystemInstruction,
+      tools: [{
+        functionDeclarations: [
+          {
+            name: "atualizar_preco_produto",
+            description: "Atualiza o preço de um produto existente no banco de dados. Use apenas quando o Gestor pedir explicitamente para alterar o preço de algo.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                nome_produto: { type: "STRING", description: "Nome parcial ou completo do produto (ex: Bife Ancho, Vinho Tinto Reserva)" },
+                novo_preco: { type: "NUMBER", description: "Novo preço a ser aplicado no banco de dados (apenas números)" }
+              },
+              required: ["nome_produto", "novo_preco"]
+            }
+          }
+        ]
+      }]
+    });
 
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    const text = response.text();
+    const chat = model.startChat();
+    const result = await chat.sendMessage(prompt);
+    let response = result.response;
+
+    // Verifica se o Gemini chamou alguma função
+    const call = response.functionCalls();
+    
+    if (call && call.length > 0) {
+      const fnCall = call[0];
+      let apiResponse = {};
+      
+      if (fnCall.name === 'atualizar_preco_produto') {
+        const { nome_produto, novo_preco } = fnCall.args;
+        
+        // Busca o produto pelo nome
+        const { data: prods } = await supabase.from('products').select('id, nome').ilike('nome', `%${nome_produto}%`).limit(1);
+        
+        if (prods && prods.length > 0) {
+          const { error } = await supabase.from('products').update({ preco: novo_preco }).eq('id', prods[0].id);
+          if (error) {
+            apiResponse = { status: "erro", detalhe: error.message };
+          } else {
+            apiResponse = { status: "sucesso", detalhe: `Preço do produto '${prods[0].nome}' atualizado com sucesso no banco de dados para R$ ${novo_preco}.` };
+          }
+        } else {
+          apiResponse = { status: "erro", detalhe: `Nenhum produto encontrado contendo o nome '${nome_produto}'.` };
+        }
+      }
+
+      // Devolve o resultado da função para o Gemini gerar a mensagem final de texto
+      const finalResult = await chat.sendMessage([{
+        functionResponse: {
+          name: fnCall.name,
+          response: apiResponse
+        }
+      }]);
+      
+      response = finalResult.response;
+    }
 
     return NextResponse.json({ 
       success: true, 
-      response: text 
+      response: response.text() 
     });
     
   } catch (error) {
