@@ -1,8 +1,21 @@
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import SellerReferralTracker from "@/components/SellerReferralTracker";
 import Script from "next/script";
 import Link from "next/link";
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-playfair',
+});
 
 export const metadata = {
   title: "Antenor & Filhos | Boutique de Carnes & Adega",
@@ -36,7 +49,7 @@ export default function RootLayout({ children }) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID || "G-4H9W5QPE0L";
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${inter.variable} ${playfair.variable}`}>
       <head>
         {/* Theme preservation script to avoid styling flash */}
         <script 
