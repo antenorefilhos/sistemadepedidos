@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { marked } from 'marked';
 
 export default function HermesDashboard({ orders, sellers, products, password }) {
+  const [sessions, setSessions] = useState([]);
+  const [activeSessionId, setActiveSessionId] = useState(null);
   const [messages, setMessages] = useState([
-    { role: 'ai', content: 'Olá! Sou Hermes, seu agente de IA especialista em negócios. Analisei os dados da loja em tempo real. O que você gostaria de saber ou analisar hoje?' }
+    { role: 'ai', content: 'Olá! Sou Hermes, seu agente de IA especialista em negócios. O que você gostaria de analisar hoje?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,6 +18,62 @@ export default function HermesDashboard({ orders, sellers, products, password })
   const [configForm, setConfigForm] = useState({ api_key: '', system_prompt: '' });
   const [savingConfig, setSavingConfig] = useState(false);
 
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  const loadSessions = async () => {
+    try {
+      const res = await fetch(`/api/admin/hermes/sessions?auth=${encodeURIComponent(password)}`);
+      const data = await res.json();
+      if (data && data.sessions) setSessions(data.sessions);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadMessages = async (sessionId) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/hermes/messages?session_id=${sessionId}&auth=${encodeURIComponent(password)}`);
+      const data = await res.json();
+      if (data && data.messages) {
+        if (data.messages.length > 0) {
+          setMessages(data.messages.map(m => ({ role: m.role, content: m.content })));
+        } else {
+          setMessages([{ role: 'ai', content: 'Olá! Como posso ajudar nesta nova conversa?' }]);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectSession = (id) => {
+    if (activeSessionId === id) return;
+    setActiveSessionId(id);
+    loadMessages(id);
+  };
+
+  const startNewChat = () => {
+    setActiveSessionId(null);
+    setMessages([{ role: 'ai', content: 'Olá! Sou Hermes, seu agente de IA especialista em negócios. O que você gostaria de analisar hoje?' }]);
+  };
+
+  const handleDeleteSession = async (e, id) => {
+    e.stopPropagation();
+    if (!confirm('Deseja excluir este chat? O histórico será apagado.')) return;
+    try {
+      await fetch(`/api/admin/hermes/sessions?session_id=${id}&auth=${encodeURIComponent(password)}`, { method: 'DELETE' });
+      if (activeSessionId === id) startNewChat();
+      loadSessions();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const openConfig = async () => {
     setShowConfig(true);
     try {
@@ -23,7 +82,7 @@ export default function HermesDashboard({ orders, sellers, products, password })
       if (data && !data.error) {
         setConfigForm({ api_key: data.api_key || '', system_prompt: data.system_prompt || '' });
       }
-    } catch(e) {
+    } catch (e) {
       console.error(e);
     }
   };
@@ -42,7 +101,7 @@ export default function HermesDashboard({ orders, sellers, products, password })
       } else {
         alert('Erro ao salvar configurações.');
       }
-    } catch(e) {
+    } catch (e) {
       console.error(e);
       alert('Erro de conexão ao salvar.');
     } finally {
@@ -108,7 +167,6 @@ export default function HermesDashboard({ orders, sellers, products, password })
     setInput('');
     setLoading(true);
 
-    // Prepare context data
     const revenue = calculateTotalRevenue(false);
     const avgTicket = orders.length > 0 ? revenue / orders.length : 0;
     const sellersData = getSellersPerformance().map(s => ({ name: s.name, rev: s.revenue }));
@@ -123,17 +181,24 @@ export default function HermesDashboard({ orders, sellers, products, password })
       topCategories
     };
 
+    const payload = { prompt: promptText, dataContext };
+    if (activeSessionId) payload.session_id = activeSessionId;
+
     try {
       const res = await fetch(`/api/admin/hermes?auth=${encodeURIComponent(password)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText, dataContext })
+        body: JSON.stringify(payload)
       });
       
       const data = await res.json();
       
       if (res.ok) {
         setMessages(prev => [...prev, { role: 'ai', content: data.response }]);
+        if (data.session_id && !activeSessionId) {
+          setActiveSessionId(data.session_id);
+          loadSessions();
+        }
       } else {
         setMessages(prev => [...prev, { role: 'error', content: data.error || 'Erro na IA.' }]);
       }
@@ -145,89 +210,158 @@ export default function HermesDashboard({ orders, sellers, products, password })
     }
   };
 
-  // Helper to format Markdown safely (basic bold and lists)
-  const formatMarkdown = (text) => {
-    let formatted = text.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/\\n/g, '<br />');
-    return formatted;
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', animation: 'fadeIn 0.3s ease' }}>
+      <style>{`
+        .hermes-markdown p { margin-top: 0; margin-bottom: 12px; }
+        .hermes-markdown p:last-child { margin-bottom: 0; }
+        .hermes-markdown ul, .hermes-markdown ol { margin-top: 0; margin-bottom: 12px; padding-left: 24px; }
+        .hermes-markdown li { margin-bottom: 6px; }
+        .hermes-markdown h1, .hermes-markdown h2, .hermes-markdown h3 { margin-top: 16px; margin-bottom: 8px; color: var(--primary); }
+        .hermes-markdown strong { color: var(--primary-light); }
+      `}</style>
       
-      {/* CÉREBRO: Hermes Agent Chat */}
-      <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--primary-light)' }}>
-        <div style={{ padding: '20px 24px', backgroundColor: 'rgba(171, 144, 112, 0.15)', borderBottom: '1px solid var(--primary-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '48px', height: '48px', backgroundColor: 'var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 0 20px rgba(171, 144, 112, 0.4)' }}>
-              🤖
-            </div>
-            <div>
-              <h3 style={{ margin: 0, color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '22px' }}>Hermes AI Agent</h3>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Módulo de Inteligência de Negócios e Insights</span>
-            </div>
+      {/* Container Principal Estilo ChatGPT */}
+      <div style={{ display: 'flex', gap: '20px', height: '600px' }}>
+        
+        {/* BARRA LATERAL (Histórico) */}
+        <div className="glass" style={{ width: '280px', flexShrink: 0, borderRadius: '16px', border: '1px solid var(--primary-light)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(0,0,0,0.2)' }}>
+            <button 
+              onClick={startNewChat}
+              style={{ width: '100%', padding: '12px', borderRadius: '10px', backgroundColor: 'var(--primary)', color: '#121418', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <i className="fa-solid fa-plus"></i> Novo Chat
+            </button>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={() => handleSendMessage(null, 'Gere um relatório rápido de fechamento do dia destacando os vendedores e o faturamento total.')} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s' }}>
-              📊 Relatório Rápido
-            </button>
-            <button onClick={() => handleSendMessage(null, 'Me dê uma ideia de promoção para tentar aumentar o ticket médio hoje.')} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s' }}>
-              💡 Sugestão de Marketing
-            </button>
-            <button onClick={openConfig} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(171, 144, 112, 0.2)', border: '1px solid rgba(171, 144, 112, 0.4)', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s' }} title="Configurar Hermes">
-              <i className="fa-solid fa-gear"></i> Configurar
+          
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '8px', marginBottom: '4px' }}>Histórico de Sessões</span>
+            
+            {sessions.map(sess => (
+              <div 
+                key={sess.id} 
+                onClick={() => selectSession(sess.id)}
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '12px', 
+                  borderRadius: '8px', 
+                  backgroundColor: activeSessionId === sess.id ? 'rgba(171,144,112,0.15)' : 'transparent',
+                  border: activeSessionId === sess.id ? '1px solid rgba(171,144,112,0.3)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                  <i className="fa-regular fa-message" style={{ color: activeSessionId === sess.id ? 'var(--primary)' : 'var(--text-muted)', fontSize: '14px' }}></i>
+                  <span style={{ color: activeSessionId === sess.id ? 'white' : 'var(--text-muted)', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
+                    {sess.title}
+                  </span>
+                </div>
+                <button 
+                  onClick={(e) => handleDeleteSession(e, sess.id)}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', opacity: activeSessionId === sess.id ? 1 : 0.4 }}
+                  title="Excluir chat"
+                >
+                  <i className="fa-solid fa-trash-can" style={{ fontSize: '12px' }}></i>
+                </button>
+              </div>
+            ))}
+
+            {sessions.length === 0 && (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                Nenhum chat salvo ainda.
+              </div>
+            )}
+          </div>
+          
+          <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <button onClick={openConfig} style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: 'transparent', border: '1px solid rgba(171,144,112,0.3)', color: 'var(--primary)', fontSize: '13px', cursor: 'pointer' }}>
+              <i className="fa-solid fa-gear"></i> Configurações do Agente
             </button>
           </div>
         </div>
-        
-        <div style={{ height: '350px', overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          {messages.map((msg, idx) => (
-            <div key={idx} style={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start'
-            }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px', textTransform: 'uppercase' }}>
-                {msg.role === 'user' ? 'Você' : (msg.role === 'error' ? 'Sistema' : 'Hermes Agent')}
-              </span>
-              <div style={{
-                maxWidth: '85%',
-                padding: '16px 20px',
-                borderRadius: '16px',
-                borderBottomLeftRadius: msg.role === 'user' ? '16px' : '4px',
-                borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
-                backgroundColor: msg.role === 'user' ? 'rgba(255,255,255,0.05)' : (msg.role === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(171,144,112,0.1)'),
-                border: msg.role === 'user' ? '1px solid rgba(255,255,255,0.1)' : (msg.role === 'error' ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--primary-light)'),
-                color: msg.role === 'error' ? '#fca5a5' : 'white',
-                fontSize: '15px',
-                lineHeight: '1.6'
-              }}>
-                <div dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
+
+        {/* ÁREA PRINCIPAL DO CHAT */}
+        <div className="glass" style={{ flex: 1, borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--primary-light)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '20px 24px', backgroundColor: 'rgba(171, 144, 112, 0.15)', borderBottom: '1px solid var(--primary-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: '48px', height: '48px', backgroundColor: 'var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 0 20px rgba(171, 144, 112, 0.4)' }}>
+                🤖
+              </div>
+              <div>
+                <h3 style={{ margin: 0, color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '22px' }}>Hermes AI Agent</h3>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Módulo de Inteligência de Negócios e Insights</span>
               </div>
             </div>
-          ))}
-          {loading && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', fontSize: '14px', padding: '16px' }}>
-              <i className="fa-solid fa-circle-notch fa-spin"></i> Hermes está analisando os dados da loja...
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => handleSendMessage(null, 'Gere um relatório rápido de fechamento do dia destacando os vendedores e o faturamento total.')} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '12px', cursor: 'pointer' }}>
+                📊 Relatório Rápido
+              </button>
+              <button onClick={() => handleSendMessage(null, 'Me dê uma ideia de promoção para tentar aumentar o ticket médio hoje.')} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '12px', cursor: 'pointer' }}>
+                💡 Sugestão de Marketing
+              </button>
             </div>
-          )}
-          <div ref={chatEndRef} />
-        </div>
-        
-        <div style={{ padding: '16px 24px', backgroundColor: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '12px' }}>
-            <input 
-              type="text" 
-              placeholder="Pergunte ao Hermes sobre as vendas, produtos ou peça uma sugestão..." 
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={loading}
-              style={{ flex: 1, padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.03)', color: 'white', fontSize: '15px' }}
-            />
-            <button type="submit" disabled={loading || !input.trim()} style={{ padding: '0 32px', borderRadius: '12px', backgroundColor: 'var(--primary)', border: 'none', color: '#121418', fontWeight: 'bold', fontSize: '16px', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', opacity: loading || !input.trim() ? 0.5 : 1, transition: 'all 0.2s' }}>
-              <i className="fa-solid fa-paper-plane"></i>
-            </button>
-          </form>
+          </div>
+          
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+            {messages.map((msg, idx) => (
+              <div key={idx} style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start'
+              }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px', textTransform: 'uppercase' }}>
+                  {msg.role === 'user' ? 'Você' : (msg.role === 'error' ? 'Sistema' : 'Hermes')}
+                </span>
+                <div style={{
+                  maxWidth: '85%',
+                  padding: '16px 20px',
+                  borderRadius: '16px',
+                  borderBottomLeftRadius: msg.role === 'user' ? '16px' : '4px',
+                  borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
+                  backgroundColor: msg.role === 'user' ? 'rgba(255,255,255,0.05)' : (msg.role === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(171,144,112,0.1)'),
+                  border: msg.role === 'user' ? '1px solid rgba(255,255,255,0.1)' : (msg.role === 'error' ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--primary-light)'),
+                  color: msg.role === 'error' ? '#fca5a5' : 'white',
+                  fontSize: '15px',
+                  lineHeight: '1.6'
+                }}>
+                  <div 
+                    className="hermes-markdown"
+                    dangerouslySetInnerHTML={{ 
+                      __html: msg.role === 'user' 
+                        ? msg.content.replace(/\n/g, '<br />') 
+                        : marked.parse(msg.content) 
+                    }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', fontSize: '14px', padding: '16px' }}>
+                <i className="fa-solid fa-circle-notch fa-spin"></i> Hermes está analisando os dados da loja...
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+          
+          <div style={{ padding: '16px 24px', backgroundColor: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '12px' }}>
+              <input 
+                type="text" 
+                placeholder="Pergunte ao Hermes sobre as vendas, produtos ou peça uma sugestão..." 
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={loading}
+                style={{ flex: 1, padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.03)', color: 'white', fontSize: '15px' }}
+              />
+              <button type="submit" disabled={loading || !input.trim()} style={{ padding: '0 32px', borderRadius: '12px', backgroundColor: 'var(--primary)', border: 'none', color: '#121418', fontWeight: 'bold', fontSize: '16px', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', opacity: loading || !input.trim() ? 0.5 : 1, transition: 'all 0.2s' }}>
+                <i className="fa-solid fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -304,7 +438,7 @@ export default function HermesDashboard({ orders, sellers, products, password })
                   value={configForm.api_key}
                   onChange={e => setConfigForm({...configForm, api_key: e.target.value})}
                 />
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', display: 'block' }}>Se deixado em branco, o sistema tentará usar a variável de ambiente `.env`.</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', display: 'block' }}>Se deixado em branco, o sistema tentará usar a variável de ambiente \`.env\`.</span>
               </div>
 
               <div className="form-group">
