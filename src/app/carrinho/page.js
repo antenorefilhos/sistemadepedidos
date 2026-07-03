@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getFingerprint, trackEvent } from '@/lib/telemetry';
 import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
@@ -136,10 +137,14 @@ export default function CartPage() {
       customer_address: formData.address,
       notes: formData.notes,
       seller_id: activeSeller ? activeSeller.id : null,
+      fingerprint: getFingerprint(),
       items: orderItems
     };
 
     try {
+      // Telemetria local antes de enviar
+      trackEvent('checkout', { total_items: orderItems.length });
+
       // 1. Save to server database
       const res = await fetch('/api/orders', {
         method: 'POST',

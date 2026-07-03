@@ -4,6 +4,8 @@ import Header from "@/components/Header";
 import SellerReferralTracker from "@/components/SellerReferralTracker";
 import Script from "next/script";
 import Link from "next/link";
+import { getFingerprint, trackEvent } from "@/lib/telemetry";
+import TelemetryProvider from "@/components/TelemetryProvider";
 
 const inter = Inter({
   subsets: ['latin'],

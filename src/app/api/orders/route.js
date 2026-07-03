@@ -30,6 +30,7 @@ export async function POST(request) {
       customer_address,
       notes,
       seller_id,
+      fingerprint,
       items
     } = body;
 
@@ -51,7 +52,8 @@ export async function POST(request) {
         customer_email: customer_email || null,
         customer_address: customer_address || null,
         notes: notes || null,
-        seller_id: seller_id || null
+        seller_id: seller_id || null,
+        fingerprint: fingerprint || null
       })
       .select('id')
       .single();

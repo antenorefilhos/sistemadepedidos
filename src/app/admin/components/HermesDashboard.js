@@ -13,6 +13,9 @@ export default function HermesDashboard({ orders, sellers, products, password })
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Super Powers Tabs
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'analytics' | 'logistics' | 'inventory' | 'rh'
+
   // Config Modal State
   const [showConfig, setShowConfig] = useState(false);
   const [configForm, setConfigForm] = useState({ api_key: '', system_prompt: '' });
@@ -221,8 +224,39 @@ export default function HermesDashboard({ orders, sellers, products, password })
         .hermes-markdown strong { color: var(--primary-light); }
       `}</style>
       
+      {/* SUPER POWERS TABS */}
+      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
+        {[
+          { id: 'chat', icon: 'fa-robot', label: 'Hermes AI (Chat)' },
+          { id: 'analytics', icon: 'fa-chart-pie', label: 'Analytics (CMO/CFO)' },
+          { id: 'logistics', icon: 'fa-truck-fast', label: 'Logística (COO)' },
+          { id: 'inventory', icon: 'fa-boxes-stacked', label: 'Inventário (CTO)' },
+          { id: 'rh', icon: 'fa-users', label: 'RH & Vendas (CEO)' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="btn"
+            style={{
+              backgroundColor: activeTab === tab.id ? 'var(--primary)' : 'rgba(0,0,0,0.3)',
+              color: activeTab === tab.id ? '#000' : 'var(--text-muted)',
+              border: activeTab === tab.id ? 'none' : '1px solid rgba(171,144,112,0.3)',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <i className={`fa-solid ${tab.icon}`}></i> {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Container Principal Estilo ChatGPT */}
-      <div style={{ display: 'flex', gap: '20px', height: '600px' }}>
+      <div style={{ display: activeTab === 'chat' ? 'flex' : 'none', gap: '20px', height: '600px' }}>
         
         {/* BARRA LATERAL (Histórico) */}
         <div className="glass" style={{ width: '280px', flexShrink: 0, borderRadius: '16px', border: '1px solid var(--primary-light)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -414,6 +448,65 @@ export default function HermesDashboard({ orders, sellers, products, password })
                 </div>
               );
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* SUPER POWER: ANALYTICS (CMO/CFO) */}
+      <div style={{ display: activeTab === 'analytics' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
+        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
+          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-chart-pie"></i> Analytics & Telemetria</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Módulo em construção. Integrando com a nova tabela <code>telemetry_events</code> para calcular CAC, LTV e Taxa de Conversão em tempo real.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginTop: '20px' }}>
+             <div style={{ padding: '20px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+               <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Receita Total</h4>
+               <div style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {calculateTotalRevenue(false).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+             </div>
+             <div style={{ padding: '20px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+               <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Ticket Médio</h4>
+               <div style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {orders.length > 0 ? (calculateTotalRevenue(false)/orders.length).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '0,00'}</div>
+             </div>
+             <div style={{ padding: '20px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+               <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Total de Pedidos</h4>
+               <div style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>{orders.length}</div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SUPER POWER: LOGÍSTICA (COO) */}
+      <div style={{ display: activeTab === 'logistics' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
+        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
+          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-truck-fast"></i> Kanban de Logística</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Gerenciamento visual de entrega de orçamentos e despachos. (Em breve: Drag and Drop interativo)</p>
+        </div>
+      </div>
+
+      {/* SUPER POWER: INVENTÁRIO (CTO) */}
+      <div style={{ display: activeTab === 'inventory' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
+        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
+          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-boxes-stacked"></i> Alertas de Inventário</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Conectado ao módulo Solidcon. Monitoramento de Ruptura de Estoque Ativo.</p>
+        </div>
+      </div>
+
+      {/* SUPER POWER: RH & VENDAS (CEO) */}
+      <div style={{ display: activeTab === 'rh' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
+        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
+          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-users"></i> Ranking de Vendedores (Leaderboard)</h2>
+          <div style={{ marginTop: '20px' }}>
+            {getSellersPerformance().map((s, idx) => (
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: idx === 0 ? 'rgba(171,144,112,0.1)' : 'transparent' }}>
+                <div>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', marginRight: '15px', color: idx === 0 ? 'var(--primary)' : 'white' }}>#{idx + 1}</span>
+                  <span style={{ fontSize: '16px' }}>{s.name}</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: 'var(--primary)', fontWeight: 'bold' }}>R$ {s.revenue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{s.count} pedidos (T.M: R$ {s.avgTicket.toLocaleString('pt-BR', {minimumFractionDigits: 2})})</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
