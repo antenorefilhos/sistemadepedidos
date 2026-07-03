@@ -10,6 +10,46 @@ export default function HermesDashboard({ orders, sellers, products, password })
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Config Modal State
+  const [showConfig, setShowConfig] = useState(false);
+  const [configForm, setConfigForm] = useState({ api_key: '', system_prompt: '' });
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  const openConfig = async () => {
+    setShowConfig(true);
+    try {
+      const res = await fetch(`/api/admin/hermes/config?auth=${encodeURIComponent(password)}`);
+      const data = await res.json();
+      if (data && !data.error) {
+        setConfigForm({ api_key: data.api_key || '', system_prompt: data.system_prompt || '' });
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const saveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      const res = await fetch(`/api/admin/hermes/config?auth=${encodeURIComponent(password)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configForm)
+      });
+      if (res.ok) {
+        setShowConfig(false);
+        alert('Configurações salvas com sucesso no banco de dados!');
+      } else {
+        alert('Erro ao salvar configurações.');
+      }
+    } catch(e) {
+      console.error(e);
+      alert('Erro de conexão ao salvar.');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   // Derived stats
   const calculateTotalRevenue = (completedOnly = false) => {
     return orders.reduce((sum, order) => {
@@ -134,6 +174,9 @@ export default function HermesDashboard({ orders, sellers, products, password })
             <button onClick={() => handleSendMessage(null, 'Me dê uma ideia de promoção para tentar aumentar o ticket médio hoje.')} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s' }}>
               💡 Sugestão de Marketing
             </button>
+            <button onClick={openConfig} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(171, 144, 112, 0.2)', border: '1px solid rgba(171, 144, 112, 0.4)', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s' }} title="Configurar Hermes">
+              <i className="fa-solid fa-gear"></i> Configurar
+            </button>
           </div>
         </div>
         
@@ -240,6 +283,54 @@ export default function HermesDashboard({ orders, sellers, products, password })
           </div>
         </div>
       </div>
+
+      {/* CONFIG MODAL */}
+      {showConfig && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease' }}>
+          <div className="glass" style={{ width: '600px', maxWidth: '90%', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: 'white', fontSize: '18px' }}><i className="fa-solid fa-gear"></i> Configurações do Agente Hermes</h3>
+              <button onClick={() => setShowConfig(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}><i className="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Gemini API Key</label>
+                <input 
+                  type="password" 
+                  placeholder="Cole sua API Key do Google AI Studio"
+                  className="form-control"
+                  style={{ padding: '12px', fontSize: '14px' }}
+                  value={configForm.api_key}
+                  onChange={e => setConfigForm({...configForm, api_key: e.target.value})}
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', display: 'block' }}>Se deixado em branco, o sistema tentará usar a variável de ambiente `.env`.</span>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>System Prompt (Regras de Comportamento)</label>
+                <textarea 
+                  placeholder="Ex: Você é o Hermes, especialista em vendas..."
+                  className="form-control"
+                  style={{ padding: '12px', fontSize: '14px', minHeight: '180px', resize: 'vertical' }}
+                  value={configForm.system_prompt}
+                  onChange={e => setConfigForm({...configForm, system_prompt: e.target.value})}
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', display: 'block' }}>Instruções base de como a IA deve agir, qual tom usar e quais restrições ela tem.</span>
+              </div>
+
+            </div>
+            <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'flex-end', gap: '12px', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+              <button onClick={() => setShowConfig(false)} style={{ padding: '10px 20px', borderRadius: '8px', backgroundColor: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>
+                Cancelar
+              </button>
+              <button onClick={saveConfig} disabled={savingConfig} style={{ padding: '10px 20px', borderRadius: '8px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                {savingConfig ? 'Salvando...' : 'Salvar Configurações'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
