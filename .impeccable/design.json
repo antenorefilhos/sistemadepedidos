@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-03T12:56:00.000Z",
+  "title": "Design System: Antenor e Filhos",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Mostarda Dourado", "canonical": "#ab9070", "tonalRamp": ["#362a1c", "#5c4932", "#826849", "#ab9070", "#bcac91", "#cdbfae", "#ded2cc", "#efe7e3"] },
+      "primary-light": { "role": "primary", "displayName": "Mostarda Claro", "canonical": "#d7b994", "tonalRamp": ["#4a3c27", "#6f5a3d", "#9b7f56", "#d7b994", "#e2cbab", "#eedec3", "#f6efdb", "#fcf7ef"] },
+      "neutral-bg": { "role": "neutral", "displayName": "Preto Absoluto", "canonical": "#000000", "tonalRamp": ["#000000", "#111111", "#222222", "#333333", "#555555", "#777777", "#999999", "#eeeeee"] },
+      "neutral-card": { "role": "neutral", "displayName": "Carvão Noturno", "canonical": "#090a0d", "tonalRamp": ["#030405", "#090a0d", "#12141a", "#1a1e26", "#252b36", "#323a49", "#404a5d", "#7c89a3"] },
+      "whatsapp": { "role": "brand-third-party", "displayName": "WhatsApp Green", "canonical": "#25D366", "note": "Official WhatsApp brand color — exception to the Contrast Rule. Used only on WhatsApp icon glyphs." },
+      "wine-badge-gold": { "role": "decorative-gradient", "displayName": "Medalha Ouro (Wine Score)", "canonical": "linear-gradient(135deg, #b38728 0%, #fbf5b7 25%, #daaf52 50%, #fbf5b7 75%, #aa771c 100%)", "note": "Metallic gold gradient exclusively for wine score badges (.wine-score-badge). Intentional luxury detail — not design system drift. Colors #fbf5b7, #daaf52, #aa771c, #f2d893, #b38728 are part of this gradient." }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 2px 4px rgba(0, 0, 0, 0.3)", "purpose": "Glow Ambiental para dar sutileza tátil a botões menores ou badges." },
+      { "name": "shadow-lg", "value": "0 8px 32px rgba(0, 0, 0, 0.25)", "purpose": "Flutuação de Card." }
+    ],
+    "motion": [
+      { "name": "transition-normal", "value": "0.25s ease", "purpose": "Default easing for state transitions." },
+      { "name": "transition-slow", "value": "0.4s cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Transições maiores como levitação de cards." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button Primary",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Botão principal de chamada para ação.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">ADICIONAR</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; font-family: 'FuturaLT', 'Inter', sans-serif; font-size: 14px; font-weight: 400; padding: 8px 35px; border-radius: 0px; border: 1px solid transparent; cursor: pointer; transition: all 0.25s ease; text-transform: uppercase; letter-spacing: 0.1em; } .ds-btn-primary { background-color: #ab9070; color: #000000; font-weight: 600; } .ds-btn-primary:hover { background-color: #d7b994; transform: translateY(-1px); }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "description": "Card de produto de luxo que usa glassmorphism.",
+      "html": "<div class=\"ds-product-card\"><div class=\"ds-product-image-container\"></div><div class=\"ds-product-info\"><h3 class=\"ds-product-title\">Bife Ancho Wagyu</h3><div class=\"ds-product-price\">R$ 380,00</div></div></div>",
+      "css": ".ds-product-card { background: linear-gradient(135deg, rgba(9, 10, 13, 0.45) 0%, rgba(5, 6, 8, 0.6) 100%); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-radius: 0px; border: 1px solid rgba(171, 144, 112, 0.12); overflow: hidden; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; height: 100%; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02); } .ds-product-card:hover { transform: translateY(-6px); background: linear-gradient(135deg, rgba(171, 144, 112, 0.06) 0%, rgba(9, 10, 13, 0.55) 100%); border-color: rgba(171, 144, 112, 0.45); box-shadow: 0 12px 35px rgba(171, 144, 112, 0.12), 0 20px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05); } .ds-product-image-container { height: 150px; background-color: #0b0c0e; border-bottom: 1px solid #1c1f26; } .ds-product-info { padding: 20px; display: flex; flex-direction: column; } .ds-product-title { font-family: 'FuturaLT', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; margin-bottom: 8px; } .ds-product-price { font-family: 'FuturaLT', 'Inter', sans-serif; font-size: 16px; font-weight: 600; color: #ab9070; margin-top: 15px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Elegant Cellar",
+    "overview": "O design busca reproduzir o ambiente de uma adega de alto luxo: intimista, focada em vinhos e contrastes suaves e luxuosos. Com a estética fundamentada em tons escuros e refinados (Black & Gold), a interface flutua sobre fundos sóbrios utilizando um forte componente de glassmorphism (desfoque e transparência) para criar uma sensação de profundidade etérea, mas sem perder o peso da marca. O sistema explicitamente rejeita designs 'tech' frios, corporativos ou interfaces no estilo SaaS genérico.",
+    "keyCharacteristics": [
+      "Atmosfera de Adega: Predominância do preto total e cinzas profundos para o fundo.",
+      "Glassmorphism Refinado: Uso extensivo de backdrops desfocados para elementos flutuantes.",
+      "Flutuante e Elegante: A filosofia interativa evita bordas duras e prefere sombras difusas para manter a leveza do luxo."
+    ],
+    "rules": [
+      {
+        "name": "The Contrast Rule",
+        "body": "O Mostarda Dourado é a única fonte de cor viva no design. Ele nunca deve ser usado em grandes blocos sólidos que não sejam botões, e sim focado em guiar o olho.",
+        "section": "colors"
+      },
+      {
+        "name": "The Uppercase Spacing Rule",
+        "body": "Qualquer título ou botão em uppercase deve usar espaçamento de letras letter-spacing: 0.05em ou 0.1em.",
+        "section": "typography"
+      },
+      {
+        "name": "The Glass Floor Rule",
+        "body": "Elementos que sobrepõem conteúdo devem usar fundo altamente transparente combinado com desfoque intenso (blur(24px)).",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do usar o backdrop-filter: blur(24px) para elementos fixos que se sobrepõem ao conteúdo.",
+      "Do manter grandes respiros (paddings enormes) entre seções, pois o espaço em branco (ou preto, neste caso) é a principal assinatura de luxo.",
+      "Do usar letras maiúsculas finas (300 weight) com letter-spacing: 0.05em para seções."
+    ],
+    "donts": [
+      "Don't criar interfaces no estilo SaaS genérico, frias ou corporativas.",
+      "Don't usar o Mostarda Dourado (#ab9070) como plano de fundo de seções inteiras.",
+      "Don't arredondar botões primários (manter 0px), se essa for a linguagem original para passar peso.",
+      "Don't permitir que a tipografia se torne densa demais; use descrições curtas e sucintas nos cards de produto."
+    ]
+  }
+}

@@ -113,7 +113,7 @@ export default function Home() {
                 O domínio do fogo. Permita que nossos mestres churrasqueiros transformem nossos cortes exclusivos em obras-primas grelhadas, servidas com excelência.
               </p>
               <a href="https://wa.me/552422221482?text=Gostaria%20de%20reservar%20uma%20mesa%20no%20Restaurante" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontSize: '14px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                <i className="fa-brands fa-whatsapp" style={{ color: '#25D366' }}></i> Reservar uma Mesa &rarr;
+              <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)' }}></i> Reservar uma Mesa &rarr;
               </a>
             </div>
           </div>
@@ -149,7 +149,7 @@ export default function Home() {
             <div>
               <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '5px' }}>Telefone / WhatsApp:</h4>
               <p style={{ fontSize: '14px' }}>
-                <i className="fa-solid fa-phone" style={{ color: 'var(--primary)', marginRight: '6px' }}></i> Fixo: (24) 2222-1482 | <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', marginRight: '4px' }}></i> WhatsApp: (24) 98865-0462
+                <i className="fa-solid fa-phone" style={{ color: 'var(--primary)', marginRight: '6px' }}></i> Fixo: (24) 2222-1482 | <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)', marginRight: '4px' }}></i> WhatsApp: (24) 98865-0462
               </p>
             </div>
           </div>

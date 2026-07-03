@@ -393,9 +393,9 @@ export default function ProductDetails({ product, relatedProducts }) {
                 {wineData.specs.volume && (
                   <div style={{ marginTop: '10px' }}>
                     <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
                       background: 'transparent', border: '1px solid var(--primary)',
-                      padding: '6px 14px', borderRadius: '99px', fontSize: '12px', color: 'var(--primary)'
+                      padding: '6px 14px', borderRadius: 'var(--radius-round)', fontSize: '12px', color: 'var(--primary)'
                     }}>
                       <i className="fa-solid fa-wine-bottle"></i> {wineData.specs.volume}
                     </span>
@@ -457,7 +457,7 @@ export default function ProductDetails({ product, relatedProducts }) {
                     backgroundColor: 'rgba(171, 144, 112, 0.15)',
                     border: '1px solid rgba(171, 144, 112, 0.3)',
                     color: 'var(--primary)', padding: '6px 12px',
-                    borderRadius: '6px', fontSize: '12px', fontWeight: '500'
+                    borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: '500'
                   }}>
                     <i className="fa-solid fa-scale-balanced"></i>
                     Peça com peso aproximado de {product.peso} {product.unidade_peso}
