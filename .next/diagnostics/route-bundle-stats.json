@@ -113,6 +113,34 @@
     ]
   },
   {
+    "route": "/receitas",
+    "firstLoadUncompressedJsBytes": 532965,
+    "firstLoadChunkPaths": [
+      ".next\\static\\chunks\\3sxi4v4lyjiql.js",
+      ".next\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next\\static\\chunks\\2f814k52i9wot.js",
+      ".next\\static\\chunks\\0k1hxv1y7ac0v.js",
+      ".next\\static\\chunks\\2qfuz-1p-7gc9.js",
+      ".next\\static\\chunks\\3j9pm5otqxm82.js",
+      ".next\\static\\chunks\\1mfjqidm5qp0a.js",
+      ".next\\static\\chunks\\turbopack-071tvln0_7xvx.js"
+    ]
+  },
+  {
+    "route": "/receitas/[id]",
+    "firstLoadUncompressedJsBytes": 532965,
+    "firstLoadChunkPaths": [
+      ".next\\static\\chunks\\3sxi4v4lyjiql.js",
+      ".next\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next\\static\\chunks\\2f814k52i9wot.js",
+      ".next\\static\\chunks\\0k1hxv1y7ac0v.js",
+      ".next\\static\\chunks\\2qfuz-1p-7gc9.js",
+      ".next\\static\\chunks\\3j9pm5otqxm82.js",
+      ".next\\static\\chunks\\1mfjqidm5qp0a.js",
+      ".next\\static\\chunks\\turbopack-071tvln0_7xvx.js"
+    ]
+  },
+  {
     "route": "/",
     "firstLoadUncompressedJsBytes": 532244,
     "firstLoadChunkPaths": [
@@ -179,32 +207,6 @@
   },
   {
     "route": "/politica-de-privacidade-antenor-e-filhos",
-    "firstLoadUncompressedJsBytes": 532244,
-    "firstLoadChunkPaths": [
-      ".next\\static\\chunks\\3sxi4v4lyjiql.js",
-      ".next\\static\\chunks\\14mrh2-p_w84d.js",
-      ".next\\static\\chunks\\0k1hxv1y7ac0v.js",
-      ".next\\static\\chunks\\2qfuz-1p-7gc9.js",
-      ".next\\static\\chunks\\3j9pm5otqxm82.js",
-      ".next\\static\\chunks\\1mfjqidm5qp0a.js",
-      ".next\\static\\chunks\\turbopack-071tvln0_7xvx.js"
-    ]
-  },
-  {
-    "route": "/receitas",
-    "firstLoadUncompressedJsBytes": 532244,
-    "firstLoadChunkPaths": [
-      ".next\\static\\chunks\\3sxi4v4lyjiql.js",
-      ".next\\static\\chunks\\14mrh2-p_w84d.js",
-      ".next\\static\\chunks\\0k1hxv1y7ac0v.js",
-      ".next\\static\\chunks\\2qfuz-1p-7gc9.js",
-      ".next\\static\\chunks\\3j9pm5otqxm82.js",
-      ".next\\static\\chunks\\1mfjqidm5qp0a.js",
-      ".next\\static\\chunks\\turbopack-071tvln0_7xvx.js"
-    ]
-  },
-  {
-    "route": "/receitas/[id]",
     "firstLoadUncompressedJsBytes": 532244,
     "firstLoadChunkPaths": [
       ".next\\static\\chunks\\3sxi4v4lyjiql.js",
