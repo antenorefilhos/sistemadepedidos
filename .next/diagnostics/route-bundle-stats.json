@@ -114,11 +114,11 @@
   },
   {
     "route": "/receitas",
-    "firstLoadUncompressedJsBytes": 532965,
+    "firstLoadUncompressedJsBytes": 532982,
     "firstLoadChunkPaths": [
       ".next\\static\\chunks\\3sxi4v4lyjiql.js",
       ".next\\static\\chunks\\14mrh2-p_w84d.js",
-      ".next\\static\\chunks\\2f814k52i9wot.js",
+      ".next\\static\\chunks\\2uxzlcpaurpt_.js",
       ".next\\static\\chunks\\0k1hxv1y7ac0v.js",
       ".next\\static\\chunks\\2qfuz-1p-7gc9.js",
       ".next\\static\\chunks\\3j9pm5otqxm82.js",
@@ -128,11 +128,11 @@
   },
   {
     "route": "/receitas/[id]",
-    "firstLoadUncompressedJsBytes": 532965,
+    "firstLoadUncompressedJsBytes": 532982,
     "firstLoadChunkPaths": [
       ".next\\static\\chunks\\3sxi4v4lyjiql.js",
       ".next\\static\\chunks\\14mrh2-p_w84d.js",
-      ".next\\static\\chunks\\2f814k52i9wot.js",
+      ".next\\static\\chunks\\2uxzlcpaurpt_.js",
       ".next\\static\\chunks\\0k1hxv1y7ac0v.js",
       ".next\\static\\chunks\\2qfuz-1p-7gc9.js",
       ".next\\static\\chunks\\3j9pm5otqxm82.js",
