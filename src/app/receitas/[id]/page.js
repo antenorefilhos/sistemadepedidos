@@ -44,7 +44,7 @@ export default async function RecipeDetailsPage({ params }) {
   }
 
   return (
-    <div className="bg-[var(--bg-main)] text-white min-h-screen pt-32 pb-24">
+    <div className="bg-[var(--bg-main)] text-white min-h-screen" style={{ paddingTop: '120px', paddingBottom: '120px' }}>
       
       {/* Banner Principal da Receita */}
       <div className="relative w-full h-[40vh] md:h-[60vh] bg-black" style={{ borderBottom: '1px solid var(--border-color)' }}>

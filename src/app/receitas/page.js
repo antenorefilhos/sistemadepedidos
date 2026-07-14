@@ -35,7 +35,7 @@ export default async function ReceitasPage() {
   }
 
   return (
-    <div className="bg-[var(--bg-main)] text-white min-h-screen pt-32 pb-24">
+    <div className="bg-[var(--bg-main)] text-white min-h-screen" style={{ paddingTop: '160px', paddingBottom: '120px' }}>
       <div className="container mx-auto px-6 md:px-12">
         
         {/* Header */}
