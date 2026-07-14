@@ -1,3 +1,0 @@
-module.exports=[33273,a=>{"use strict";var b=a.i(87924),c=a.i(72131);a.s(["default",0,function({src:a,alt:d,className:e,iconSizeClass:f="text-4xl"}){let[g,h]=(0,c.useState)(!1),[i,j]=(0,c.useState)(!1);return((0,c.useEffect)(()=>{j(!0)},[]),!a||i&&g)?(0,b.jsx)("div",{className:"w-full h-full min-h-[200px] flex items-center justify-center bg-[#111] animate-[fadeIn_0.3s_ease]",style:{minHeight:"200px",width:"100%",height:"100%"},children:(0,b.jsx)("i",{className:`fa-solid fa-utensils ${f} text-[var(--color-gold)]/30`})}):(0,b.jsx)("img",{src:a,alt:d,className:e,onError:()=>{console.log("RecipeImage error loading src:",a),h(!0)}})}])}];
-
-//# sourceMappingURL=src_components_RecipeImage_1z1huv9.js.map

@@ -45,3 +45,12 @@ next-env.d.ts
 
 # env
 .env*
+.env.local
+
+# next.js build output
+.next/
+/.next/
+
+# PHP dependencies
+bio-links/vendor/
+/bio-links/vendor/
