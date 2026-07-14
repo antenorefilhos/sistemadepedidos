@@ -1,5 +1,6 @@
 import { getSupabase } from '@/lib/pgDb';
 import Link from 'next/link';
+import RecipeImage from '@/components/RecipeImage';
 
 export const metadata = {
   title: 'Receitas | Antenor & Filhos',
@@ -52,43 +53,64 @@ export default async function ReceitasPage() {
             <p>Nenhuma receita disponível no momento. Em breve novidades!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '32px' }}>
             {recipes.map(recipe => (
               <Link 
                 key={recipe.id} 
                 href={`/receitas/${recipe.id}`}
-                className="group relative block rounded-2xl overflow-hidden glass-panel hover:border-[var(--color-gold)]/50 transition-all duration-300 transform hover:-translate-y-1"
+                className="group hover:border-[var(--color-gold)]/50 transition-all duration-300 transform hover:-translate-y-1 glass-panel"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  textDecoration: 'none',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  background: 'rgba(9, 10, 13, 0.6)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}
               >
                 {/* Image Area */}
-                <div className="relative aspect-[4/3] bg-[#000] overflow-hidden">
-                  {recipe.image_url ? (
-                    <>
-                      <img 
-                        src={recipe.image_url} 
-                        alt={recipe.title} 
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          const fallback = e.target.nextElementSibling;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                      <div className="w-full h-full hidden items-center justify-center bg-[#111]">
-                        <i className="fa-solid fa-utensils text-4xl text-[var(--color-gold)]/30"></i>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[#111]">
-                      <i className="fa-solid fa-fire-burner text-4xl text-[var(--color-gold)]/30"></i>
+                <div style={{ position: 'relative', width: '100%', height: '220px', background: '#000', overflow: 'hidden' }}>
+                  <RecipeImage 
+                    src={recipe.image_url} 
+                    alt={recipe.title} 
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100" 
+                  />
+                  {/* Badges */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    <div className="bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#e3cfaf] flex items-center gap-1.5">
+                      <i className="fa-regular fa-clock"></i> {recipe.prep_time || '45 min'}
                     </div>
-                  )}
-                  {/* Badge */}
-                  {recipe.prep_time && (
-                    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-[#e3cfaf]">
-                      <i className="fa-regular fa-clock mr-1"></i> {recipe.prep_time}
+                    <div className="bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#e3cfaf] flex items-center gap-1.5">
+                      <i className="fa-solid fa-users"></i> {recipe.servings ? `${recipe.servings} porções` : '4 porções'}
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Content Area */}
-       
+                <div className="p-6 relative z-10 flex-grow flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-serif text-2xl text-[var(--color-gold)] mb-3 group-hover:text-white transition-colors line-clamp-2">
+                      {recipe.title}
+                    </h3>
+                    <p className="text-[var(--color-muted)] text-sm line-clamp-3 mb-6">
+                      {recipe.description 
+                        ? stripHtml(recipe.description) 
+                        : 'Uma receita clássica, preparada com excelência.'}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center text-xs font-bold uppercase tracking-widest text-[var(--color-gold)] group-hover:text-white transition-colors mt-auto">
+                    Ver Receita Completa <i className="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}

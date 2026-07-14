@@ -594,4 +594,366 @@ export default function BiolinksManager({ password }) {
                         animation: 'false',
                         image: ''
                       } : type === 'avatar' ? {
-                        image: '
+                        image: '',
+                        size: 96,
+                        border_radius: 'round',
+                        border_width: 0,
+                        border_style: 'solid',
+                        border_color: '#ffffff',
+                        border_shadow_offset_x: 0,
+                        border_shadow_offset_y: 4,
+                        border_shadow_blur: 15,
+                        border_shadow_color: '#00000030'
+                      } : type === 'heading' ? {
+                        text: '',
+                        heading_type: 'h2',
+                        text_color: '#ffffff'
+                      } : type === 'paragraph' ? {
+                        text: '',
+                        text_color: '#d7b994'
+                      } : type === 'phone_collector' ? {
+                        name: 'Promoções no WhatsApp',
+                        button_text: 'Quero Participar',
+                        name_placeholder: 'Seu Nome',
+                        phone_placeholder: 'Seu WhatsApp'
+                      } : {}
+                    });
+                  }}
+                  className="select select-bordered bg-black/40 text-sm focus:border-primary!"
+                >
+                  {BLOCK_TYPES.map(t => (
+                    <option key={t.type} value={t.type}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* RENDERIZAÇÃO CONDICIONAL BASEADO NO TIPO SELECIONADO */}
+              {currentBlock.type === 'avatar' && (
+                <>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">URL da Imagem do Perfil</span></label>
+                    <input 
+                      type="text"
+                      required
+                      value={currentBlock.settings.image || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, image: e.target.value } })}
+                      placeholder="/uploads/avatars/imagem.png"
+                      className="input input-bordered bg-black/40 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Tamanho (px)</span></label>
+                      <input 
+                        type="number"
+                        value={currentBlock.settings.size || 96}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, size: parseInt(e.target.value) || 96 } })}
+                        className="input input-bordered bg-black/40 text-sm"
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text font-bold">Formato das Bordas</span></label>
+                      <select 
+                        value={currentBlock.settings.border_radius || 'round'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_radius: e.target.value } })}
+                        className="select select-bordered bg-black/40 text-sm"
+                      >
+                        <option value="round">Redondo (Total)</option>
+                        <option value="rounded">Arredondado (Suave)</option>
+                        <option value="straight">Reto (Sem borda)</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {currentBlock.type === 'heading' && (
+                <>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Texto do Título</span></label>
+                    <input 
+                      type="text"
+                      required
+                      value={currentBlock.settings.text || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, text: e.target.value } })}
+                      className="input input-bordered bg-black/40 text-sm focus:border-primary!"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Tamanho (Tag)</span></label>
+                      <select 
+                        value={currentBlock.settings.heading_type || 'h2'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, heading_type: e.target.value } })}
+                        className="select select-bordered bg-black/40 text-sm"
+                      >
+                        <option value="h1">Título H1</option>
+                        <option value="h2">Título H2</option>
+                        <option value="h3">Título H3</option>
+                        <option value="h4">Título H4</option>
+                        <option value="h5">Título H5</option>
+                        <option value="h6">Título H6</option>
+                      </select>
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Cor do Texto</span></label>
+                      <input 
+                        type="color"
+                        value={currentBlock.settings.text_color || '#ffffff'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, text_color: e.target.value } })}
+                        className="input input-bordered bg-black/40 w-full"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {currentBlock.type === 'paragraph' && (
+                <>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Texto do Parágrafo</span></label>
+                    <textarea 
+                      required
+                      value={currentBlock.settings.text || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, text: e.target.value } })}
+                      className="textarea textarea-bordered bg-black/40 text-sm focus:border-primary!"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Cor do Texto</span></label>
+                    <input 
+                      type="color"
+                      value={currentBlock.settings.text_color || '#ffffff'}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, text_color: e.target.value } })}
+                      className="input input-bordered bg-black/40 w-full"
+                    />
+                  </div>
+                </>
+              )}
+
+              {currentBlock.type === 'link' && (
+                <>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Nome do Botão</span></label>
+                    <input 
+                      type="text"
+                      required
+                      value={currentBlock.settings.name || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, name: e.target.value } })}
+                      className="input input-bordered bg-black/40 text-sm focus:border-primary!"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">URL de Destino</span></label>
+                    <input 
+                      type="text"
+                      required
+                      value={currentBlock.location_url || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, location_url: e.target.value })}
+                      placeholder="https://..." 
+                      className="input input-bordered bg-black/40 text-sm focus:border-primary!"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">URL do Ícone do Botão</span></label>
+                    <input 
+                      type="text"
+                      value={currentBlock.settings.image || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, image: e.target.value } })}
+                      placeholder="ex: https://site.com/icone.png"
+                      className="input input-bordered bg-black/40 text-sm"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Fundo do Botão</span></label>
+                      <input 
+                        type="color"
+                        value={currentBlock.settings.background_color || '#ffffff'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, background_color: e.target.value } })}
+                        className="input input-bordered bg-black/40 w-full"
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Cor do Texto</span></label>
+                      <input 
+                        type="color"
+                        value={currentBlock.settings.text_color || '#000000'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, text_color: e.target.value } })}
+                        className="input input-bordered bg-black/40 w-full"
+                      />
+                    </div>
+                  </div>
+
+                  {/* ESTILOS DE BORDA E SOMBRAS 1:1 DO 66BIOLINKS */}
+                  <div className="grid grid-cols-3 gap-4 border-t border-base-300 mt-2 pt-2">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Bordas</span></label>
+                      <select 
+                        value={currentBlock.settings.border_radius || 'round'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_radius: e.target.value } })}
+                        className="select select-bordered bg-black/40 text-xs"
+                      >
+                        <option value="round">Totalmente Redondo</option>
+                        <option value="rounded">Arredondado</option>
+                        <option value="straight">Reto</option>
+                      </select>
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Largura Borda</span></label>
+                      <input 
+                        type="number"
+                        value={currentBlock.settings.border_width || 0}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_width: parseInt(e.target.value) || 0 } })}
+                        className="input input-bordered bg-black/40 text-xs"
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Estilo Borda</span></label>
+                      <select 
+                        value={currentBlock.settings.border_style || 'solid'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_style: e.target.value } })}
+                        className="select select-bordered bg-black/40 text-xs"
+                      >
+                        <option value="solid">Sólida</option>
+                        <option value="dashed">Tracejada</option>
+                        <option value="dotted">Pontilhada</option>
+                        <option value="double">Dupla</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Cor da Borda</span></label>
+                      <input 
+                        type="color"
+                        value={currentBlock.settings.border_color || '#000000'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_color: e.target.value } })}
+                        className="input input-bordered bg-black/40 w-full"
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Animação de Entrada</span></label>
+                      <select 
+                        value={currentBlock.settings.animation || 'false'}
+                        onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, animation: e.target.value } })}
+                        className="select select-bordered bg-black/40 text-xs"
+                      >
+                        <option value="false">Nenhuma</option>
+                        <option value="bounce">Salto (Bounce)</option>
+                        <option value="tada">Tada (Festa)</option>
+                        <option value="wobble">Oscilação (Wobble)</option>
+                        <option value="shake">Tremor (Shake)</option>
+                        <option value="pulse">Pulso (Pulse)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-control border-t border-base-300 mt-2 pt-2">
+                    <label className="label"><span className="label-text font-bold">Configuração de Sombra (CSS Box Shadow)</span></label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <span className="text-[10px] opacity-75">Sombra X (px)</span>
+                        <input 
+                          type="number" 
+                          value={currentBlock.settings.border_shadow_offset_x || 0}
+                          onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_shadow_offset_x: parseInt(e.target.value) || 0 } })}
+                          className="input input-bordered bg-black/40 text-xs w-full"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] opacity-75">Sombra Y (px)</span>
+                        <input 
+                          type="number" 
+                          value={currentBlock.settings.border_shadow_offset_y || 6}
+                          onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_shadow_offset_y: parseInt(e.target.value) || 0 } })}
+                          className="input input-bordered bg-black/40 text-xs w-full"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] opacity-75">Desfoque (Blur)</span>
+                        <input 
+                          type="number" 
+                          value={currentBlock.settings.border_shadow_blur || 20}
+                          onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_shadow_blur: parseInt(e.target.value) || 0 } })}
+                          className="input input-bordered bg-black/40 text-xs w-full"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">Cor da Sombra</span></label>
+                        <input 
+                          type="text"
+                          value={currentBlock.settings.border_shadow_color || '#00000015'}
+                          onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_shadow_color: e.target.value } })}
+                          placeholder="rgba(0,0,0,0.1) ou #hex"
+                          className="input input-bordered bg-black/40 text-xs"
+                        />
+                      </div>
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">Espalhamento (Spread)</span></label>
+                        <input 
+                          type="number"
+                          value={currentBlock.settings.border_shadow_spread || 0}
+                          onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, border_shadow_spread: parseInt(e.target.value) || 0 } })}
+                          className="input input-bordered bg-black/40 text-xs w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {currentBlock.type === 'phone_collector' && (
+                <>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Título do Captador</span></label>
+                    <input 
+                      type="text"
+                      required
+                      value={currentBlock.settings.name || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, name: e.target.value } })}
+                      className="input input-bordered bg-black/40 text-sm focus:border-primary!"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Texto do Botão</span></label>
+                    <input 
+                      type="text"
+                      required
+                      value={currentBlock.settings.button_text || ''}
+                      onChange={(e) => setCurrentBlock({ ...currentBlock, settings: { ...currentBlock.settings, button_text: e.target.value } })}
+                      className="input input-bordered bg-black/40 text-sm focus:border-primary!"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="form-control mt-2 border-t border-base-300 pt-2">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <input 
+                    type="checkbox" 
+                    checked={currentBlock.is_enabled}
+                    onChange={(e) => setCurrentBlock({ ...currentBlock, is_enabled: e.target.checked })}
+                    className="checkbox checkbox-primary"
+                  />
+                  <span className="label-text font-bold">Bloco Ativo/Habilitado</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-action mt-8 border-t border-base-300 pt-4">
+              <button type="button" onClick={() => setShowBlockModal(false)} className="btn btn-outline btn-sm">Cancelar</button>
+              <button type="submit" className="btn btn-primary btn-sm">Confirmar Bloco</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}

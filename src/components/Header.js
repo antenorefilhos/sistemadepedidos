@@ -81,6 +81,7 @@ export default function Header() {
     { href: '/boutique', label: 'Boutique' },
     { href: '/adega', label: 'Adega' },
     { href: '/cardapio', label: 'Cardápio' },
+    { href: '/receitas', label: 'Receitas' },
     { href: '/entregas', label: 'Entregas' },
     { href: '/distribuidora', label: 'Distribuidora' },
   ];

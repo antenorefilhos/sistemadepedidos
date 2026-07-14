@@ -353,4 +353,11 @@ export default function RecipeEditor({ password, products }) {
                     {saving ? <span className="loading loading-spinner"></span> : 'Salvar Receita'}
                   </button>
                 </div>
-   
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

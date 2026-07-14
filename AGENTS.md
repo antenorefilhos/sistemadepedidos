@@ -1,4 +1,6 @@
-TUDO SEMPRE EM PT-BR
+# Diretrizes Gerais dos Agentes
+
+- **Idioma**: TUDO SEMPRE EM PT-BR
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
@@ -42,7 +44,16 @@ D:\NOVA ORGANIZAÇÃO\PROJETOS\Obsidian\Antenor e Filhos\Sistema de Pedidos (ant
 <!-- END:claude-rules -->
 
 <!-- BEGIN:commit-rules -->
-
-- A cada nova implementação, cite no chat a descrição/resumo do commit em pt-br
+- Descreva a descrição/resumo do commit em pt-br
+- Descreva as mudanças do commit em pt-br
+- Coloque no formato padrão de commit:
+  feat: Nova funcionalidade
+  fix: Correção de bug
+  docs: Documentação
+  style: Estilo
+  refactor: Refatoração
+  perf: Performance
+  test: Testes
+  chore: Outros
 
 <!-- END:commit-rules -->
