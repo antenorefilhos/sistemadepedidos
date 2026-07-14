@@ -44,10 +44,10 @@ export default async function RecipeDetailsPage({ params }) {
   }
 
   return (
-    <div className="bg-[var(--bg-main)] text-white min-h-screen pt-24 pb-20">
+    <div className="bg-[var(--bg-main)] text-white min-h-screen pt-32 pb-24">
       
       {/* Banner Principal da Receita */}
-      <div className="relative w-full h-[40vh] md:h-[60vh] bg-black">
+      <div className="relative w-full h-[40vh] md:h-[60vh] bg-black" style={{ borderBottom: '1px solid var(--border-color)' }}>
         <RecipeImage 
           src={recipe.image_url} 
           alt={recipe.title} 
@@ -57,24 +57,60 @@ export default async function RecipeDetailsPage({ params }) {
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-transparent to-transparent"></div>
         
         <div className="absolute bottom-0 left-0 w-full p-8 md:p-16">
-          <div className="container-app">
-             <div className="flex gap-3 flex-wrap mb-6" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
-               <div className="bg-black/60 text-[var(--color-gold)] border border-[var(--color-gold)]/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                 <i className="fa-regular fa-clock mr-2"></i> {recipe.prep_time || '45 min'}
+          <div className="container mx-auto px-6 md:px-12">
+             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px', zIndex: 3 }}>
+               <div style={{
+                 background: 'rgba(0, 0, 0, 0.85)',
+                 border: '1px solid var(--border-color)',
+                 padding: '6px 14px',
+                 fontSize: '11px',
+                 fontWeight: 'bold',
+                 textTransform: 'uppercase',
+                 color: 'var(--primary)',
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '8px',
+                 borderRadius: '0px'
+               }}>
+                 <i className="fa-regular fa-clock"></i> {recipe.prep_time || '45 min'}
                </div>
-               <div className="bg-black/60 text-[var(--color-gold)] border border-[var(--color-gold)]/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                 <i className="fa-solid fa-users mr-2"></i> {recipe.servings ? `${recipe.servings} porções` : '4 porções'}
+               <div style={{
+                 background: 'rgba(0, 0, 0, 0.85)',
+                 border: '1px solid var(--border-color)',
+                 padding: '6px 14px',
+                 fontSize: '11px',
+                 fontWeight: 'bold',
+                 textTransform: 'uppercase',
+                 color: 'var(--primary)',
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '8px',
+                 borderRadius: '0px'
+               }}>
+                 <i className="fa-solid fa-users"></i> {recipe.servings ? `${recipe.servings} porções` : '4 porções'}
                </div>
-               <div className="bg-black/60 text-[var(--color-gold)] border border-[var(--color-gold)]/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                 <i className="fa-solid fa-fire-burner mr-2"></i> Dificuldade: {recipe.difficulty || 'Fácil'}
+               <div style={{
+                 background: 'rgba(0, 0, 0, 0.85)',
+                 border: '1px solid var(--border-color)',
+                 padding: '6px 14px',
+                 fontSize: '11px',
+                 fontWeight: 'bold',
+                 textTransform: 'uppercase',
+                 color: 'var(--primary)',
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '8px',
+                 borderRadius: '0px'
+               }}>
+                 <i className="fa-solid fa-fire-burner"></i> {recipe.difficulty || 'Fácil'}
                </div>
              </div>
-             <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl text-white mb-4 drop-shadow-lg">{recipe.title}</h1>
+             <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl text-white mb-4 drop-shadow-lg" style={{ fontFamily: 'var(--font-serif)', textTransform: 'none' }}>{recipe.title}</h1>
           </div>
         </div>
       </div>
 
-      <div className="container-app mt-8 md:mt-16">
+      <div className="container mx-auto px-6 md:px-12 mt-12 md:mt-20">
         <div style={{ display: 'flex', flexDirection: 'row', gap: '48px', flexWrap: 'wrap' }}>
           
           {/* Coluna Esquerda: Descrição e Ingredientes/Preparo */}
@@ -82,24 +118,41 @@ export default async function RecipeDetailsPage({ params }) {
             
             {recipe.description && recipe.instructions && (
               <div 
-                className="mb-12 text-lg text-[var(--color-muted)] leading-relaxed border-l-2 border-[var(--color-gold)] pl-6 italic"
+                className="mb-12 text-lg leading-relaxed italic"
+                style={{ color: 'var(--text-muted)', borderLeft: '2px solid var(--primary)', paddingLeft: '24px', marginBottom: '48px' }}
                 dangerouslySetInnerHTML={{ __html: recipe.description }}
               ></div>
             )}
 
-            <div className="glass-panel p-8 md:p-12 rounded-2xl mb-12">
-              <h2 className="font-serif text-3xl text-[var(--color-gold)] mb-8 border-b border-white/10 pb-4">
+            <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px', marginBottom: '48px' }}>
+              <h2 className="font-serif text-3xl mb-8 pb-4" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 32px 0', textTransform: 'none' }}>
                 Instruções de Preparo
               </h2>
               <div 
-                className="prose prose-invert max-w-none text-gray-300 leading-loose prose-h3:text-[var(--color-gold)] prose-h3:font-serif prose-a:text-[var(--color-gold)]"
+                className="prose prose-invert max-w-none text-gray-300 leading-loose prose-h3:text-[var(--primary)] prose-h3:font-serif prose-a:text-[var(--primary)]"
                 dangerouslySetInnerHTML={{ __html: recipe.instructions ? recipe.instructions : recipe.description }}
               ></div>
             </div>
             
-            <div className="mt-8">
-               <Link href="/receitas" className="btn-outline border-white/20 text-white hover:bg-white hover:text-black">
-                 <i className="fa-solid fa-arrow-left mr-2"></i> Voltar para Receitas
+            <div className="mt-8" style={{ marginTop: '32px' }}>
+               <Link 
+                 href="/receitas" 
+                 className="btn"
+                 style={{
+                   display: 'inline-flex',
+                   alignItems: 'center',
+                   border: '1px solid var(--border-color)',
+                   background: 'transparent',
+                   color: 'white',
+                   borderRadius: '0px',
+                   textTransform: 'uppercase',
+                   fontSize: '12px',
+                   fontWeight: 'bold',
+                   padding: '12px 24px',
+                   letterSpacing: 'var(--ls-wider)'
+                 }}
+               >
+                 <i className="fa-solid fa-arrow-left mr-2" style={{ marginRight: '8px' }}></i> Voltar para Receitas
                </Link>
             </div>
           </div>
@@ -107,17 +160,27 @@ export default async function RecipeDetailsPage({ params }) {
           {/* Coluna Direita: Carnes Recomendadas (Produtos Vinculados) */}
           <div style={{ flex: '1 1 300px', minWidth: '280px' }}>
             <div className="sticky top-32">
-              <h3 className="font-serif text-2xl text-[var(--color-gold)] mb-6">Cortes Utilizados</h3>
+              <h3 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>Cortes Utilizados</h3>
               
               {relatedProducts.length > 0 ? (
-                <div className="flex flex-col gap-4">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {relatedProducts.map(prod => (
                     <Link 
                       key={prod.id} 
                       href={`/produtos/${prod.slug}`}
-                      className="glass-panel p-4 rounded-xl flex gap-4 items-center group hover:border-[var(--color-gold)]/50 transition-colors"
+                      className="group product-card"
+                      style={{
+                        display: 'flex',
+                        gap: '16px',
+                        alignItems: 'center',
+                        textDecoration: 'none',
+                        borderRadius: '0px',
+                        padding: '16px',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-color)'
+                      }}
                     >
-                      <div className="w-20 h-20 bg-black rounded-lg overflow-hidden flex-shrink-0 relative">
+                      <div style={{ width: '80px', height: '80px', background: '#000', overflow: 'hidden', flexShrink: 0, position: 'relative', borderRadius: '0px' }}>
                          <RecipeImage 
                            src={prod.image_url} 
                            alt={prod.title} 
@@ -126,8 +189,8 @@ export default async function RecipeDetailsPage({ params }) {
                          />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm text-white group-hover:text-[var(--color-gold)] transition-colors mb-1 line-clamp-2" dangerouslySetInnerHTML={{ __html: prod.title }}></h4>
-                        <div className="text-[var(--color-gold)] font-serif text-lg">
+                        <h4 className="font-bold text-sm text-white group-hover:text-[var(--primary-hover)] transition-colors mb-1 line-clamp-2" style={{ margin: '0 0 4px 0', fontSize: '14px', transition: 'color var(--transition-fast)' }} dangerouslySetInnerHTML={{ __html: prod.title }}></h4>
+                        <div className="font-serif text-lg" style={{ color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '18px' }}>
                           R$ {Number(prod.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                       </div>
@@ -135,7 +198,7 @@ export default async function RecipeDetailsPage({ params }) {
                   ))}
                 </div>
               ) : (
-                <div className="glass-panel p-6 rounded-xl text-center text-sm text-[var(--color-muted)]">
+                <div style={{ padding: '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>
                   Nenhum corte específico vinculado. Pode ser preparado com a carne de sua preferência.
                 </div>
               )}
