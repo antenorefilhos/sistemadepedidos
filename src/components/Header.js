@@ -6,6 +6,10 @@ import { usePathname } from 'next/navigation';
 
 export default function Header() {
   const pathname = usePathname();
+
+  // Oculta o header global na área administrativa
+  if (pathname && pathname.startsWith('/admin')) return null;
+
   const [activeSeller, setActiveSeller] = useState(null);
   const [cartCount, setCartCount] = useState(0);
   const [theme, setTheme] = useState('dark');
@@ -121,7 +125,7 @@ export default function Header() {
 
             {/* Seller Badge */}
             {activeSeller && (
-              <div className="seller-badge hide-mobile">
+              <div className="seller-badge">
                 <span className="seller-dot" />
                 <span>Vendedor: <b>{activeSeller.name}</b></span>
                 <button onClick={clearSeller} className="seller-exit" title="Comprar direto com a loja">
@@ -130,15 +134,7 @@ export default function Header() {
               </div>
             )}
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="nav-icon-btn"
-              title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
-              aria-label="Alternar tema"
-            >
-              <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
-            </button>
+
 
             {/* Cart Button */}
             <Link href="/carrinho" className="cart-btn" onClick={() => setMobileMenuOpen(false)}>
@@ -176,7 +172,7 @@ export default function Header() {
             style={{ height: '36px', width: 'auto' }}
           />
           <button
-            className="nav-icon-btn"
+            className="mobile-drawer-close"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Fechar menu"
           >
@@ -209,12 +205,7 @@ export default function Header() {
           ))}
         </ul>
 
-        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(171,144,112,0.15)' }}>
-          <button onClick={toggleTheme} className="nav-icon-btn" style={{ gap: '10px', fontSize: '13px', width: '100%', justifyContent: 'flex-start', paddingLeft: 0 }}>
-            <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
-            {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
-          </button>
-        </div>
+
       </aside>
     </>
   );

@@ -4,18 +4,32 @@ import ProductDetails from './ProductDetails';
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(slug);
+    } catch (e) {
+      return slug;
+    }
+  })();
+
+  const variations = Array.from(new Set([
+    slug,
+    slug.toLowerCase(),
+    decoded,
+    decoded.toLowerCase(),
+    encodeURIComponent(decoded).toLowerCase(),
+    encodeURIComponent(decoded).toUpperCase()
+  ]));
+
   const supabase = getSupabase();
-  const encodedSlug = encodeURIComponent(slug).toLowerCase();
-  
   const { data: product } = await supabase
     .from('products')
     .select('title, description, image_url')
-    .or(`slug.eq.${slug},slug.eq.${encodedSlug}`)
+    .in('slug', variations)
     .eq('status', 'on')
     .limit(1)
-    .single();
-  
+    .maybeSingle();
+
   if (!product) {
     return {
       title: 'Produto Não Encontrado | Antenor e Filhos',
@@ -37,9 +51,25 @@ export async function generateMetadata({ params }) {
 export default async function ProductDetailPage({ params }) {
   const { slug } = await params;
   
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(slug);
+    } catch (e) {
+      return slug;
+    }
+  })();
+
+  const variations = Array.from(new Set([
+    slug,
+    slug.toLowerCase(),
+    decoded,
+    decoded.toLowerCase(),
+    encodeURIComponent(decoded).toLowerCase(),
+    encodeURIComponent(decoded).toUpperCase()
+  ]));
+
   // 1. Fetch main product details with joined categories
   const supabase = getSupabase();
-  const encodedSlug = encodeURIComponent(slug).toLowerCase();
 
   const { data: p } = await supabase
     .from('products')
@@ -49,10 +79,10 @@ export default async function ProductDetailPage({ params }) {
         categories ( id, name, slug, type )
       )
     `)
-    .or(`slug.eq.${slug},slug.eq.${encodedSlug}`)
+    .in('slug', variations)
     .eq('status', 'on')
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!p) {
     notFound();

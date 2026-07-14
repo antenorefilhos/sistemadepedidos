@@ -5,6 +5,10 @@ import LiveOrdersMonitor from './components/LiveOrdersMonitor';
 import ProductEditor from './components/ProductEditor';
 import HermesDashboard from './components/HermesDashboard';
 import SolidconIntegration from './components/SolidconIntegration';
+import StoreSettings from './components/StoreSettings';
+import RecipeEditor from './components/RecipeEditor';
+import MenuRestaurantEditor from './components/MenuRestaurantEditor';
+import BiolinksManager from './components/BiolinksManager';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -84,11 +88,19 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    document.body.classList.add('admin-body');
+    document.documentElement.setAttribute('data-theme', 'light');
+    
     const saved = sessionStorage.getItem('admin_auth_pass');
     if (saved) {
       setPassword(saved);
       checkAuth(saved);
     }
+
+    return () => {
+      document.body.classList.remove('admin-body');
+      document.documentElement.removeAttribute('data-theme');
+    };
   }, []);
 
   useEffect(() => {
@@ -539,48 +551,77 @@ export default function AdminDashboard() {
     return d.toLocaleString('pt-BR');
   };
 
-  // Filtering Orders
-  const filteredOrders = orders.filter(o => {
-    const matchesSearch = o.customer_name.toLowerCase().includes(orderSearch.toLowerCase()) ||
-                          o.id.toString() === orderSearch;
-    const matchesStatus = orderStatusFilter === '' || o.status === orderStatusFilter;
+  // Filtering Orders (Fuzzy Search)
+  const filteredOrders = (() => {
+    let result = orders;
     
-    let matchesSeller = true;
+    // Filtro de Status
+    if (orderStatusFilter !== '') {
+      result = result.filter(o => o.status === orderStatusFilter);
+    }
+    
+    // Filtro de Vendedor
     if (orderSellerFilter !== '') {
       if (orderSellerFilter === 'direto') {
-        matchesSeller = !o.seller_id;
+        result = result.filter(o => !o.seller_id);
       } else {
-        matchesSeller = o.seller_id === Number(orderSellerFilter);
+        result = result.filter(o => o.seller_id === Number(orderSellerFilter));
       }
     }
-    return matchesSearch && matchesStatus && matchesSeller;
-  });
+    
+    // Filtro de Busca Fuzzy
+    if (orderSearch.trim() !== '') {
+      const Fuse = require('fuse.js').default;
+      const fuse = new Fuse(result, {
+        keys: ['customer_name', 'id'],
+        threshold: 0.4
+      });
+      result = fuse.search(orderSearch).map(item => item.item);
+    }
+    
+    return result;
+  })();
 
-  // Filtering Products for Table
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(prodSearch.toLowerCase()) || 
-                          (p.sku && p.sku.includes(prodSearch));
-    const matchesType = prodTypeFilter === '' || p.type === prodTypeFilter;
-    return matchesSearch && matchesType;
-  });
+  // Filtering Products for Table (Fuzzy Search)
+  const filteredProducts = (() => {
+    let result = products;
+    
+    // Filtro de Tipo/Setor
+    if (prodTypeFilter !== '') {
+      result = result.filter(p => p.type === prodTypeFilter);
+    }
+    
+    // Filtro de Busca Fuzzy
+    if (prodSearch.trim() !== '') {
+      const Fuse = require('fuse.js').default;
+      const fuse = new Fuse(result, {
+        keys: ['title', 'sku'],
+        threshold: 0.4
+      });
+      result = fuse.search(prodSearch).map(item => item.item);
+    }
+    
+    return result;
+  })();
 
   // Pagination helper
   const totalProdPages = Math.ceil(filteredProducts.length / prodPerPage) || 1;
   const paginatedProducts = filteredProducts.slice((prodPage - 1) * prodPerPage, prodPage * prodPerPage);
 
-  // Statistics calculation helpers
-  const totalOrders = orders.length;
-  const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
-  const completedOrdersCount = orders.filter(o => o.status === 'completed').length;
+  // Statistics calculation helpers (dinâmicos com base nos filtros)
+  const totalOrders = filteredOrders.length;
+  const pendingOrdersCount = filteredOrders.filter(o => o.status === 'processing').length;
+  const completedOrdersCount = filteredOrders.filter(o => o.status === 'completed').length;
   
-  // Total Budgets Estimate Revenue
+  // Total Budgets Estimate Revenue (resiliente com preços estimados do catálogo)
   const calculateTotalRevenue = (onlyCompleted = false) => {
     let total = 0;
-    orders.forEach(o => {
+    filteredOrders.forEach(o => {
       if (onlyCompleted && o.status !== 'completed') return;
       o.items.forEach(i => {
-        if (i.price) {
-          total += (i.price * i.quantity);
+        const itemPrice = i.price || products.find(p => p.title === i.product_title)?.preco || 0;
+        if (itemPrice) {
+          total += (itemPrice * i.quantity);
         }
       });
     });
@@ -591,17 +632,16 @@ export default function AdminDashboard() {
   const totalRevenue = calculateTotalRevenue(false);
   const ticketMedio = completedOrdersCount > 0 ? (salesRevenue / completedOrdersCount) : 0;
 
-  // Chart data: Sales by Category
+  // Chart data: Sales by Category (dinâmico e resiliente)
   const getSalesByCategory = () => {
     const categoriesStats = { Boutique: 0, Adega: 0 };
-    orders.forEach(o => {
+    filteredOrders.forEach(o => {
       o.items.forEach(i => {
-        // Simple heuristic: if EAN starts with number or has certain structure
-        // In database type is carnes_ or adega, let's fetch matching products
         const matchProd = products.find(p => p.title === i.product_title);
         const sector = matchProd?.type === 'adega' ? 'Adega' : 'Boutique';
-        if (i.price) {
-          categoriesStats[sector] += (i.price * i.quantity);
+        const itemPrice = i.price || matchProd?.preco || 0;
+        if (itemPrice) {
+          categoriesStats[sector] += (itemPrice * i.quantity);
         }
       });
     });
@@ -627,7 +667,7 @@ export default function AdminDashboard() {
       }
       
       stats[name].count += 1;
-      if (o.status === 'pending') {
+      if (o.status === 'processing') {
         stats[name].pending += 1;
       } else if (o.status === 'completed') {
         stats[name].completed += 1;
@@ -658,192 +698,151 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="page-wrapper" style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '40px', paddingLeft: '20px', paddingRight: '20px' }}>
-        <form onSubmit={handleLogin} className="glass" style={{ maxWidth: '400px', width: '100%', padding: '40px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h2 style={{ color: 'var(--primary)', textAlign: 'center', marginBottom: '10px', fontFamily: 'var(--font-serif)' }}>Painel Gerencial</h2>
-          <div className="form-group">
-            <label className="form-label">Senha de Acesso</label>
-            <input 
-              type="password" 
-              placeholder="Digite sua senha de acesso" 
-              className="form-control"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>
-            Acessar Painel
-          </button>
-        </form>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-base-200">
+        <div className="card w-full max-w-sm bg-base-100 shadow-xl border border-primary/20">
+          <form onSubmit={handleLogin} className="card-body">
+            <h2 className="card-title justify-center text-primary font-bold mb-4 text-lg">Painel Gerencial</h2>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Senha de Acesso</span>
+              </label>
+              <input 
+                type="password" 
+                placeholder="Digite sua senha de acesso" 
+                className="input input-bordered w-full"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="card-actions justify-end mt-4">
+              <button type="submit" className="btn btn-primary btn-block">
+                Acessar Painel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="page-wrapper" style={{ minHeight: '90vh', display: 'flex' }}>
+    <div className="flex flex-1 w-full overflow-hidden">
       
-      {/* Redesigned Premium Sidebar Panel */}
-      <aside style={{ 
-        width: '260px', 
-        backgroundColor: '#07080a', 
-        borderRight: '1px solid var(--border-color)', 
-        padding: '30px 20px', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '30px',
-        flexShrink: 0
-      }} className="hide-mobile">
-        <div>
-          <h3 style={{ color: 'var(--primary)', fontSize: '15px', letterSpacing: '0.15em', marginBottom: '5px' }}>Antenor & Filhos</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>MÓDULO DE EXPEDIÇÃO v1.2</span>
+      {/* Redesigned Premium Sidebar Panel - DaisyUI Menu */}
+      <aside className="w-[220px] bg-base-300 border-r border-base-200 flex flex-col flex-shrink-0 hide-mobile">
+        <div className="px-5 pt-7 pb-3">
+          <h3 className="text-primary text-[13px] tracking-tight font-bold whitespace-nowrap mb-0.5">Antenor &amp; Filhos</h3>
+          <span className="text-[9px] text-base-content/50 font-bold uppercase tracking-wider">Módulo de Expedição v1.2</span>
         </div>
 
-        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <ul className="menu w-full px-4 gap-1 flex-1 overflow-y-auto mt-4 text-sm font-medium">
           <li>
-            <button 
-              onClick={() => setActiveTab('orders')} 
-              style={{
-                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                backgroundColor: activeTab === 'orders' ? 'var(--primary-light)' : 'transparent',
-                color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-muted)',
-                border: activeTab === 'orders' ? '1px solid var(--primary)' : '1px solid transparent',
-                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}
-            >
-              <i className="fa-solid fa-list-check" style={{ width: '16px' }}></i> Orçamentos
+            <button onClick={() => setActiveTab('orders')} className={activeTab === 'orders' ? 'active' : ''}>
+              <i className="fa-solid fa-list-check w-5 text-center"></i> Orçamentos
             </button>
           </li>
           <li>
-            <button 
-              onClick={() => setActiveTab('products')} 
-              style={{
-                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                backgroundColor: activeTab === 'products' ? 'var(--primary-light)' : 'transparent',
-                color: activeTab === 'products' ? 'var(--primary)' : 'var(--text-muted)',
-                border: activeTab === 'products' ? '1px solid var(--primary)' : '1px solid transparent',
-                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}
-            >
-              <i className="fa-solid fa-drumstick-bite" style={{ width: '16px' }}></i> Catálogo
+            <button onClick={() => setActiveTab('products')} className={activeTab === 'products' ? 'active' : ''}>
+              <i className="fa-solid fa-drumstick-bite w-5 text-center"></i> Catálogo
             </button>
           </li>
           <li>
-            <button 
-              onClick={() => setActiveTab('categories')} 
-              style={{
-                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                backgroundColor: activeTab === 'categories' ? 'var(--primary-light)' : 'transparent',
-                color: activeTab === 'categories' ? 'var(--primary)' : 'var(--text-muted)',
-                border: activeTab === 'categories' ? '1px solid var(--primary)' : '1px solid transparent',
-                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}
-            >
-              <i className="fa-solid fa-tags" style={{ width: '16px' }}></i> Categorias
+            <button onClick={() => setActiveTab('categories')} className={activeTab === 'categories' ? 'active' : ''}>
+              <i className="fa-solid fa-tags w-5 text-center"></i> Categorias
             </button>
           </li>
           <li>
-            <button 
-              onClick={() => setActiveTab('sellers')} 
-              style={{
-                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                backgroundColor: activeTab === 'sellers' ? 'var(--primary-light)' : 'transparent',
-                color: activeTab === 'sellers' ? 'var(--primary)' : 'var(--text-muted)',
-                border: activeTab === 'sellers' ? '1px solid var(--primary)' : '1px solid transparent',
-                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}
-            >
-              <i className="fa-solid fa-users" style={{ width: '16px' }}></i> Vendedores
+            <button onClick={() => setActiveTab('sellers')} className={activeTab === 'sellers' ? 'active' : ''}>
+              <i className="fa-solid fa-users w-5 text-center"></i> Vendedores
             </button>
           </li>
           <li>
-            <button 
-              onClick={() => setActiveTab('stats')} 
-              style={{
-                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                backgroundColor: activeTab === 'stats' ? 'var(--primary-light)' : 'transparent',
-                color: activeTab === 'stats' ? 'var(--primary)' : 'var(--text-muted)',
-                border: activeTab === 'stats' ? '1px solid var(--primary)' : '1px solid transparent',
-                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}
-            >
-              <i className="fa-solid fa-brain" style={{ width: '16px' }}></i> Inteligência AI
+            <button onClick={() => setActiveTab('stats')} className={activeTab === 'stats' ? 'active' : ''}>
+              <i className="fa-solid fa-brain w-5 text-center"></i> Inteligência AI
             </button>
           </li>
           <li>
-            <button 
-              onClick={() => setActiveTab('monitor')} 
-              style={{
-                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                backgroundColor: activeTab === 'monitor' ? 'var(--primary-light)' : 'transparent',
-                color: activeTab === 'monitor' ? 'var(--primary)' : 'var(--text-muted)',
-                border: activeTab === 'monitor' ? '1px solid var(--primary)' : '1px solid transparent',
-                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}
-            >
-              <i className="fa-solid fa-desktop" style={{ width: '16px' }}></i> Monitor Ao Vivo
+            <button onClick={() => setActiveTab('monitor')} className={activeTab === 'monitor' ? 'active' : ''}>
+              <i className="fa-solid fa-desktop w-5 text-center"></i> Monitor Ao Vivo
+            </button>
+          </li>
+          <li className="mt-2">
+            <button onClick={() => setActiveTab('solidcon')} className={activeTab === 'solidcon' ? 'active' : ''}>
+              <i className="fa-solid fa-cloud-arrow-down w-5 text-center"></i> Integração ERP
+            </button>
+          </li>
+
+          <div className="divider text-[10px] uppercase opacity-50 my-2">Painel Estendido</div>
+          <li>
+            <button onClick={() => setActiveTab('recipes')} className={activeTab === 'recipes' ? 'active' : ''}>
+              <i className="fa-solid fa-book-open w-5 text-center"></i> Receitas
             </button>
           </li>
           <li>
-            <button 
-              onClick={() => setActiveTab('solidcon')} 
-              style={{
-                width: '100%', textLeft: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                backgroundColor: activeTab === 'solidcon' ? 'var(--primary-light)' : 'transparent',
-                color: activeTab === 'solidcon' ? 'var(--primary)' : 'var(--text-muted)',
-                border: activeTab === 'solidcon' ? '1px solid var(--primary)' : '1px solid transparent',
-                cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em',
-                marginTop: '15px'
-              }}
-            >
-              <i className="fa-solid fa-cloud-arrow-down" style={{ width: '16px' }}></i> Integração ERP
+            <button onClick={() => setActiveTab('menu_restaurant')} className={activeTab === 'menu_restaurant' ? 'active' : ''}>
+              <i className="fa-solid fa-utensils w-5 text-center"></i> Cardápio (Admin)
             </button>
+          </li>
+          <li>
+            <button onClick={() => setActiveTab('biolinks')} className={activeTab === 'biolinks' ? 'active' : ''}>
+              <i className="fa-solid fa-link w-5 text-center"></i> Biolinks (Admin)
+            </button>
+          </li>
+          <li>
+            <button onClick={() => setActiveTab('settings')} className={activeTab === 'settings' ? 'active' : ''}>
+              <i className="fa-solid fa-gear w-5 text-center"></i> Configurações
+            </button>
+          </li>
+
+          <div className="divider text-[10px] uppercase opacity-50 my-2">Atalhos Externos</div>
+          <li>
+            <a href="/adega" target="_blank" rel="noopener noreferrer">
+              <i className="fa-solid fa-wine-glass w-5 text-center"></i> Abrir Adega
+            </a>
+          </li>
+          <li>
+            <a href="/boutique" target="_blank" rel="noopener noreferrer">
+              <i className="fa-solid fa-store w-5 text-center"></i> Abrir Boutique
+            </a>
+          </li>
+          <li>
+            <a href="/cardapio" target="_blank" rel="noopener noreferrer">
+              <i className="fa-solid fa-utensils w-5 text-center"></i> Abrir Cardápio
+            </a>
           </li>
         </ul>
 
-        <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
-            Usuário: <b>{role === 'admin' ? 'Administrador' : 'Gerente'}</b>
+        <div className="p-4 border-t border-base-200 mt-auto bg-base-300">
+          <div className="text-xs text-base-content/70 mb-3 text-center">
+            Usuário: <span className="font-bold">{role === 'admin' ? 'Administrador' : 'Gerente'}</span>
           </div>
-          <button onClick={handleLogout} className="btn btn-secondary" style={{ width: '100%', padding: '8px', fontSize: '12px' }}>
+          <button onClick={handleLogout} className="btn btn-outline btn-sm btn-block">
             Sair do Módulo
           </button>
         </div>
       </aside>
 
       {/* Main Admin Content Panel */}
-      <main style={{ flexGrow: 1, padding: '30px', backgroundColor: 'var(--bg-main)' }}>
+      <main className="flex-grow p-4 md:p-8 bg-base-200 overflow-y-auto w-full">
         
         {/* Banner de Aviso de Produção */}
         {typeof window !== 'undefined' && 
          (window.location.hostname === 'antenorefilhos.com.br' || 
           window.location.hostname === 'www.antenorefilhos.com.br' ||
           window.location.hostname.includes('vercel.app')) && (
-          <div style={{
-            backgroundColor: '#7a1b1b',
-            color: '#ffdddd',
-            padding: '12px 20px',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '20px',
-            border: '1px solid #ff4444',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            fontSize: '14px',
-            fontWeight: '600'
-          }}>
-            <i className="fa-solid fa-triangle-exclamation" style={{ color: '#ff4444', fontSize: '18px' }}></i>
-            <span>Atenção: Você está visualizando o Painel em PRODUÇÃO. Quaisquer alterações salvas afetarão o site público em tempo real!</span>
+          <div role="alert" className="alert alert-error shadow-lg mb-6">
+            <i className="fa-solid fa-triangle-exclamation text-xl"></i>
+            <span><strong>Atenção:</strong> Você está visualizando o Painel em PRODUÇÃO. Quaisquer alterações salvas afetarão o site público em tempo real!</span>
           </div>
         )}
         
         {/* Mobile Navigation bar (tabs visible only on mobile) */}
-        <div className="show-mobile" style={{ marginBottom: '20px' }}>
+        <div className="md:hidden mb-6">
           <select 
             value={activeTab} 
             onChange={(e) => setActiveTab(e.target.value)}
-            className="form-control"
-            style={{ border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold' }}
+            className="select select-bordered select-primary w-full font-bold"
           >
             <option value="orders">📋 Orçamentos ({totalOrders})</option>
             <option value="products">🥩 Produtos ({products.length})</option>
@@ -851,6 +850,11 @@ export default function AdminDashboard() {
             <option value="sellers">👥 Vendedores ({sellers.length})</option>
             <option value="stats">📈 Estatísticas & Relatórios</option>
             <option value="monitor">🖥️ Monitor Ao Vivo</option>
+            <option value="recipes">📖 Receitas</option>
+            <option value="menu_restaurant">🍽️ Cardápio (Admin)</option>
+            <option value="biolinks">🔗 Biolinks (Admin)</option>
+            <option value="settings">⚙️ Configurações</option>
+            <option value="solidcon">☁️ Integração ERP</option>
           </select>
         </div>
 
@@ -858,115 +862,130 @@ export default function AdminDashboard() {
 
         {/* Dashboard Widgets Row (Visible in stats/orders) */}
         {(activeTab === 'orders' || activeTab === 'stats') && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px',
-            marginBottom: '30px'
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
             {/* Widget 1 */}
-            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                <span>Faturamento Finalizado</span>
-                <i className="fa-solid fa-circle-dollar-to-slot" style={{ color: 'var(--success)' }}></i>
+            <div className="card bg-base-100 shadow-md border border-base-200 hover:shadow-lg transition-all duration-200">
+              <div className="card-body p-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">Faturamento Finalizado</span>
+                  <div className="p-2 bg-success/15 rounded-lg text-success">
+                    <i className="fa-solid fa-circle-dollar-to-slot text-lg"></i>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-black text-base-content tracking-tight">
+                  <span className="text-sm font-normal mr-1 text-base-content/70">R$</span>
+                  {salesRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </h2>
+                <span className="text-xs text-base-content/50 mt-2">Base: {completedOrdersCount} orçamentos concluídos</span>
               </div>
-              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>
-                <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
-                {salesRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h2>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Base: {completedOrdersCount} orçamentos concluídos</span>
             </div>
 
             {/* Widget 2 */}
-            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                <span>Pedidos Totais</span>
-                <i className="fa-solid fa-file-invoice" style={{ color: 'var(--primary)' }}></i>
+            <div className="card bg-base-100 shadow-md border border-base-200 hover:shadow-lg transition-all duration-200">
+              <div className="card-body p-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">Pedidos Totais</span>
+                  <div className="p-2 bg-primary/15 rounded-lg text-primary">
+                    <i className="fa-solid fa-file-invoice text-lg"></i>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-black text-base-content tracking-tight">{totalOrders}</h2>
+                <span className="text-xs text-warning font-semibold mt-2">{pendingOrdersCount} pendentes de atendimento</span>
               </div>
-              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>{totalOrders}</h2>
-              <span style={{ fontSize: '11px', color: 'var(--warning)' }}>{pendingOrdersCount} pendentes de atendimento</span>
             </div>
 
             {/* Widget 3 */}
-            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                <span>Ticket Médio</span>
-                <i className="fa-solid fa-calculator" style={{ color: 'var(--primary-hover)' }}></i>
+            <div className="card bg-base-100 shadow-md border border-base-200 hover:shadow-lg transition-all duration-200">
+              <div className="card-body p-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">Ticket Médio</span>
+                  <div className="p-2 bg-info/15 rounded-lg text-info">
+                    <i className="fa-solid fa-calculator text-lg"></i>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-black text-base-content tracking-tight">
+                  <span className="text-sm font-normal mr-1 text-base-content/70">R$</span>
+                  {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </h2>
+                <span className="text-xs text-base-content/50 mt-2">Média por orçamento finalizado</span>
               </div>
-              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>
-                <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
-                {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h2>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Média por orçamento finalizado</span>
             </div>
 
             {/* Widget 4 */}
-            <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                <span>Demanda Solicitada</span>
-                <i className="fa-solid fa-arrows-to-eye" style={{ color: 'var(--text-muted)' }}></i>
+            <div className="card bg-base-100 shadow-md border border-base-200 hover:shadow-lg transition-all duration-200">
+              <div className="card-body p-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">Demanda Solicitada</span>
+                  <div className="p-2 bg-neutral/15 rounded-lg text-neutral-content">
+                    <i className="fa-solid fa-arrows-to-eye text-lg"></i>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-black text-base-content tracking-tight">
+                  <span className="text-sm font-normal mr-1 text-base-content/70">R$</span>
+                  {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </h2>
+                <span className="text-xs text-base-content/50 mt-2">Volume bruto de todos os orçamentos</span>
               </div>
-              <h2 style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>
-                <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
-                {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h2>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Volume total de orçamentos abertos</span>
             </div>
           </div>
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>Carregando dados do servidor...</div>
+          <div className="text-center py-16 text-base-content/60">Carregando dados do servidor...</div>
         ) : (
           <div>
             {/* TAB 1: ORDERS */}
             {activeTab === 'orders' && (
               <div>
                 {/* Filters Row */}
-                <div className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-lg)', marginBottom: '25px' }}>
-                  <h4 style={{ color: 'white', fontSize: '13px', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filtros de Pesquisa</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Pesquisar por cliente ou ID..." 
-                      className="form-control"
-                      value={orderSearch}
-                      onChange={(e) => setOrderSearch(e.target.value)}
-                    />
-                    <select
-                      className="form-control"
-                      value={orderStatusFilter}
-                      onChange={(e) => setOrderStatusFilter(e.target.value)}
-                    >
-                      <option value="">Todos os Status</option>
-                      <option value="pending">🟡 Pendente</option>
-                      <option value="viewed">🔵 Visualizado</option>
-                      <option value="completed">🟢 Finalizado</option>
-                      <option value="cancelled">🔴 Cancelado</option>
-                    </select>
-                    <select
-                      className="form-control"
-                      value={orderSellerFilter}
-                      onChange={(e) => setOrderSellerFilter(e.target.value)}
-                    >
-                      <option value="">Filtrar por Vendedor</option>
-                      <option value="direto">Site Direto</option>
-                      {sellers.map(s => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
-                    <button onClick={exportToCSV} className="btn btn-secondary" style={{ padding: '10px', fontSize: '12px' }}>
-                      <i className="fa-solid fa-file-csv" style={{ marginRight: '6px' }}></i> Exportar CSV
-                    </button>
+                <div className="card bg-base-100 shadow-md border border-base-200 mb-6">
+                  <div className="card-body p-6">
+                    <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/80 mb-3 flex items-center gap-2">
+                      <i className="fa-solid fa-magnifying-glass text-primary"></i> Filtros de Pesquisa
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <input 
+                        type="text" 
+                        placeholder="Pesquisar por cliente ou ID..." 
+                        className="input input-bordered w-full"
+                        value={orderSearch}
+                        onChange={(e) => setOrderSearch(e.target.value)}
+                      />
+                      <select
+                        className="select select-bordered w-full"
+                        value={orderStatusFilter}
+                        onChange={(e) => setOrderStatusFilter(e.target.value)}
+                      >
+                        <option value="">Todos os Status</option>
+                        <option value="processing">🟡 Pendente</option>
+                        <option value="viewed">🔵 Visualizado</option>
+                        <option value="completed">🟢 Finalizado</option>
+                        <option value="cancelled">🔴 Cancelado</option>
+                      </select>
+                      <select
+                        className="select select-bordered w-full"
+                        value={orderSellerFilter}
+                        onChange={(e) => setOrderSellerFilter(e.target.value)}
+                      >
+                        <option value="">Filtrar por Vendedor</option>
+                        <option value="direto">Site Direto</option>
+                        {sellers.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                      <button onClick={exportToCSV} className="btn btn-outline btn-primary w-full">
+                        <i className="fa-solid fa-file-csv mr-2"></i> Exportar CSV
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {filteredOrders.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)' }}>Nenhum pedido de orçamento corresponde aos filtros selecionados.</p>
+                  <p className="text-base-content/60 italic p-4">Nenhum pedido de orçamento corresponde aos filtros selecionados.</p>
                 ) : (
-                  <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                    <table className="admin-table">
-                      <thead>
+                  <div className="overflow-x-auto bg-base-100 rounded-box border border-base-300">
+                    <table className="table table-zebra table-sm md:table-md w-full">
+                      <thead className="bg-base-200">
                         <tr>
                           <th>ID</th>
                           <th>Data</th>
@@ -979,70 +998,70 @@ export default function AdminDashboard() {
                       </thead>
                       <tbody>
                         {filteredOrders.map(order => (
-                          <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td>#{order.id}</td>
-                            <td>{formatDate(order.created_at)}</td>
+                          <tr key={order.id} className="hover">
+                            <td className="font-mono text-xs">#{String(order.id).slice(0, 8)}</td>
+                            <td className="whitespace-nowrap">
+                              <div>{new Date(order.created_at).toLocaleDateString('pt-BR')}</div>
+                              <div className="text-[11px] text-base-content/55 font-mono">{new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                            </td>
                             <td>
-                              <b>{order.customer_name}</b>
-                              {order.customer_address && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Entrega: {order.customer_address}</div>}
+                              <div className="font-bold">{order.customer_name}</div>
+                              {order.customer_address && <div className="text-xs text-base-content/60 truncate max-w-[150px]" title={order.customer_address}>Entrega: {order.customer_address}</div>}
                             </td>
                             <td>
                               <a 
                                 href={`https://wa.me/${order.customer_whatsapp.replace(/\D/g, '')}`} 
                                 target="_blank" 
                                 rel="noopener noreferrer" 
-                                style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                className="text-success hover:text-success/80 font-bold flex items-center gap-2 whitespace-nowrap"
                               >
-                                <i className="fa-brands fa-whatsapp" style={{ color: '#25D366' }}></i>
+                                <i className="fa-brands fa-whatsapp text-lg"></i>
                                 {order.customer_whatsapp}
                               </a>
                             </td>
-                            <td>{order.seller_name || <span style={{ color: 'var(--text-muted)' }}>Site Direto</span>}</td>
+                            <td>{order.seller_name || <span className="text-base-content/50 italic">Site Direto</span>}</td>
                             <td>
-                              <select 
-                                value={order.status}
-                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                style={{
-                                  backgroundColor: '#1a1e26',
-                                  color: order.status === 'pending' ? 'var(--warning)' : 
-                                         order.status === 'completed' ? 'var(--success)' : 
-                                         order.status === 'cancelled' ? 'var(--danger)' : 'white',
-                                  border: '1px solid var(--border-color)',
-                                  padding: '6px 10px',
-                                  fontSize: '12px',
-                                  fontWeight: '600'
-                                }}
-                              >
-                                <option value="pending">Pendente</option>
-                                <option value="viewed">Visualizado</option>
-                                <option value="completed">Finalizado</option>
-                                <option value="cancelled">Cancelado</option>
-                              </select>
+                              <div className={`badge font-bold text-xs uppercase ${
+                                order.status === 'processing' ? 'badge-warning bg-warning/20 border-warning text-warning-content' : 
+                                order.status === 'completed' ? 'badge-success bg-success/20 border-success text-success-content' : 
+                                order.status === 'cancelled' ? 'badge-error bg-error/20 border-error text-error-content' : 
+                                'badge-info bg-info/20 border-info text-info-content'
+                              } gap-1 p-3 min-w-[125px] justify-center`}>
+                                <select 
+                                  value={order.status}
+                                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                  className="bg-transparent border-none text-xs font-bold text-inherit focus:outline-none cursor-pointer text-center select-xs appearance-none py-0 pr-0"
+                                  style={{ textAlignLast: 'center' }}
+                                >
+                                  <option value="processing" className="bg-base-100 text-warning-content">Pendente</option>
+                                  <option value="viewed" className="bg-base-100 text-info-content">Visualizado</option>
+                                  <option value="completed" className="bg-base-100 text-success-content">Finalizado</option>
+                                  <option value="cancelled" className="bg-base-100 text-error-content">Cancelado</option>
+                                </select>
+                              </div>
                             </td>
                             <td>
-                              <div style={{ display: 'flex', gap: '8px' }}>
+                              <div className="flex gap-2">
                                 <button 
                                   onClick={() => setSelectedOrder(order)}
-                                  className="btn btn-secondary" 
-                                  style={{ padding: '6px 12px', fontSize: '11px' }}
+                                  className="btn btn-sm btn-primary btn-outline font-semibold"
                                 >
-                                  Ver Detalhes
+                                  Detalhes
                                 </button>
                                 <button 
                                   onClick={() => handlePrintOrder(order)}
-                                  className="btn btn-secondary" 
-                                  style={{ padding: '6px 10px', fontSize: '11px', borderColor: 'var(--primary)' }}
-                                  title="Imprimir Cupom de Expedição"
+                                  className="btn btn-sm btn-ghost text-base-content/70 hover:text-primary hover:bg-primary/10"
+                                  title="Imprimir Cupom"
                                 >
                                   <i className="fa-solid fa-print"></i>
                                 </button>
                                 {role === 'admin' && (
                                   <button 
                                     onClick={() => handleDeleteOrder(order.id)}
-                                    className="btn btn-danger" 
-                                    style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}
+                                    className="btn btn-sm btn-ghost text-error/70 hover:text-error hover:bg-error/10"
+                                    title="Excluir"
                                   >
-                                    Excluir
+                                    <i className="fa-solid fa-trash"></i>
                                   </button>
                                 )}
                               </div>
@@ -1059,93 +1078,109 @@ export default function AdminDashboard() {
             {/* TAB 2: PRODUCTS */}
             {activeTab === 'products' && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
-                  <h3 style={{ color: 'white' }}>Lista do Catálogo de Produtos</h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                  <h3 className="text-base text-base-content font-bold">Catálogo de Produtos</h3>
                   {role === 'admin' && (
-                    <button onClick={() => handleOpenProductModal(null)} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>
-                      ➕ Criar Produto
+                    <button onClick={() => handleOpenProductModal(null)} className="btn btn-primary">
+                      <i className="fa-solid fa-plus mr-2"></i> Criar Produto
                     </button>
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                  <input 
-                    type="text" 
-                    placeholder="Pesquisar catálogo..." 
-                    className="form-control"
-                    style={{ maxWidth: '300px' }}
-                    value={prodSearch}
-                    onChange={(e) => { setProdSearch(e.target.value); setProdPage(1); }}
-                  />
-                  <select
-                    className="form-control"
-                    style={{ maxWidth: '200px' }}
-                    value={prodTypeFilter}
-                    onChange={(e) => { setProdTypeFilter(e.target.value); setProdPage(1); }}
-                  >
-                    <option value="">Todos os Setores</option>
-                    <option value="carnes_">Boutique de Carnes</option>
-                    <option value="adega">Adega de Vinhos</option>
-                  </select>
+                <div className="card bg-base-200 shadow-sm border border-base-300 mb-6">
+                  <div className="card-body p-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input 
+                        type="text" 
+                        placeholder="Pesquisar catálogo..." 
+                        className="input input-bordered w-full"
+                        value={prodSearch}
+                        onChange={(e) => { setProdSearch(e.target.value); setProdPage(1); }}
+                      />
+                      <select
+                        className="select select-bordered w-full"
+                        value={prodTypeFilter}
+                        onChange={(e) => { setProdTypeFilter(e.target.value); setProdPage(1); }}
+                      >
+                        <option value="">Todos os Setores</option>
+                        <option value="carnes_">Boutique de Carnes</option>
+                        <option value="adega">Adega de Vinhos</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                  <table className="admin-table">
-                    <thead>
+                <div className="overflow-x-auto bg-base-100 rounded-box border border-base-300">
+                  <table className="table table-zebra w-full">
+                    <thead className="bg-base-200">
                       <tr>
-                        <th>Imagem</th>
-                        <th>Título</th>
-                        <th>EAN (SKU)</th>
-                        <th>Preço</th>
-                        <th>Setor</th>
-                        <th>Status</th>
-                        {role === 'admin' && <th>Ações</th>}
+                        <th className="w-24 px-4 py-3">Imagem</th>
+                        <th className="w-1/3 min-w-[280px] px-4 py-3">Título</th>
+                        <th className="w-44 min-w-[160px] px-4 py-3">EAN (SKU)</th>
+                        <th className="w-36 min-w-[120px] px-4 py-3">Preço</th>
+                        <th className="w-28 min-w-[90px] px-4 py-3">Setor</th>
+                        <th className="w-28 min-w-[90px] px-4 py-3">Status</th>
+                        {role === 'admin' && <th className="w-36 min-w-[130px] px-4 py-3">Ações</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedProducts.map(p => (
-                        <tr key={p.id}>
-                          <td>
+                        <tr key={p.id} className="hover">
+                          <td className="px-4 py-3.5">
                             {p.image_url ? (
-                              <img src={p.image_url} alt={`Miniatura de ${p.title}`} style={{ width: '40px', height: '40px', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+                              <div className="avatar">
+                                <div className="w-14 h-14 rounded-md border border-base-300 overflow-hidden shadow-sm">
+                                  <img src={p.image_url} alt={p.title} className="object-cover w-full h-full" />
+                                </div>
+                              </div>
                             ) : (
-                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Sem foto</span>
+                              <div className="avatar placeholder">
+                                <div className="bg-neutral/10 text-neutral rounded-md w-14 h-14 flex items-center justify-center border border-base-300">
+                                  <span className="text-[10px] uppercase font-bold text-base-content/40">Sem foto</span>
+                                </div>
+                              </div>
                             )}
                           </td>
-                          <td>
-                            <b>{p.title}</b>
+                          <td className="px-4 py-3.5">
+                            <div className="font-bold text-base-content leading-snug">{p.title}</div>
                             {p.categories && p.categories.length > 0 && (
-                              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                              <div className="flex gap-1.5 flex-wrap mt-2">
                                 {p.categories.map(c => (
-                                  <span key={c.id} style={{ fontSize: '9px', backgroundColor: 'var(--primary-light)', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '1px 5px' }}>
+                                  <span key={c.id} className="badge badge-primary badge-outline text-[10px] font-bold py-0.5 px-2 h-auto">
                                     {c.name}
                                   </span>
                                 ))}
                               </div>
                             )}
                           </td>
-                          <td><code>{p.sku || '-'}</code></td>
-                          <td style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                          <td className="px-4 py-3.5 font-mono text-xs font-semibold text-base-content/80 whitespace-nowrap">{p.sku || '-'}</td>
+                          <td className="px-4 py-3.5 text-primary font-bold whitespace-nowrap">
                             {p.preco ? (
                               <>
-                                <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                                <span className="text-xs font-normal mr-1 text-base-content/60">R$</span>
                                 {p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </>
                             ) : (
-                              'Sob consulta'
+                              <span className="text-base-content/50 italic text-sm font-normal">Sob consulta</span>
                             )}
                           </td>
-                          <td>{p.type === 'carnes_' ? 'Boutique' : 'Adega'}</td>
-                          <td>
-                            <span style={{ color: p.status === 'on' ? 'var(--success)' : 'var(--danger)', fontWeight: '600' }}>
+                          <td className="px-4 py-3.5">
+                            <div className="badge badge-ghost font-semibold text-[11px] uppercase tracking-wider py-1 px-2.5">
+                              {p.type === 'carnes_' ? 'Boutique' : 'Adega'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div className={`badge font-bold text-[10px] uppercase tracking-wider py-1 px-2.5 ${p.status === 'on' ? 'badge-success bg-success/20 border-success text-success-content' : 'badge-error bg-error/20 border-error text-error-content'}`}>
                               {p.status === 'on' ? 'Ativo' : 'Inativo'}
-                            </span>
+                            </div>
                           </td>
                           {role === 'admin' && (
-                            <td>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => handleOpenProductModal(p)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }}>Editar</button>
-                                <button onClick={() => handleDeleteProduct(p.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}>Excluir</button>
+                            <td className="px-4 py-3.5">
+                              <div className="flex gap-2">
+                                <button onClick={() => handleOpenProductModal(p)} className="btn btn-xs md:btn-sm btn-primary btn-outline font-semibold">Editar</button>
+                                <button onClick={() => handleDeleteProduct(p.id)} className="btn btn-xs md:btn-sm btn-ghost text-error/70 hover:text-error hover:bg-error/10" title="Excluir">
+                                  <i className="fa-solid fa-trash"></i>
+                                </button>
                               </div>
                             </td>
                           )}
@@ -1156,24 +1191,26 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Pagination Controls */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
-                  <button 
-                    disabled={prodPage === 1}
-                    onClick={() => setProdPage(p => p - 1)}
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 12px' }}
-                  >
-                    Anterior
-                  </button>
-                  <span style={{ alignSelf: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>Página <b>{prodPage}</b> de {totalProdPages}</span>
-                  <button 
-                    disabled={prodPage === totalProdPages}
-                    onClick={() => setProdPage(p => p + 1)}
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 12px' }}
-                  >
-                    Próxima
-                  </button>
+                <div className="flex justify-center mt-6">
+                  <div className="join">
+                    <button 
+                      disabled={prodPage === 1}
+                      onClick={() => setProdPage(p => p - 1)}
+                      className="join-item btn btn-outline"
+                    >
+                      Anterior
+                    </button>
+                    <button className="join-item btn btn-active no-animation pointer-events-none bg-base-300 text-base-content/70">
+                      Página <strong className="text-base-content mx-1">{prodPage}</strong> de {totalProdPages}
+                    </button>
+                    <button 
+                      disabled={prodPage === totalProdPages}
+                      onClick={() => setProdPage(p => p + 1)}
+                      className="join-item btn btn-outline"
+                    >
+                      Próxima
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1181,18 +1218,18 @@ export default function AdminDashboard() {
             {/* TAB 3: CATEGORIES */}
             {activeTab === 'categories' && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
-                  <h3 style={{ color: 'white' }}>Gerenciamento de Categorias</h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                  <h3 className="text-base text-base-content font-bold">Gerenciamento de Categorias</h3>
                   {role === 'admin' && (
-                    <button onClick={() => handleOpenCategoryModal(null)} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>
-                      ➕ Criar Categoria
+                    <button onClick={() => handleOpenCategoryModal(null)} className="btn btn-primary">
+                      <i className="fa-solid fa-plus mr-2"></i> Criar Categoria
                     </button>
                   )}
                 </div>
 
-                <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                  <table className="admin-table">
-                    <thead>
+                <div className="overflow-x-auto bg-base-100 rounded-box border border-base-300">
+                  <table className="table table-zebra w-full">
+                    <thead className="bg-base-200">
                       <tr>
                         <th>ID</th>
                         <th>Nome</th>
@@ -1203,18 +1240,20 @@ export default function AdminDashboard() {
                     </thead>
                     <tbody>
                       {categories.map(cat => (
-                        <tr key={cat.id}>
-                          <td>#{cat.id}</td>
-                          <td><b>{cat.name}</b></td>
-                          <td><code>{cat.slug}</code></td>
+                        <tr key={cat.id} className="hover">
+                          <td className="font-mono text-xs">#{String(cat.id).slice(0, 8)}</td>
+                          <td className="font-bold">{cat.name}</td>
+                          <td className="font-mono text-xs text-base-content/70">{cat.slug}</td>
                           <td>
-                            <span style={{ fontSize: '12px', color: 'var(--primary-hover)' }}>{cat.type}</span>
+                            <div className="badge badge-primary badge-outline text-xs">{cat.type}</div>
                           </td>
                           {role === 'admin' && (
                             <td>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => handleOpenCategoryModal(cat)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }}>Editar</button>
-                                <button onClick={() => handleDeleteCategory(cat.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}>Excluir</button>
+                              <div className="flex gap-2">
+                                <button onClick={() => handleOpenCategoryModal(cat)} className="btn btn-sm btn-outline btn-primary">Editar</button>
+                                <button onClick={() => handleDeleteCategory(cat.id)} className="btn btn-sm btn-outline btn-error" title="Excluir">
+                                  <i className="fa-solid fa-trash"></i>
+                                </button>
                               </div>
                             </td>
                           )}
@@ -1229,73 +1268,97 @@ export default function AdminDashboard() {
             {/* TAB 4: SELLERS */}
             {activeTab === 'sellers' && (
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: role === 'admin' ? '1fr 350px' : '1fr', gap: '30px', alignItems: 'start' }}>
+                <div className={`grid gap-8 ${role === 'admin' ? 'lg:grid-cols-[1fr_350px]' : 'grid-cols-1'} items-start`}>
                   <div>
-                    <h3 style={{ color: 'white', marginBottom: '20px' }}>Lista de Vendedores Ativos</h3>
-                    <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                      <table className="admin-table">
-                        <thead>
+                    <h3 className="text-sm font-bold text-base-content uppercase tracking-wider mb-4">Lista de Vendedores Ativos</h3>
+                    <div className="overflow-x-auto bg-base-100 rounded-box border border-base-300">
+                      <table className="table table-zebra table-sm w-full">
+                        <thead className="bg-base-200">
                           <tr>
                             <th>ID</th>
                             <th>Nome</th>
                             <th>WhatsApp</th>
                             <th>Slug Comissional</th>
+                            <th>Link de Vendas</th>
                             {role === 'admin' && <th>Ações</th>}
                           </tr>
                         </thead>
                         <tbody>
                           {sellers.map(s => (
-                            <tr key={s.id}>
-                              <td>#{s.id}</td>
-                              <td><b>{s.name}</b></td>
+                            <tr key={s.id} className="hover">
+                              <td className="font-mono text-xs">#{String(s.id).slice(0, 8)}</td>
+                              <td className="font-bold">{s.name}</td>
                               <td>
-                                <a href={`https://wa.me/${s.phone}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                                  {s.phone} ↗
+                                <a href={`https://wa.me/${s.phone}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 font-bold flex items-center gap-2 w-fit">
+                                  <i className="fa-brands fa-whatsapp text-lg"></i>
+                                  {s.phone}
                                 </a>
                               </td>
-                              <td><code>?ref={s.slug}</code></td>
+                              <td className="font-mono text-xs text-base-content/70">?ref={s.slug}</td>
+                              <td>
+                                <button
+                                  onClick={() => {
+                                    const link = `${window.location.origin}/?ref=${s.slug}`;
+                                    navigator.clipboard.writeText(link);
+                                    alert(`Link copiado para o vendedor ${s.name}!\n\n${link}`);
+                                  }}
+                                  className="btn btn-xs btn-primary btn-outline flex items-center gap-1.5"
+                                  title="Copiar link comissionado"
+                                >
+                                  <i className="fa-regular fa-copy"></i>
+                                  Copiar Link
+                                </button>
+                              </td>
                               {role === 'admin' && (
                                 <td>
-                                  <button onClick={() => handleDeleteSeller(s.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }}>Excluir</button>
+                                  <button onClick={() => handleDeleteSeller(s.id)} className="btn btn-sm btn-outline btn-error" title="Excluir">
+                                    <i className="fa-solid fa-trash"></i>
+                                  </button>
                                 </td>
                               )}
                             </tr>
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     </div>
-                  </div>
 
                   {role === 'admin' && (
-                    <aside className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-                      <h4 style={{ color: 'white', marginBottom: '15px', textTransform: 'uppercase', fontSize: '13px' }}>Cadastrar Vendedor</h4>
-                      <form onSubmit={handleCreateSeller} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label className="form-label">Nome Completo</label>
-                          <input 
-                            type="text" 
-                            required 
-                            placeholder="Nome do vendedor" 
-                            className="form-control"
-                            value={newSeller.name}
-                            onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
-                          />
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label className="form-label">WhatsApp (Fixo sem símbolos)</label>
-                          <input 
-                            type="tel" 
-                            required 
-                            placeholder="Ex: 5524988650462" 
-                            className="form-control"
-                            value={newSeller.phone}
-                            onChange={(e) => setNewSeller({ ...newSeller, phone: e.target.value })}
-                          />
-                        </div>
-                        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '10px' }}>
-                          Salvar Vendedor
-                        </button>
-                      </form>
+                    <aside className="card bg-base-200 shadow-sm border border-base-300 w-full">
+                      <div className="card-body p-6">
+                        <h4 className="card-title text-sm uppercase tracking-wider mb-2">Cadastrar Vendedor</h4>
+                        <form onSubmit={handleCreateSeller} className="flex flex-col gap-4">
+                          <div className="form-control w-full">
+                            <label className="label">
+                              <span className="label-text font-bold">Nome Completo</span>
+                            </label>
+                            <input 
+                              type="text" 
+                              required 
+                              placeholder="Nome do vendedor" 
+                              className="input input-bordered w-full"
+                              value={newSeller.name}
+                              onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
+                            />
+                          </div>
+                          <div className="form-control w-full">
+                            <label className="label">
+                              <span className="label-text font-bold">WhatsApp (Fixo sem símbolos)</span>
+                            </label>
+                            <input 
+                              type="tel" 
+                              required 
+                              placeholder="Ex: 5524988650462" 
+                              className="input input-bordered w-full"
+                              value={newSeller.phone}
+                              onChange={(e) => setNewSeller({ ...newSeller, phone: e.target.value })}
+                            />
+                          </div>
+                          <button type="submit" className="btn btn-primary mt-2">
+                            Salvar Vendedor
+                          </button>
+                        </form>
+                      </div>
                     </aside>
                   )}
                 </div>
@@ -1316,6 +1379,26 @@ export default function AdminDashboard() {
             {activeTab === 'solidcon' && (
               <SolidconIntegration password={password} />
             )}
+
+            {/* TAB 7: STORE SETTINGS */}
+            {activeTab === 'settings' && (
+              <StoreSettings password={password} />
+            )}
+
+            {/* TAB 8: RECIPES */}
+            {activeTab === 'recipes' && (
+              <RecipeEditor password={password} products={products} />
+            )}
+
+            {/* TAB 9: MENU RESTAURANT */}
+            {activeTab === 'menu_restaurant' && (
+              <MenuRestaurantEditor password={password} />
+            )}
+
+            {/* TAB 10: BIOLINKS MANAGER */}
+            {activeTab === 'biolinks' && (
+              <BiolinksManager password={password} />
+            )}
           </div>
         )}
       </main>
@@ -1334,44 +1417,55 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* CATEGORY FORM MODAL */}
+      {/* CATEGORY FORM MODAL (DAISYUI PILOT) */}
       {showCategoryModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <form onSubmit={handleSaveCategory} className="glass" style={{ maxWidth: '400px', width: '100%', padding: '30px' }}>
-            <h3 style={{ color: 'white', marginBottom: '20px' }}>{categoryForm.id ? 'Editar Categoria' : 'Criar Categoria'}</h3>
+        <dialog className="modal modal-open">
+          <div className="modal-box bg-base-100 border border-base-300 max-w-sm">
+            <h3 className="font-bold text-lg text-base-content mb-6">
+              {categoryForm.id ? 'Editar Categoria' : 'Criar Categoria'}
+            </h3>
             
-            <div className="form-group">
-              <label className="form-label">Nome da Categoria</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="Ex: VPJ Angus" 
-                className="form-control"
-                value={categoryForm.name}
-                onChange={(e) => handleCategoryNameChange(e.target.value)}
-              />
-            </div>
+            <form onSubmit={handleSaveCategory} className="flex flex-col gap-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text text-base-content/70 text-xs font-bold uppercase tracking-widest">Nome da Categoria</span>
+                </label>
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="Ex: VPJ Angus" 
+                  className="input input-bordered w-full"
+                  value={categoryForm.name}
+                  onChange={(e) => handleCategoryNameChange(e.target.value)}
+                />
+              </div>
 
-            <div className="form-group">
-              <label className="form-label">Tipo de Taxonomia</label>
-              <select
-                className="form-control"
-                value={categoryForm.type}
-                onChange={(e) => setCategoryForm({ ...categoryForm, type: e.target.value })}
-              >
-                <option value="sessoes_carnes_">Boutique: Categorias</option>
-                <option value="racas_carnes">Boutique: Raças</option>
-                <option value="embalagem_carnes">Boutique: Embalagens</option>
-                <option value="sessoes_vinho_">Adega: Seções de Vinho</option>
-              </select>
-            </div>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text text-base-content/70 text-xs font-bold uppercase tracking-widest">Tipo de Taxonomia</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={categoryForm.type}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, type: e.target.value })}
+                >
+                  <option value="sessoes_carnes_">Boutique: Categorias</option>
+                  <option value="racas_carnes">Boutique: Raças</option>
+                  <option value="embalagem_carnes">Boutique: Embalagens</option>
+                  <option value="sessoes_vinho_">Adega: Seções de Vinho</option>
+                </select>
+              </div>
 
-            <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
-              <button type="submit" className="btn btn-primary" style={{ flexGrow: 1 }}>Salvar Categoria</button>
-              <button type="button" onClick={() => setShowCategoryModal(false)} className="btn btn-secondary">Cancelar</button>
-            </div>
+              <div className="modal-action mt-6 flex gap-3">
+                <button type="submit" className="btn btn-primary flex-grow">Salvar Categoria</button>
+                <button type="button" onClick={() => setShowCategoryModal(false)} className="btn btn-ghost">Cancelar</button>
+              </div>
+            </form>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setShowCategoryModal(false)}>
+            <button>close</button>
           </form>
-        </div>
+        </dialog>
       )}
 
       {/* ── Order Details Modal ─────────────────────────── */}
@@ -1379,106 +1473,63 @@ export default function AdminDashboard() {
         const order = selectedOrder;
         const totalPrice = order.items.reduce((sum, item) => item.price ? sum + item.price * item.quantity : sum, 0);
         const hasPrice = order.items.some(item => item.price);
-        const statusLabels = { pending: 'Pendente', viewed: 'Visualizado', completed: 'Finalizado', cancelled: 'Cancelado' };
-        const statusColors = { pending: 'var(--warning)', viewed: '#60a5fa', completed: 'var(--success)', cancelled: 'var(--danger)' };
+        const statusLabels = { processing: 'Pendente', viewed: 'Visualizado', completed: 'Finalizado', cancelled: 'Cancelado' };
+        const statusColors = { processing: 'var(--warning)', viewed: '#60a5fa', completed: 'var(--success)', cancelled: 'var(--danger)' };
         return (
-          <div
-            onClick={() => setSelectedOrder(null)}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 9999,
-              backgroundColor: 'rgba(0,0,0,0.75)',
-              backdropFilter: 'blur(6px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '20px'
-            }}
-          >
-            <div
-              onClick={e => e.stopPropagation()}
-              style={{
-                backgroundColor: '#0d0f14',
-                border: '1px solid rgba(171,144,112,0.25)',
-                borderRadius: '16px',
-                width: '100%',
-                maxWidth: '680px',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(171,144,112,0.1)',
-              }}
-            >
+          <dialog className="modal modal-open" onClick={() => setSelectedOrder(null)}>
+            <div className="modal-box max-w-3xl bg-base-100 p-0 overflow-hidden" onClick={e => e.stopPropagation()}>
               {/* Header */}
-              <div style={{
-                padding: '24px 28px 20px',
-                borderBottom: '1px solid rgba(171,144,112,0.15)',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                position: 'sticky', top: 0, backgroundColor: '#0d0f14', zIndex: 1,
-                borderRadius: '16px 16px 0 0'
-              }}>
+              <div className="p-6 border-b border-base-200 bg-base-200 sticky top-0 z-10 flex justify-between items-start">
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '22px', fontWeight: '700', color: 'white' }}>Pedido #{order.id}</span>
-                    <span style={{
-                      fontSize: '11px', fontWeight: '700', letterSpacing: '0.06em',
-                      padding: '3px 10px', borderRadius: '20px',
-                      backgroundColor: `${statusColors[order.status]}22`,
-                      color: statusColors[order.status],
-                      border: `1px solid ${statusColors[order.status]}55`
-                    }}>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-xl font-bold text-base-content">Pedido #{order.id}</span>
+                    <div className={`badge font-bold uppercase text-[10px] tracking-wider ${
+                      order.status === 'processing' ? 'badge-warning' : 
+                      order.status === 'completed' ? 'badge-success' : 
+                      order.status === 'cancelled' ? 'badge-error' : 'badge-info'
+                    }`}>
                       {statusLabels[order.status] || order.status}
-                    </span>
+                    </div>
                   </div>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatDate(order.created_at)}</span>
+                  <span className="text-xs text-base-content/60">{formatDate(order.created_at)}</span>
                 </div>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  style={{
-                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'white', borderRadius: '8px', width: '32px', height: '32px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', fontSize: '16px', flexShrink: 0
-                  }}
-                >✕</button>
+                <button onClick={() => setSelectedOrder(null)} className="btn btn-sm btn-circle btn-ghost">✕</button>
               </div>
 
-              <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div className="p-6 flex flex-col gap-6 overflow-y-auto max-h-[70vh]">
 
                 {/* Origin */}
-                <div style={{
-                  padding: '14px 18px', borderRadius: '10px',
-                  backgroundColor: order.seller_name ? 'rgba(171,144,112,0.08)' : 'rgba(96,165,250,0.06)',
-                  border: `1px solid ${order.seller_name ? 'rgba(171,144,112,0.25)' : 'rgba(96,165,250,0.2)'}`,
-                  display: 'flex', alignItems: 'center', gap: '12px'
-                }}>
-                  <span style={{ fontSize: '24px' }}>{order.seller_name ? '🤝' : '🌐'}</span>
+                <div className={`alert ${order.seller_name ? 'alert-warning bg-warning/10 text-warning-content border-warning/20' : 'alert-info bg-info/10 text-info-content border-info/20'}`}>
+                  <span className="text-2xl">{order.seller_name ? '🤝' : '🌐'}</span>
                   <div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>Origem do Pedido</div>
-                    <div style={{ fontSize: '15px', fontWeight: '600', color: order.seller_name ? 'var(--primary)' : '#60a5fa' }}>
+                    <h3 className="font-bold text-sm uppercase tracking-wider opacity-70">Origem do Pedido</h3>
+                    <div className="text-lg font-bold">
                       {order.seller_name ? `Indicação de ${order.seller_name}` : 'Site Direto (sem indicação)'}
                     </div>
                     {order.seller_name && (
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Este pedido veio através de link de vendedor</div>
+                      <div className="text-xs opacity-70 mt-1">Este pedido veio através de link de vendedor</div>
                     )}
                   </div>
                 </div>
 
                 {/* Client Info */}
                 <div>
-                  <h4 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '12px' }}>Dados do Cliente</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>NOME</div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'white' }}>{order.customer_name}</div>
+                  <h4 className="text-xs uppercase tracking-wider text-base-content/60 mb-3 font-bold">Dados do Cliente</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="bg-base-200 p-4 rounded-box border border-base-300">
+                      <div className="text-[10px] text-base-content/60 mb-1 font-bold">NOME</div>
+                      <div className="text-sm font-bold text-base-content">{order.customer_name}</div>
                     </div>
-                    <div style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>WHATSAPP</div>
-                      <a href={`https://wa.me/${order.customer_whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                        style={{ fontSize: '14px', fontWeight: '600', color: '#25D366', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-                        <i className="fa-brands fa-whatsapp"></i>{order.customer_whatsapp}
+                    <div className="bg-base-200 p-4 rounded-box border border-base-300">
+                      <div className="text-[10px] text-base-content/60 mb-1 font-bold">WHATSAPP</div>
+                      <a href={`https://wa.me/${order.customer_whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-success hover:text-success/80 font-bold flex items-center gap-2 text-sm w-fit">
+                        <i className="fa-brands fa-whatsapp text-lg"></i>{order.customer_whatsapp}
                       </a>
                     </div>
                     {order.customer_address && (
-                      <div style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', gridColumn: '1 / -1' }}>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>ENDEREÇO DE ENTREGA</div>
-                        <div style={{ fontSize: '14px', color: 'white' }}>{order.customer_address}</div>
+                      <div className="bg-base-200 p-4 rounded-box border border-base-300 md:col-span-2">
+                        <div className="text-[10px] text-base-content/60 mb-1 font-bold">ENDEREÇO DE ENTREGA</div>
+                        <div className="text-sm text-base-content">{order.customer_address}</div>
                       </div>
                     )}
                   </div>
@@ -1486,38 +1537,32 @@ export default function AdminDashboard() {
 
                 {/* Items */}
                 <div>
-                  <h4 style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                  <h4 className="text-xs uppercase tracking-wider text-base-content/60 mb-3 font-bold">
                     Itens do Pedido ({order.items.length} {order.items.length === 1 ? 'item' : 'itens'})
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="flex flex-col gap-2">
                     {order.items.map((item, idx) => {
                       const matchProd = products.find(p => p.title === item.product_title);
                       return (
-                        <div key={item.id || idx} style={{
-                          display: 'flex', alignItems: 'center', gap: '14px',
-                          padding: '12px 16px',
-                          backgroundColor: 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          borderRadius: '8px'
-                        }}>
+                        <div key={item.id || idx} className="flex items-center gap-4 p-3 bg-base-200 border border-base-300 rounded-box">
                           {matchProd?.image_url ? (
-                            <img src={matchProd.image_url} alt={`Miniatura de ${matchProd.title}`} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                            <img src={matchProd.image_url} alt={matchProd.title} className="w-12 h-12 object-cover rounded" />
                           ) : (
-                            <div aria-hidden="true" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🥩</div>
+                            <div className="w-12 h-12 bg-base-300 rounded flex items-center justify-center text-xl">🥩</div>
                           )}
-                          <div style={{ flexGrow: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: '13px', fontWeight: '600', color: 'white', marginBottom: '3px' }}>
-                              <span style={{ color: 'var(--primary)', marginRight: '6px' }}>{item.quantity}×</span>{item.product_title}
+                          <div className="flex-grow min-w-0">
+                            <div className="text-sm font-bold text-base-content mb-1 leading-tight">
+                              <span className="text-primary mr-2">{item.quantity}×</span>{item.product_title}
                             </div>
-                            {item.sku && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>EAN: {item.sku}</div>}
+                            {item.sku && <div className="text-xs text-base-content/60 font-mono">EAN: {item.sku}</div>}
                           </div>
-                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div className="text-right shrink-0">
                             {item.price ? (
-                              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--primary)' }}>
+                              <span className="text-sm font-bold text-primary">
                                 R$ {(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                               </span>
                             ) : (
-                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sob consulta</span>
+                              <span className="text-xs text-base-content/60 italic">Sob consulta</span>
                             )}
                           </div>
                         </div>
@@ -1525,15 +1570,9 @@ export default function AdminDashboard() {
                     })}
                   </div>
                   {hasPrice && (
-                    <div style={{
-                      marginTop: '12px', padding: '14px 16px',
-                      backgroundColor: 'rgba(171,144,112,0.06)',
-                      border: '1px solid rgba(171,144,112,0.2)',
-                      borderRadius: '8px',
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                    }}>
-                      <span style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total (itens com preço)</span>
-                      <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary)' }}>
+                    <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-box flex justify-between items-center">
+                      <span className="text-xs text-primary/80 uppercase tracking-wider font-bold">Total (itens com preço)</span>
+                      <span className="text-lg font-bold text-primary">
                         R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
@@ -1542,32 +1581,30 @@ export default function AdminDashboard() {
 
                 {/* Notes */}
                 {order.notes && (
-                  <div style={{
-                    padding: '14px 16px',
-                    backgroundColor: 'rgba(255,200,50,0.04)',
-                    border: '1px solid rgba(255,200,50,0.15)',
-                    borderRadius: '8px',
-                    borderLeft: '3px solid rgba(255,200,50,0.5)'
-                  }}>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,200,50,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Observações do Cliente</div>
-                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.6' }}>{order.notes}</div>
+                  <div className="alert alert-warning bg-warning/10 border-warning/30 text-warning-content items-start">
+                    <i className="fa-solid fa-note-sticky mt-1"></i>
+                    <div>
+                      <h3 className="font-bold text-xs uppercase tracking-wider opacity-70">Observações do Cliente</h3>
+                      <div className="text-sm mt-1">{order.notes}</div>
+                    </div>
                   </div>
                 )}
+              </div>
 
-                {/* Footer Actions */}
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px' }}>
-                  <button onClick={() => handlePrintOrder(order)} className="btn btn-secondary"
-                    style={{ padding: '10px 20px', fontSize: '13px', borderColor: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-print"></i> Imprimir Cupom
-                  </button>
-                  <button onClick={() => setSelectedOrder(null)} className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '13px' }}>
-                    Fechar
-                  </button>
-                </div>
-
+              {/* Footer Actions */}
+              <div className="p-4 border-t border-base-200 bg-base-300 flex gap-3 justify-end">
+                <button onClick={() => handlePrintOrder(order)} className="btn btn-outline btn-primary">
+                  <i className="fa-solid fa-print"></i> Imprimir Cupom
+                </button>
+                <button onClick={() => setSelectedOrder(null)} className="btn btn-primary">
+                  Fechar
+                </button>
               </div>
             </div>
-          </div>
+            <form method="dialog" className="modal-backdrop">
+              <button>close</button>
+            </form>
+          </dialog>
         );
       })()}
     </div>

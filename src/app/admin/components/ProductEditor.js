@@ -85,86 +85,54 @@ export default function ProductEditor({
     <button 
       type="button"
       onClick={() => setActiveTab(id)}
-      style={{
-        padding: '16px 20px',
-        display: 'flex', alignItems: 'center', gap: '16px',
-        backgroundColor: activeTab === id ? 'var(--primary-light)' : 'transparent',
-        color: activeTab === id ? 'var(--text-primary)' : 'var(--text-muted)',
-        border: 'none', 
-        borderLeft: activeTab === id ? '3px solid var(--primary)' : '3px solid transparent',
-        cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s ease',
-        borderRadius: '0 12px 12px 0', margin: '4px 12px 4px 0'
-      }}
+      className={`w-full flex items-center gap-4 p-4 text-left border-l-4 transition-all duration-200
+        ${activeTab === id 
+          ? 'bg-base-200/50 border-primary text-base-content rounded-r-xl my-1' 
+          : 'border-transparent text-base-content/60 hover:bg-base-200/30 my-1'}`}
     >
-      <span style={{ 
-        fontSize: '18px', 
-        color: activeTab === id ? 'var(--primary)' : 'inherit',
-        backgroundColor: activeTab === id ? 'rgba(171,144,112,0.15)' : 'rgba(255,255,255,0.05)',
-        width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        borderRadius: '8px', transition: 'all 0.2s ease'
-      }}>
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-200
+        ${activeTab === id ? 'bg-primary/20 text-primary' : 'bg-base-content/5 text-base-content'}`}>
         {icon}
-      </span>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <span style={{ fontSize: '14px', fontWeight: '600', letterSpacing: '0.03em' }}>{label}</span>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', opacity: activeTab === id ? 1 : 0.7 }}>{description}</span>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-sm font-bold tracking-wide">{label}</span>
+        <span className={`text-[11px] mt-0.5 ${activeTab === id ? 'opacity-100 text-base-content/80' : 'opacity-70 text-base-content/50'}`}>
+          {description}
+        </span>
       </div>
     </button>
   );
 
   return (
-    <div style={{ 
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', 
-      backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', 
-      zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', 
-      padding: '20px', animation: 'fadeIn 0.2s ease' 
-    }}>
-      
-      <form onSubmit={handleSaveProduct} className="glass" style={{ 
-        width: '100%', maxWidth: '1200px', height: '85vh', 
-        display: 'flex', flexDirection: 'column', 
-        borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
-      }}>
+    <dialog className="modal modal-open">
+      <form onSubmit={handleSaveProduct} className="modal-box max-w-[1200px] h-[85vh] p-0 flex flex-col bg-base-100 border border-base-300 shadow-2xl rounded-2xl overflow-hidden">
         
         {/* Superior: Header Limpo */}
-        <div style={{ 
-          padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', 
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-          backgroundColor: 'rgba(0,0,0,0.2)' 
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '48px', height: '48px', backgroundColor: 'var(--primary-light)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '20px' }}>
+        <div className="p-6 md:px-8 border-b border-base-300 flex justify-between items-center bg-base-200/50">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary text-xl">
               <i className="fa-solid fa-box-open"></i>
             </div>
             <div>
-              <h2 style={{ color: 'white', margin: 0, fontSize: '20px', fontWeight: '600', fontFamily: 'var(--font-serif)' }}>
+              <h2 className="text-xl font-bold text-base-content font-serif m-0">
                 {productForm.id ? 'Editor de Produto' : 'Novo Produto'}
               </h2>
-              <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+              <span className="text-sm text-base-content/60">
                 {productForm.title ? productForm.title : 'Preencha as informações para o catálogo'}
               </span>
             </div>
           </div>
           
-          <button type="button" onClick={onClose} style={{ 
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)', 
-            width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s'
-          }} onMouseOver={(e) => { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
-            <i className="fa-solid fa-xmark" style={{ fontSize: '16px' }}></i>
+          <button type="button" onClick={onClose} className="btn btn-circle btn-ghost btn-sm text-base-content/60 hover:text-base-content hover:bg-base-content/10">
+            <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
 
         {/* Corpo Principal (Abas + Conteúdo) */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div className="flex flex-1 overflow-hidden">
           
           {/* Menu Lateral Abas */}
-          <div style={{ 
-            width: '280px', backgroundColor: 'rgba(0,0,0,0.3)', 
-            borderRight: '1px solid rgba(255,255,255,0.05)', 
-            display: 'flex', flexDirection: 'column', paddingTop: '16px' 
-          }}>
+          <div className="w-[280px] bg-base-300/30 border-r border-base-300 flex flex-col pt-4 shrink-0">
             {renderTabButton('geral', <i className="fa-solid fa-align-left"></i>, 'Informações', 'Nome, EAN e Descrição')}
             {renderTabButton('preco', <i className="fa-solid fa-tag"></i>, 'Preços & Pesos', 'Valores e dimensões')}
             {renderTabButton('midia', <i className="fa-regular fa-image"></i>, 'Mídia Visual', 'Fotos do produto')}
@@ -174,43 +142,47 @@ export default function ProductEditor({
           </div>
 
           {/* Conteúdo da Aba */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '40px 50px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-            <div style={{ maxWidth: '800px' }}>
+          <div className="flex-1 overflow-y-auto p-8 md:p-12 bg-base-100">
+            <div className="max-w-3xl">
 
               {/* ABA 1: DADOS BÁSICOS */}
               {activeTab === 'geral' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeInTab 0.3s ease' }}>
+                <div className="flex flex-col gap-8 animate-[fadeInTab_0.3s_ease]">
                   
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Nome do Produto <span style={{color: 'var(--primary)'}}>*</span></label>
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-xs tracking-widest uppercase font-bold">Nome do Produto <span className="text-primary">*</span></span>
+                    </label>
                     <input 
                       type="text" required 
                       placeholder="Ex: Picanha Wagyu A5 1kg" 
-                      className="form-control"
-                      style={{ fontSize: '16px', padding: '16px' }}
+                      className="input input-bordered w-full text-lg h-14"
                       value={productForm.title}
                       onChange={(e) => handleProductTitleChange(e.target.value)}
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Código de Barras / EAN / SKU</label>
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-xs tracking-widest uppercase font-bold">Código de Barras / EAN / SKU</span>
+                    </label>
                     <input 
                       type="text" placeholder="Para leitura no PDV / ERP Solidcon" 
-                      className="form-control"
-                      style={{ padding: '16px' }}
+                      className="input input-bordered w-full font-mono h-12"
                       value={productForm.sku}
                       onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Descrição / Notas de Degustação</label>
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-xs tracking-widest uppercase font-bold">Descrição / Notas de Degustação</span>
+                    </label>
                     <style>{`
-                      .rsw-editor { min-height: 160px; font-family: var(--font-sans); font-size: 15px; border: 1px solid rgba(255,255,255,0.1) !important; color: white; background-color: rgba(255,255,255,0.02) !important; }
-                      .rsw-toolbar { border-bottom: 1px solid rgba(255,255,255,0.1) !important; background-color: rgba(0,0,0,0.2) !important; }
-                      .rsw-btn { color: white !important; }
-                      .rsw-btn:hover { background-color: rgba(255,255,255,0.1) !important; }
+                      .rsw-editor { min-height: 200px; font-family: inherit; font-size: 15px; border: 1px solid var(--fallback-bc,oklch(var(--bc)/0.2)) !important; border-radius: var(--rounded-btn, 0.5rem); color: inherit; background-color: var(--fallback-b1,oklch(var(--b1)/1)) !important; }
+                      .rsw-toolbar { border-bottom: 1px solid var(--fallback-bc,oklch(var(--bc)/0.2)) !important; background-color: var(--fallback-b2,oklch(var(--b2)/1)) !important; border-radius: var(--rounded-btn, 0.5rem) var(--rounded-btn, 0.5rem) 0 0; }
+                      .rsw-btn { color: inherit !important; }
+                      .rsw-btn:hover { background-color: var(--fallback-bc,oklch(var(--bc)/0.1)) !important; }
                     `}</style>
                     <Editor 
                       value={productForm.description || ''} 
@@ -222,46 +194,52 @@ export default function ProductEditor({
 
               {/* ABA 2: PREÇO E MEDIDAS */}
               {activeTab === 'preco' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeInTab 0.3s ease' }}>
+                <div className="flex flex-col gap-8 animate-[fadeInTab_0.3s_ease]">
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Preço de Venda (R$)</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text text-xs tracking-widest uppercase font-bold">Preço de Venda (R$)</span>
+                      </label>
                       <input 
                         type="number" step="0.01" placeholder="0.00" 
-                        className="form-control"
-                        style={{ fontSize: '20px', fontWeight: 'bold', padding: '16px' }}
+                        className="input input-bordered w-full text-xl font-bold text-primary h-14"
                         value={productForm.preco}
                         onChange={(e) => setProductForm({ ...productForm, preco: e.target.value })}
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Preço Promocional <i className="fa-solid fa-lock" style={{fontSize: '10px', marginLeft: '4px'}}></i></label>
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text text-xs tracking-widest uppercase font-bold text-base-content/50">
+                          Preço Promocional <i className="fa-solid fa-lock text-[10px] ml-1"></i>
+                        </span>
+                      </label>
                       <input 
                         type="number" step="0.01" placeholder="0.00" disabled
-                        className="form-control"
-                        style={{ padding: '16px', opacity: 0.5, cursor: 'not-allowed' }}
+                        className="input input-bordered w-full h-14 opacity-50 cursor-not-allowed"
                         title="Liberado no Módulo 4: ERP Solidcon"
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Peso Líquido / Volume</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text text-xs tracking-widest uppercase font-bold">Peso Líquido / Volume</span>
+                      </label>
                       <input 
                         type="text" placeholder="Ex: 500" 
-                        className="form-control"
-                        style={{ padding: '16px' }}
+                        className="input input-bordered w-full h-12"
                         value={productForm.peso}
                         onChange={(e) => setProductForm({ ...productForm, peso: e.target.value })}
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Unidade de Medida</label>
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text text-xs tracking-widest uppercase font-bold">Unidade de Medida</span>
+                      </label>
                       <select 
-                        className="form-control"
-                        style={{ padding: '16px', cursor: 'pointer' }}
+                        className="select select-bordered w-full h-12"
                         value={productForm.unidade_peso}
                         onChange={(e) => setProductForm({ ...productForm, unidade_peso: e.target.value })}
                       >
@@ -273,23 +251,28 @@ export default function ProductEditor({
                     </div>
                   </div>
 
-                  <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Estoque Sincronizado <i className="fa-solid fa-lock" style={{fontSize: '10px', marginLeft: '4px'}}></i></label>
-                      <input 
-                        type="text" placeholder="Aguardando conexão com ERP Solidcon..." disabled
-                        className="form-control"
-                        style={{ padding: '16px', opacity: 0.5, cursor: 'not-allowed', fontStyle: 'italic' }}
-                      />
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-xs tracking-widest uppercase font-bold text-base-content/50">
+                        Estoque Sincronizado <i className="fa-solid fa-lock text-[10px] ml-1"></i>
+                      </span>
+                    </label>
+                    <input 
+                      type="text" placeholder="Aguardando conexão com ERP Solidcon..." disabled
+                      className="input input-bordered w-full italic opacity-50 cursor-not-allowed"
+                    />
                   </div>
                 </div>
               )}
 
               {/* ABA 3: MÍDIA */}
               {activeTab === 'midia' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeInTab 0.3s ease' }}>
+                <div className="flex flex-col gap-8 animate-[fadeInTab_0.3s_ease]">
                   
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Galeria (Imagem Principal)</label>
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-xs tracking-widest uppercase font-bold">Galeria (Imagem Principal)</span>
+                    </label>
                     
                     {/* Premium Drag and Drop Area */}
                     <div 
@@ -298,37 +281,31 @@ export default function ProductEditor({
                       onDragOver={handleDrag}
                       onDrop={handleDrop}
                       onClick={onButtonClick}
-                      style={{ 
-                        width: '100%', height: '320px', 
-                        border: `2px dashed ${dragActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}`, 
-                        borderRadius: '16px', 
-                        backgroundColor: dragActive ? 'rgba(171, 144, 112, 0.05)' : 'rgba(0,0,0,0.3)', 
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                        cursor: 'pointer', transition: 'all 0.3s', position: 'relative', overflow: 'hidden'
-                      }}
+                      className={`w-full h-80 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden border-2 border-dashed
+                        ${dragActive ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20'}`}
                     >
-                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleChange} style={{ display: 'none' }} />
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
                       
                       {uploading ? (
-                        <div style={{ color: 'var(--primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                          <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '32px' }}></i>
-                          <span style={{ fontWeight: '600' }}>Enviando arquivo...</span>
+                        <div className="text-primary flex flex-col items-center gap-4">
+                          <span className="loading loading-spinner loading-lg"></span>
+                          <span className="font-bold">Enviando arquivo...</span>
                         </div>
                       ) : productForm.image_url ? (
-                        <div style={{ position: 'relative', width: '100%', height: '200px', backgroundColor: '#090a0d', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)' }}>
-                          <img src={productForm.image_url} alt="Pré-visualização do produto" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '20px' }} />
-                          <button style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.85)', padding: '16px', textAlign: 'center', fontSize: '13px', color: 'white', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                        <div className="relative w-full h-[240px] bg-base-300 rounded-xl border border-base-300 overflow-hidden">
+                          <img src={productForm.image_url} alt="Pré-visualização do produto" className="w-full h-full object-contain p-4" />
+                          <button className="absolute bottom-0 left-0 right-0 bg-base-content/90 p-4 text-center text-sm text-base-100 flex justify-center gap-3 font-bold hover:bg-base-content transition-colors">
                             <i className="fa-solid fa-upload"></i> Clique ou Arraste nova imagem para substituir
                           </button>
                         </div>
                       ) : (
-                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ width: '80px', height: '80px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                            <i className="fa-regular fa-image" style={{ fontSize: '32px', color: 'white' }}></i>
+                        <div className="text-center p-10 text-base-content/60 flex flex-col items-center">
+                          <div className="w-20 h-20 bg-base-content/5 rounded-full flex items-center justify-center mb-5 text-base-content">
+                            <i className="fa-regular fa-image text-3xl"></i>
                           </div>
-                          <div style={{ fontSize: '18px', color: 'white', fontWeight: 'bold', marginBottom: '8px' }}>Arraste uma foto aqui</div>
-                          <div style={{ fontSize: '14px' }}>ou clique para procurar no seu computador</div>
-                          <div style={{ fontSize: '12px', marginTop: '20px', opacity: 0.6, backgroundColor: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '99px' }}>
+                          <div className="text-lg text-base-content font-bold mb-2">Arraste uma foto aqui</div>
+                          <div className="text-sm">ou clique para procurar no seu computador</div>
+                          <div className="text-xs mt-5 opacity-60 bg-base-content/5 px-4 py-2 rounded-full">
                             JPG, PNG ou WEBP • Máx 2MB
                           </div>
                         </div>
@@ -336,19 +313,14 @@ export default function ProductEditor({
                     </div>
                   </div>
 
-                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ height: '1px', flex: 1, backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>OU FORNEÇA UMA URL EXTERNA</span>
-                    <div style={{ height: '1px', flex: 1, backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-                  </div>
+                  <div className="divider text-xs text-base-content/50 uppercase tracking-widest font-bold">OU FORNEÇA UMA URL EXTERNA</div>
 
-                  <div className="form-group">
-                    <div style={{ position: 'relative' }}>
-                      <i className="fa-solid fa-link" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}></i>
+                  <div className="form-control w-full">
+                    <div className="relative">
+                      <i className="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50"></i>
                       <input 
                         type="text" placeholder="https://meusite.com/imagem.jpg" 
-                        className="form-control"
-                        style={{ padding: '14px 16px 14px 45px' }}
+                        className="input input-bordered w-full pl-12 h-14"
                         value={productForm.image_url}
                         onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
                       />
@@ -359,94 +331,94 @@ export default function ProductEditor({
 
               {/* ABA EXTRA: FICHA TÉCNICA (VINHOS) */}
               {activeTab === 'vinho' && productForm.type === 'adega' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeInTab 0.3s ease' }}>
+                <div className="flex flex-col gap-8 animate-[fadeInTab_0.3s_ease]">
                   
                   {/* SEÇÃO 1: CARACTERÍSTICAS BÁSICAS */}
-                  <div style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <h3 style={{ fontSize: '13px', textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '20px', letterSpacing: '0.05em' }}>Características Principais</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Uva(s)</label>
-                        <input type="text" placeholder="Ex: Cabernet Sauvignon" className="form-control" style={{ padding: '14px' }}
+                  <div className="bg-base-200/50 p-6 md:p-8 rounded-2xl border border-base-300">
+                    <h3 className="text-sm uppercase font-bold text-primary mb-6 tracking-wider">Características Principais</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Uva(s)</span></label>
+                        <input type="text" placeholder="Ex: Cabernet Sauvignon" className="input input-bordered w-full h-12"
                           value={productForm.uva || ''} onChange={(e) => setProductForm({ ...productForm, uva: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Safra</label>
-                        <input type="text" placeholder="Ex: 2019" className="form-control" style={{ padding: '14px' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Safra</span></label>
+                        <input type="text" placeholder="Ex: 2019" className="input input-bordered w-full h-12"
                           value={productForm.safra || ''} onChange={(e) => setProductForm({ ...productForm, safra: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>País / Região</label>
-                        <input type="text" placeholder="Ex: Mendoza, Argentina" className="form-control" style={{ padding: '14px' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">País / Região</span></label>
+                        <input type="text" placeholder="Ex: Mendoza, Argentina" className="input input-bordered w-full h-12"
                           value={productForm.origem || ''} onChange={(e) => setProductForm({ ...productForm, origem: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Produtor / Vinícola</label>
-                        <input type="text" placeholder="Ex: Catena Zapata" className="form-control" style={{ padding: '14px' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Produtor / Vinícola</span></label>
+                        <input type="text" placeholder="Ex: Catena Zapata" className="input input-bordered w-full h-12"
                           value={productForm.produtor || ''} onChange={(e) => setProductForm({ ...productForm, produtor: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Enólogo</label>
-                        <input type="text" placeholder="Ex: Alejandro Vigil" className="form-control" style={{ padding: '14px' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Enólogo</span></label>
+                        <input type="text" placeholder="Ex: Alejandro Vigil" className="input input-bordered w-full h-12"
                           value={productForm.enologo || ''} onChange={(e) => setProductForm({ ...productForm, enologo: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Volume</label>
-                        <input type="text" placeholder="Ex: 750ml" className="form-control" style={{ padding: '14px' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Volume</span></label>
+                        <input type="text" placeholder="Ex: 750ml" className="input input-bordered w-full h-12"
                           value={productForm.volume || ''} onChange={(e) => setProductForm({ ...productForm, volume: e.target.value })} />
                       </div>
                     </div>
                   </div>
 
                   {/* SEÇÃO 2: SERVIÇO E GUARDA */}
-                  <div style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <h3 style={{ fontSize: '13px', textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '20px', letterSpacing: '0.05em' }}>Serviço e Guarda</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Teor Alcoólico</label>
-                        <input type="text" placeholder="Ex: 13,5%" className="form-control" style={{ padding: '14px' }}
+                  <div className="bg-base-200/50 p-6 md:p-8 rounded-2xl border border-base-300">
+                    <h3 className="text-sm uppercase font-bold text-primary mb-6 tracking-wider">Serviço e Guarda</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Teor Alcoólico</span></label>
+                        <input type="text" placeholder="Ex: 13,5%" className="input input-bordered w-full h-12"
                           value={productForm.teor_alcoolico || ''} onChange={(e) => setProductForm({ ...productForm, teor_alcoolico: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Temperatura de Serviço</label>
-                        <input type="text" placeholder="Ex: 16°C a 18°C" className="form-control" style={{ padding: '14px' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Temperatura de Serviço</span></label>
+                        <input type="text" placeholder="Ex: 16°C a 18°C" className="input input-bordered w-full h-12"
                           value={productForm.temperatura || ''} onChange={(e) => setProductForm({ ...productForm, temperatura: e.target.value })} />
                       </div>
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <label className="form-label" style={{ fontSize: '12px' }}>Potencial de Guarda</label>
-                        <input type="text" placeholder="Ex: Até 10 anos" className="form-control" style={{ padding: '14px' }}
+                      <div className="form-control w-full md:col-span-2">
+                        <label className="label"><span className="label-text font-bold">Potencial de Guarda</span></label>
+                        <input type="text" placeholder="Ex: Até 10 anos" className="input input-bordered w-full h-12"
                           value={productForm.potencial_guarda || ''} onChange={(e) => setProductForm({ ...productForm, potencial_guarda: e.target.value })} />
                       </div>
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <label className="form-label" style={{ fontSize: '12px' }}>Amadurecimento</label>
-                        <textarea placeholder="Descreva como e onde o vinho maturou..." className="form-control" style={{ padding: '14px', minHeight: '80px', resize: 'vertical' }}
+                      <div className="form-control w-full md:col-span-2">
+                        <label className="label"><span className="label-text font-bold">Amadurecimento</span></label>
+                        <textarea placeholder="Descreva como e onde o vinho maturou..." className="textarea textarea-bordered w-full min-h-[80px]"
                           value={productForm.amadurecimento || ''} onChange={(e) => setProductForm({ ...productForm, amadurecimento: e.target.value })} />
                       </div>
                     </div>
                   </div>
 
                   {/* SEÇÃO 3: NOTAS DE DEGUSTAÇÃO */}
-                  <div style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <h3 style={{ fontSize: '13px', textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '20px', letterSpacing: '0.05em' }}>Notas de Degustação</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Visual</label>
-                        <textarea placeholder="Ex: Vermelho rubi intenso..." className="form-control" style={{ padding: '14px', minHeight: '60px', resize: 'vertical' }}
+                  <div className="bg-base-200/50 p-6 md:p-8 rounded-2xl border border-base-300">
+                    <h3 className="text-sm uppercase font-bold text-primary mb-6 tracking-wider">Notas de Degustação</h3>
+                    <div className="flex flex-col gap-6">
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Visual</span></label>
+                        <textarea placeholder="Ex: Vermelho rubi intenso..." className="textarea textarea-bordered w-full min-h-[60px]"
                           value={productForm.visual || ''} onChange={(e) => setProductForm({ ...productForm, visual: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Olfativo</label>
-                        <textarea placeholder="Ex: Aromas de frutas vermelhas..." className="form-control" style={{ padding: '14px', minHeight: '60px', resize: 'vertical' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Olfativo</span></label>
+                        <textarea placeholder="Ex: Aromas de frutas vermelhas..." className="textarea textarea-bordered w-full min-h-[60px]"
                           value={productForm.olfativo || ''} onChange={(e) => setProductForm({ ...productForm, olfativo: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Gustativo</label>
-                        <textarea placeholder="Ex: Taninos macios, final longo..." className="form-control" style={{ padding: '14px', minHeight: '60px', resize: 'vertical' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Gustativo</span></label>
+                        <textarea placeholder="Ex: Taninos macios, final longo..." className="textarea textarea-bordered w-full min-h-[60px]"
                           value={productForm.gustativo || ''} onChange={(e) => setProductForm({ ...productForm, gustativo: e.target.value })} />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '12px' }}>Harmonização</label>
-                        <textarea placeholder="Ex: Carnes vermelhas, queijos maduros..." className="form-control" style={{ padding: '14px', minHeight: '60px', resize: 'vertical' }}
+                      <div className="form-control w-full">
+                        <label className="label"><span className="label-text font-bold">Harmonização</span></label>
+                        <textarea placeholder="Ex: Carnes vermelhas, queijos maduros..." className="textarea textarea-bordered w-full min-h-[60px]"
                           value={productForm.harmonizacao || ''} onChange={(e) => setProductForm({ ...productForm, harmonizacao: e.target.value })} />
                       </div>
                     </div>
@@ -456,14 +428,13 @@ export default function ProductEditor({
 
               {/* ABA 4: CATEGORIAS E SETOR */}
               {activeTab === 'categoria' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeInTab 0.3s ease' }}>
+                <div className="flex flex-col gap-8 animate-[fadeInTab_0.3s_ease]">
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Setor Base do Produto</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="form-control w-full">
+                      <label className="label"><span className="label-text text-xs tracking-widest uppercase font-bold">Setor Base do Produto</span></label>
                       <select 
-                        className="form-control"
-                        style={{ padding: '16px', backgroundColor: 'rgba(171, 144, 112, 0.05)', color: 'var(--primary)', fontWeight: 'bold', border: '1px solid var(--primary-light)' }}
+                        className="select select-bordered w-full h-14 bg-primary/5 text-primary font-bold border-primary/30"
                         value={productForm.type}
                         onChange={(e) => setProductForm({ ...productForm, type: e.target.value })}
                       >
@@ -472,12 +443,11 @@ export default function ProductEditor({
                       </select>
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Pontuação (Específico Vinhos)</label>
+                    <div className="form-control w-full">
+                      <label className="label"><span className="label-text text-xs tracking-widest uppercase font-bold">Pontuação (Específico Vinhos)</span></label>
                       <input 
                         type="text" placeholder="Ex: RP95 | WS92" 
-                        className="form-control"
-                        style={{ padding: '16px', opacity: productForm.type === 'adega' ? 1 : 0.4 }}
+                        className={`input input-bordered w-full h-14 ${productForm.type === 'adega' ? '' : 'opacity-40 cursor-not-allowed'}`}
                         value={productForm.pontuacao}
                         onChange={(e) => setProductForm({ ...productForm, pontuacao: e.target.value })}
                         disabled={productForm.type !== 'adega'}
@@ -485,26 +455,23 @@ export default function ProductEditor({
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em', marginBottom: '16px', display: 'block' }}>Vincular Categorias de Apresentação</label>
-                    <div style={{ 
-                      display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', 
-                      padding: '24px', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', 
-                      backgroundColor: 'rgba(0,0,0,0.2)', maxHeight: '350px', overflowY: 'auto' 
-                    }}>
-                      {categories.filter(c => c.type === (productForm.type === 'adega' ? 'sessoes_vinhos' : 'sessoes_carnes_')).map(cat => {
+                  <div className="form-control w-full">
+                    <label className="label mb-2"><span className="label-text text-xs tracking-widest uppercase font-bold">Vincular Categorias de Apresentação</span></label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-6 border border-base-300 rounded-2xl bg-base-200/50 max-h-[350px] overflow-y-auto">
+                      {categories.filter(c => {
+                        if (productForm.type === 'adega') {
+                          return c.type === 'sessoes_vinho_';
+                        } else {
+                          return c.type === 'sessoes_carnes_' || c.type === 'racas_carnes' || c.type === 'embalagem_carnes';
+                        }
+                      }).map(cat => {
                         const isChecked = productForm.categoryIds.includes(cat.id);
                         return (
-                          <label key={cat.id} style={{ 
-                            display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', cursor: 'pointer', 
-                            color: isChecked ? 'white' : 'var(--text-muted)', 
-                            backgroundColor: isChecked ? 'rgba(171, 144, 112, 0.1)' : 'rgba(255,255,255,0.02)', 
-                            padding: '12px 16px', borderRadius: '8px', 
-                            border: isChecked ? '1px solid var(--primary-light)' : '1px solid transparent', 
-                            transition: 'all 0.2s', fontWeight: isChecked ? '600' : 'normal'
-                          }}>
+                          <label key={cat.id} className={`flex items-center gap-3 text-sm cursor-pointer px-4 py-3 rounded-xl border transition-all duration-200
+                            ${isChecked ? 'bg-primary/10 text-primary border-primary/30 font-bold' : 'bg-base-100/50 text-base-content/70 border-transparent hover:bg-base-200'}`}>
                             <input 
                               type="checkbox" 
+                              className="checkbox checkbox-primary checkbox-sm"
                               checked={isChecked}
                               onChange={() => {
                                 const updated = isChecked 
@@ -512,15 +479,20 @@ export default function ProductEditor({
                                   : [...productForm.categoryIds, cat.id];
                                 setProductForm({ ...productForm, categoryIds: updated });
                               }}
-                              style={{ accentColor: 'var(--primary)', width: '18px', height: '18px' }}
                             />
                             {cat.name}
                           </label>
                         );
                       })}
                       
-                      {categories.filter(c => c.type === (productForm.type === 'adega' ? 'sessoes_vinhos' : 'sessoes_carnes_')).length === 0 && (
-                        <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '10px' }}>Nenhuma categoria disponível para este setor.</div>
+                      {categories.filter(c => {
+                        if (productForm.type === 'adega') {
+                          return c.type === 'sessoes_vinho_';
+                        } else {
+                          return c.type === 'sessoes_carnes_' || c.type === 'racas_carnes' || c.type === 'embalagem_carnes';
+                        }
+                      }).length === 0 && (
+                        <div className="text-base-content/50 italic p-3 col-span-full">Nenhuma categoria disponível para este setor.</div>
                       )}
                     </div>
                   </div>
@@ -529,39 +501,36 @@ export default function ProductEditor({
 
               {/* ABA 5: SEO E VISIBILIDADE */}
               {activeTab === 'seo' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeInTab 0.3s ease' }}>
+                <div className="flex flex-col gap-8 animate-[fadeInTab_0.3s_ease]">
                   
-                  <div style={{ 
-                    backgroundColor: productForm.status === 'on' ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)', 
-                    border: `1px solid ${productForm.status === 'on' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`, 
-                    borderRadius: '12px', padding: '24px', display: 'flex', alignItems: 'flex-start', gap: '20px', transition: 'all 0.3s'
-                  }}>
-                    <div style={{ marginTop: '2px' }}>
+                  <div className={`p-6 rounded-2xl border flex items-start gap-5 transition-all duration-300
+                    ${productForm.status === 'on' ? 'bg-success/5 border-success/20' : 'bg-error/5 border-error/20'}`}>
+                    <div className="pt-1">
                       <input 
                         type="checkbox" 
+                        className={`toggle ${productForm.status === 'on' ? 'toggle-success' : 'toggle-error'}`}
                         checked={productForm.status === 'on'}
                         onChange={(e) => setProductForm({ ...productForm, status: e.target.checked ? 'on' : 'off' })}
-                        style={{ accentColor: productForm.status === 'on' ? '#22c55e' : '#ef4444', width: '28px', height: '28px', cursor: 'pointer' }}
                         id="status-check"
                       />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <label htmlFor="status-check" style={{ fontSize: '18px', fontWeight: 'bold', color: productForm.status === 'on' ? '#4ade80' : '#fca5a5', cursor: 'pointer', marginBottom: '8px' }}>
+                    <div className="flex flex-col">
+                      <label htmlFor="status-check" className={`text-lg font-bold cursor-pointer mb-2 ${productForm.status === 'on' ? 'text-success' : 'text-error'}`}>
                         {productForm.status === 'on' ? 'Produto Ativo e Visível' : 'Produto Oculto (Rascunho / Sem Estoque)'}
                       </label>
-                      <span style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                      <span className="text-sm text-base-content/60 leading-relaxed">
                         Desmarque esta opção para esconder este produto da loja. Ele continuará salvo no seu banco de dados, mas seus clientes não conseguirão vê-lo nem adicioná-lo ao carrinho.
                       </span>
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>URL Amigável (Slug Gerado)</label>
-                    <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0 16px', overflow: 'hidden' }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>antenorefilhos.com.br/produtos/</span>
+                  <div className="form-control w-full">
+                    <label className="label"><span className="label-text text-xs tracking-widest uppercase font-bold">URL Amigável (Slug Gerado)</span></label>
+                    <div className="flex items-center bg-base-300/50 border border-base-300 rounded-xl px-4 overflow-hidden">
+                      <span className="text-base-content/50 text-sm whitespace-nowrap">antenorefilhos.com.br/produtos/</span>
                       <input 
                         type="text" 
-                        style={{ flex: 1, padding: '16px 0', border: 'none', backgroundColor: 'transparent', color: 'var(--primary)', fontSize: '14px', fontFamily: 'monospace', outline: 'none' }}
+                        className="flex-1 py-4 px-2 border-none bg-transparent text-primary text-sm font-mono outline-none min-w-0"
                         value={productForm.slug}
                         disabled
                       />
@@ -575,31 +544,19 @@ export default function ProductEditor({
         </div>
 
         {/* Footer */}
-        <div style={{ 
-          padding: '20px 32px', borderTop: '1px solid rgba(255,255,255,0.05)', 
-          display: 'flex', justifyContent: 'flex-end', gap: '16px', 
-          backgroundColor: 'rgba(0,0,0,0.3)' 
-        }}>
-          <button type="button" onClick={onClose} className="btn btn-secondary" style={{ padding: '12px 24px', fontSize: '14px' }}>
-            Cancelar Alterações
+        <div className="p-5 md:px-8 border-t border-base-300 flex justify-end gap-4 bg-base-200/50">
+          <button type="button" onClick={onClose} className="btn btn-ghost">
+            Cancelar
           </button>
-          <button type="submit" className="btn btn-primary" style={{ padding: '12px 32px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button type="submit" className="btn btn-primary gap-2">
             <i className="fa-solid fa-check"></i> Salvar Produto no Catálogo
           </button>
         </div>
 
       </form>
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes fadeInTab {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}} />
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={onClose}>
+        <button>close</button>
+      </form>
+    </dialog>
   );
 }

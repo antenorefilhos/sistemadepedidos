@@ -29,6 +29,27 @@ const playNotificationSound = () => {
   }
 };
 
+// Função para disparar a notificação nativa no navegador do Celular ou PC
+const showNativeNotification = (order) => {
+  try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      const notification = new Notification(`Novo Pedido de Orçamento!`, {
+        body: `Cliente: ${order.customer_name}\nID: #${order.id}`,
+        icon: '/icon.png',
+        tag: `order-${order.id}`,
+        requireInteraction: true
+      });
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
+  } catch (err) {
+    console.error('Error showing native notification:', err);
+  }
+};
+
 export default function LiveOrdersMonitor({ password }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,19 +67,22 @@ export default function LiveOrdersMonitor({ password }) {
         setOrders(data);
         setError(null);
         
+        const latestPending = data.filter(o => o.status === 'pending');
+        const maxId = latestPending.length > 0 ? Math.max(...latestPending.map(o => o.id)) : 0;
+
         if (!isInitial) {
-          const latestPending = data.filter(o => o.status === 'pending');
-          const maxId = latestPending.length > 0 ? Math.max(...latestPending.map(o => o.id)) : 0;
-          
           if (maxId > lastOrderId) {
             setLastOrderId(maxId);
             if (isSoundEnabled) {
               playNotificationSound();
+              // Achar o novo pedido para a notificação
+              const newOrder = latestPending.find(o => o.id === maxId);
+              if (newOrder) {
+                showNativeNotification(newOrder);
+              }
             }
           }
         } else {
-          const latestPending = data.filter(o => o.status === 'pending');
-          const maxId = latestPending.length > 0 ? Math.max(...latestPending.map(o => o.id)) : 0;
           setLastOrderId(maxId);
         }
       } else {
@@ -109,74 +133,82 @@ export default function LiveOrdersMonitor({ password }) {
   const enableSound = () => {
     setIsSoundEnabled(true);
     playNotificationSound();
+    
+    // Solicitar permissão de notificação do navegador ao habilitar o som
+    if ('Notification' in window) {
+      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
   };
 
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Carregando monitor...</div>;
+  if (loading) return <div className="p-10 text-center text-base-content/60 flex flex-col items-center gap-4"><span className="loading loading-spinner loading-lg text-primary"></span>Carregando monitor...</div>;
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-main)', minHeight: 'calc(100vh - 100px)', padding: '20px', fontFamily: 'var(--font-sans)', width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div className="bg-base-200 min-h-[calc(100vh-100px)] p-6 w-full animate-[fadeIn_0.3s_ease]">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', margin: '0 0 4px 0' }}>Monitor de Pedidos (Ao Vivo)</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>Atualização automática a cada 10 segundos.</p>
+          <h2 className="text-lg font-bold text-primary mb-1">Monitor de Pedidos (Ao Vivo)</h2>
+          <p className="text-base-content/60 text-sm m-0">Atualização automática a cada 10 segundos.</p>
         </div>
         
         <button 
           onClick={enableSound}
-          style={{
-            padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold',
-            backgroundColor: isSoundEnabled ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-            color: isSoundEnabled ? '#4ade80' : '#f87171'
-          }}
+          className={`btn shadow-sm gap-2 ${isSoundEnabled ? 'btn-success bg-success/20 text-success hover:bg-success/30 border-success/30' : 'btn-error bg-error/20 text-error hover:bg-error/30 border-error/30'}`}
         >
-          {isSoundEnabled ? '🔊 Alertas Ativados' : '🔇 Ativar Alerta Sonoro'}
+          {isSoundEnabled ? '🔊 Alertas & Notificações Ativadas' : '🔇 Ativar Alertas & Notificações'}
         </button>
       </div>
 
-      {error && <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>{error}</div>}
+      {error && (
+        <div className="alert alert-error bg-error/20 text-error border-error/30 mb-4 rounded-xl">
+          <i className="fa-solid fa-circle-exclamation"></i>
+          <span>{error}</span>
+        </div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', height: 'calc(100vh - 200px)' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
         {/* Coluna 1: Novos Pedidos */}
-        <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-          <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '16px', borderBottom: '1px solid rgba(239, 68, 68, 0.2)' }}>
-            <h3 style={{ margin: 0, fontWeight: 'bold', color: '#fca5a5', fontSize: '16px', display: 'flex', justifyContent: 'space-between' }}>
+        <div className="bg-base-100/50 rounded-2xl border border-base-300 flex flex-col h-full overflow-hidden shadow-sm">
+          <div className="bg-error/10 p-4 border-b border-error/20 flex justify-between items-center">
+            <h3 className="m-0 font-bold text-error flex items-center gap-2">
               Novos (Pendentes)
-              <span style={{ backgroundColor: 'rgba(239,68,68,0.2)', padding: '2px 8px', borderRadius: '99px', fontSize: '12px' }}>{pendingOrders.length}</span>
             </h3>
+            <div className="badge badge-error badge-sm">{pendingOrders.length}</div>
           </div>
-          <div style={{ padding: '16px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {pendingOrders.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>Nenhum pedido novo.</p>}
+          <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4">
+            {pendingOrders.length === 0 && <p className="text-base-content/50 text-center py-8 italic text-sm">Nenhum pedido novo.</p>}
             {pendingOrders.map(order => (
-              <OrderCard key={order.id} order={order} onMove={() => updateOrderStatus(order.id, 'processing')} actionText="Preparar Pedido" actionColor="#3b82f6" />
+              <OrderCard key={order.id} order={order} onMove={() => updateOrderStatus(order.id, 'processing')} actionText="Preparar Pedido" actionClass="btn-info" />
             ))}
           </div>
         </div>
 
         {/* Coluna 2: Em Preparo */}
-        <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-          <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '16px', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>
-            <h3 style={{ margin: 0, fontWeight: 'bold', color: '#93c5fd', fontSize: '16px', display: 'flex', justifyContent: 'space-between' }}>
+        <div className="bg-base-100/50 rounded-2xl border border-base-300 flex flex-col h-full overflow-hidden shadow-sm">
+          <div className="bg-info/10 p-4 border-b border-info/20 flex justify-between items-center">
+            <h3 className="m-0 font-bold text-info flex items-center gap-2">
               Em Preparação
-              <span style={{ backgroundColor: 'rgba(59,130,246,0.2)', padding: '2px 8px', borderRadius: '99px', fontSize: '12px' }}>{preparingOrders.length}</span>
             </h3>
+            <div className="badge badge-info badge-sm">{preparingOrders.length}</div>
           </div>
-          <div style={{ padding: '16px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {preparingOrders.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>Nenhum pedido em preparo.</p>}
+          <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4">
+            {preparingOrders.length === 0 && <p className="text-base-content/50 text-center py-8 italic text-sm">Nenhum pedido em preparo.</p>}
             {preparingOrders.map(order => (
-              <OrderCard key={order.id} order={order} onMove={() => updateOrderStatus(order.id, 'completed')} actionText="Concluir / Entregar" actionColor="#22c55e" />
+              <OrderCard key={order.id} order={order} onMove={() => updateOrderStatus(order.id, 'completed')} actionText="Concluir / Entregar" actionClass="btn-success" />
             ))}
           </div>
         </div>
 
         {/* Coluna 3: Concluídos */}
-        <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-          <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', padding: '16px', borderBottom: '1px solid rgba(34, 197, 94, 0.2)' }}>
-            <h3 style={{ margin: 0, fontWeight: 'bold', color: '#86efac', fontSize: '16px', display: 'flex', justifyContent: 'space-between' }}>
+        <div className="bg-base-100/50 rounded-2xl border border-base-300 flex flex-col h-full overflow-hidden shadow-sm opacity-80">
+          <div className="bg-success/10 p-4 border-b border-success/20 flex justify-between items-center">
+            <h3 className="m-0 font-bold text-success flex items-center gap-2">
               Concluídos (Recentes)
             </h3>
           </div>
-          <div style={{ padding: '16px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', opacity: 0.8 }}>
-            {completedOrders.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>Nenhum pedido recente.</p>}
+          <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4">
+            {completedOrders.length === 0 && <p className="text-base-content/50 text-center py-8 italic text-sm">Nenhum pedido recente.</p>}
             {completedOrders.map(order => (
               <OrderCard key={order.id} order={order} readOnly />
             ))}
@@ -188,47 +220,43 @@ export default function LiveOrdersMonitor({ password }) {
 }
 
 // Subcomponente de Card
-function OrderCard({ order, onMove, actionText, actionColor, readOnly }) {
+function OrderCard({ order, onMove, actionText, actionClass, readOnly }) {
   const isPending = order.status === 'pending';
   
   return (
-    <div style={{ 
-      border: '1px solid',
-      borderColor: isPending ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255,255,255,0.1)',
-      borderLeft: isPending ? '4px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
-      borderRadius: '8px', 
-      padding: '16px', 
-      backgroundColor: 'rgba(255,255,255,0.02)'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+    <div className={`border rounded-xl p-4 bg-base-200/50 transition-all hover:bg-base-200 shadow-sm
+      ${isPending ? 'border-error/30 border-l-4 border-l-error' : 'border-base-300 border-l border-l-base-300'}`}>
+      
+      <div className="flex justify-between items-start mb-3">
         <div>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>#{order.id}</span>
-          <h4 style={{ margin: '2px 0 0 0', fontWeight: 'bold', color: 'white', fontSize: '15px' }}>{order.customer_name}</h4>
+          <span className="text-xs text-base-content/50 font-mono tracking-wider">#{order.id}</span>
+          <h4 className="mt-1 font-bold text-base-content text-[15px]">{order.customer_name}</h4>
         </div>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(order.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+        <span className="text-[11px] text-base-content/50 font-mono bg-base-300 px-2 py-1 rounded-md">
+          {new Date(order.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+        </span>
       </div>
       
-      <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '16px' }}>
-        <p style={{ margin: '0 0 4px 0' }}>📱 {order.customer_phone}</p>
-        <p style={{ margin: '0 0 8px 0' }}>👤 {order.seller_name || 'Venda Direta (Site)'}</p>
+      <div className="text-[13px] text-base-content/80 mb-4 flex flex-col gap-1">
+        <p className="m-0 flex items-center gap-2"><i className="fa-solid fa-mobile-screen-button text-base-content/40 w-4"></i> {order.customer_phone}</p>
+        <p className="m-0 flex items-center gap-2"><i className="fa-solid fa-user-tag text-base-content/40 w-4"></i> {order.seller_name || 'Venda Direta (Site)'}</p>
         
-        <div style={{ marginTop: '8px', backgroundColor: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', maxHeight: '100px', overflowY: 'auto' }}>
-          <p style={{ margin: '0 0 6px 0', fontWeight: 'bold', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Itens ({order.items?.length || 0}):</p>
-          {order.items && order.items.map((i, idx) => (
-            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', marginBottom: '4px' }}>
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{i.quantity}x {i.product_title}</span>
-            </div>
-          ))}
+        <div className="mt-3 bg-base-300/30 p-3 rounded-lg border border-base-300 max-h-[120px] overflow-y-auto">
+          <p className="m-0 mb-2 font-bold text-[11px] text-base-content/50 uppercase tracking-widest">Itens ({order.items?.length || 0}):</p>
+          <div className="flex flex-col gap-2">
+            {order.items && order.items.map((i, idx) => (
+              <div key={idx} className="flex justify-between items-center text-[12px] border-b border-base-content/5 pb-1 last:border-0 last:pb-0">
+                <span className="whitespace-nowrap overflow-hidden text-ellipsis mr-2"><span className="font-bold mr-1">{i.quantity}x</span> {i.product_title}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {!readOnly && (
         <button 
           onClick={onMove}
-          style={{
-            width: '100%', padding: '10px', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer',
-            backgroundColor: actionColor, color: 'white', border: 'none'
-          }}
+          className={`btn btn-sm w-full font-bold shadow-sm ${actionClass}`}
         >
           {actionText}
         </button>

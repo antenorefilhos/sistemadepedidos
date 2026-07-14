@@ -266,6 +266,8 @@ export default function ProductDetails({ product, relatedProducts }) {
                   src={product.image_url} 
                   alt={product.title} 
                   className="product-zoom-image"
+                  fetchPriority="high"
+                  loading="eager"
                   style={{ transition: 'transform 0.15s ease-out' }}
                 />
               ) : (

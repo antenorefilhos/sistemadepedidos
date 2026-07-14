@@ -6,16 +6,12 @@ export default function SolidconIntegration({ password }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [logs, setLogs] = useState([]);
   const [lastSync, setLastSync] = useState(null);
-  const [config, setConfig] = useState({
-    apiUrl: 'https://api.solidcon.com.br/v1',
-    token: '************************'
-  });
   
   const terminalEndRef = useRef(null);
 
   // Auto-scroll the terminal
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [logs]);
 
   const addLog = (msg, type = 'info') => {
@@ -50,8 +46,10 @@ export default function SolidconIntegration({ password }) {
         }, 4000);
         
         setTimeout(() => {
+          const syncDate = new Date().toLocaleString('pt-BR');
           addLog(`SINCRONIZAÇÃO CONCLUÍDA! Sucesso: ${data.updated} | Erros: ${data.errors}`, 'success');
-          setLastSync(new Date().toLocaleString('pt-BR'));
+          setLastSync(syncDate);
+          localStorage.setItem('solidcon_last_sync', syncDate);
           setIsSyncing(false);
         }, 5000);
 
@@ -67,142 +65,87 @@ export default function SolidconIntegration({ password }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', animation: 'fadeIn 0.3s ease' }}>
+    <div className="flex flex-col gap-8 animate-[fadeIn_0.3s_ease]">
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="flex justify-between items-center">
         <div>
-          <h2 style={{ color: 'white', margin: '0 0 5px 0', fontFamily: 'var(--font-serif)', fontSize: '24px' }}>Integração ERP Solidcon</h2>
-          <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '14px' }}>Sincronização de Preços e Estoque em tempo real</p>
+          <h2 className="text-lg font-bold text-base-content mb-1">Integração ERP Solidcon</h2>
+          <p className="text-base-content/60 text-sm m-0">Sincronização de Preços e Estoque em tempo real</p>
         </div>
         <button 
           onClick={startSync}
           disabled={isSyncing}
-          className="btn btn-primary"
-          style={{ 
-            padding: '12px 24px', 
-            fontSize: '15px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '10px',
-            opacity: isSyncing ? 0.7 : 1,
-            cursor: isSyncing ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 15px rgba(171,144,112,0.3)'
-          }}
+          className="btn btn-primary shadow-lg gap-3 px-6 h-12"
         >
           {isSyncing ? (
-            <><i className="fa-solid fa-arrows-rotate fa-spin"></i> Sincronizando...</>
+            <><span className="loading loading-spinner loading-sm"></span> Sincronizando...</>
           ) : (
             <><i className="fa-solid fa-cloud-arrow-down"></i> Sincronizar Agora</>
           )}
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-        
-        {/* Configurações API */}
-        <div className="glass" style={{ padding: '25px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>
-            <div style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: 'var(--primary)' }}>
-              <i className="fa-solid fa-network-wired"></i>
+      <div className="grid grid-cols-1 gap-8">
+        {/* Status Panel (Largura Total) */}
+        <div className="card bg-base-200/50 border border-base-300 shadow-xl">
+          <div className="card-body">
+            <div className="flex items-center gap-4 border-b border-base-300 pb-4 mb-4">
+              <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center text-lg text-success border border-success/20">
+                <i className="fa-solid fa-server"></i>
+              </div>
+              <div>
+                <h3 className="m-0 text-base-content font-bold text-base">Status da Sincronização</h3>
+                <span className="text-sm text-base-content/60">Histórico de comunicação direta com o ERP</span>
+              </div>
             </div>
-            <div>
-              <h3 style={{ margin: 0, color: 'white', fontSize: '16px' }}>Credenciais da API</h3>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Configuração de acesso ao Solidcon</span>
-            </div>
-          </div>
-          
-          <div className="form-group" style={{ marginBottom: '0' }}>
-            <label className="form-label">URL do Endpoint (Base)</label>
-            <input 
-              type="text" 
-              className="form-control" 
-              value={config.apiUrl}
-              onChange={(e) => setConfig({...config, apiUrl: e.target.value})}
-              style={{ backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.05)' }}
-            />
-          </div>
-          
-          <div className="form-group" style={{ marginBottom: '0' }}>
-            <label className="form-label">Token de Acesso / API Key</label>
-            <input 
-              type="password" 
-              className="form-control" 
-              value={config.token}
-              onChange={(e) => setConfig({...config, token: e.target.value})}
-              style={{ backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.05)' }}
-            />
-          </div>
-          
-          <div style={{ backgroundColor: 'rgba(171, 144, 112, 0.1)', padding: '15px', borderRadius: '8px', border: '1px solid var(--primary-light)', fontSize: '12px', color: 'var(--primary)', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-            <i className="fa-solid fa-circle-info" style={{ marginTop: '2px' }}></i>
-            <span>Estes campos estão simulados para a interface. No ambiente de produção, as chaves reais deverão ser injetadas no código backend via <code>.env</code> por segurança.</span>
-          </div>
-        </div>
-
-        {/* Status Panel */}
-        <div className="glass" style={{ padding: '25px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>
-            <div style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: 'var(--success)' }}>
-              <i className="fa-solid fa-server"></i>
-            </div>
-            <div>
-              <h3 style={{ margin: 0, color: 'white', fontSize: '16px' }}>Status da Sincronização</h3>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Histórico do painel</span>
-            </div>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Última Sincronização:</span>
-              <b style={{ color: 'white' }}>{lastSync || 'Nunca realizada'}</b>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Campos Atualizados:</span>
-              <b style={{ color: 'white' }}>Preço e Estoque</b>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Gatilho:</span>
-              <b style={{ color: 'white' }}>Manual via Admin</b>
+            
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between p-4 bg-base-100 rounded-xl border border-base-300 shadow-sm">
+                <span className="text-base-content/70 text-sm">Última Sincronização:</span>
+                <b className="text-base-content">{lastSync || localStorage.getItem('solidcon_last_sync') || 'Nunca realizada'}</b>
+              </div>
+              <div className="flex justify-between p-4 bg-base-100 rounded-xl border border-base-300 shadow-sm">
+                <span className="text-base-content/70 text-sm">Campos Atualizados:</span>
+                <b className="text-base-content">Preço e Estoque (Integração sem Autenticação)</b>
+              </div>
+              <div className="flex justify-between p-4 bg-base-100 rounded-xl border border-base-300 shadow-sm">
+                <span className="text-base-content/70 text-sm">Gatilho:</span>
+                <b className="text-base-content">Manual via Admin</b>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Terminal Visualizador de Logs */}
-      <div style={{ 
-        backgroundColor: '#0a0a0c', 
-        borderRadius: '12px', 
-        border: '1px solid #1f2229',
-        overflow: 'hidden',
-        boxShadow: 'inset 0 2px 15px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{ padding: '10px 15px', backgroundColor: '#13151a', borderBottom: '1px solid #1f2229', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <i className="fa-solid fa-terminal" style={{ color: 'var(--text-muted)', fontSize: '14px' }}></i>
-          <span style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'monospace', textTransform: 'uppercase' }}>Terminal do Backend (Logs)</span>
+      <div className="rounded-xl border border-base-300 bg-base-200 overflow-hidden shadow-inner">
+        <div className="p-3 bg-base-300/50 border-b border-base-300 flex items-center gap-3">
+          <i className="fa-solid fa-terminal text-base-content/50 text-sm"></i>
+          <span className="text-base-content/70 text-xs font-mono tracking-widest uppercase">Logs de Sincronização</span>
         </div>
         
-        <div style={{ padding: '20px', minHeight: '250px', maxHeight: '350px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6' }}>
+        <div className="p-6 min-h-[250px] max-h-[350px] overflow-y-auto font-mono text-sm leading-relaxed text-base-content">
           {logs.length === 0 ? (
-            <span style={{ color: '#444' }}>&gt; Aguardando comando de sincronização...</span>
+            <span className="text-base-content/40 opacity-70">&gt; Aguardando comando de sincronização...</span>
           ) : (
             logs.map((log, idx) => {
-              let color = '#a3a3a3';
-              if (log.type === 'success') color = '#4ade80';
-              if (log.type === 'warning') color = '#facc15';
-              if (log.type === 'error') color = '#ef4444';
+              let colorClass = 'text-base-content/80';
+              if (log.type === 'success') colorClass = 'text-success';
+              if (log.type === 'warning') colorClass = 'text-warning';
+              if (log.type === 'error') colorClass = 'text-error';
               
               return (
-                <div key={idx} style={{ display: 'flex', gap: '15px', marginBottom: '8px', animation: 'fadeIn 0.3s ease' }}>
-                  <span style={{ color: '#555', userSelect: 'none' }}>[{log.time}]</span>
-                  <span style={{ color }}>{log.msg}</span>
+                <div key={idx} className="flex gap-4 mb-2 animate-[fadeIn_0.3s_ease]">
+                  <span className="text-base-content/40 select-none">[{log.time}]</span>
+                  <span className={colorClass}>{log.msg}</span>
                 </div>
               );
             })
           )}
           {isSyncing && (
-            <div style={{ display: 'flex', gap: '15px', marginTop: '8px' }}>
-              <span style={{ color: '#555' }}>[{new Date().toLocaleTimeString('pt-BR')}]</span>
-              <span style={{ color: 'var(--primary)' }} className="pulsing-text">_</span>
+            <div className="flex gap-4 mt-2">
+              <span className="text-base-content/40">[{new Date().toLocaleTimeString('pt-BR')}]</span>
+              <span className="text-primary pulsing-text">_</span>
             </div>
           )}
           <div ref={terminalEndRef} />

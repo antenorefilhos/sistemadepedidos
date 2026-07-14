@@ -4,6 +4,22 @@ import { useState, useEffect } from 'react';
 
 export default function CardapioPage() {
   const [activeTab, setActiveTab] = useState('food'); // 'food' or 'drinks'
+  const [images, setImages] = useState({ food: '/images/alacarte.jpg', drinks: '/images/bebidas.jpg' });
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        const cardapioData = data.find(item => item.key === 'cardapio_images');
+        if (cardapioData && cardapioData.value) {
+          setImages({
+            food: cardapioData.value.food || '/images/alacarte.jpg',
+            drinks: cardapioData.value.drinks || '/images/bebidas.jpg'
+          });
+        }
+      })
+      .catch(err => console.error('Error fetching cardapio images:', err));
+  }, []);
 
   useEffect(() => {
     document.title = "Nosso Cardápio À La Carte e Carta de Vinhos | Antenor e Filhos";
@@ -78,7 +94,7 @@ export default function CardapioPage() {
                 boxShadow: 'var(--shadow-md)'
               }}>
                 <img 
-                  src="/images/alacarte.jpg" 
+                  src={images.food} 
                   alt="Cardápio À La Carte Antenor e Filhos" 
                   style={{
                     width: '100%',
@@ -101,7 +117,7 @@ export default function CardapioPage() {
                 boxShadow: 'var(--shadow-md)'
               }}>
                 <img 
-                  src="/images/bebidas.jpg" 
+                  src={images.drinks} 
                   alt="Carta de Bebidas e Adega Antenor e Filhos" 
                   style={{
                     width: '100%',

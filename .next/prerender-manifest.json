@@ -122,6 +122,30 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/admin/telemetry": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin/telemetry",
+      "dataRoute": "/admin/telemetry.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/apple-icon.png": {
       "initialHeaders": {
         "cache-control": "public, max-age=0, must-revalidate",
@@ -381,8 +405,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "0bfad7c62204d79bccd45eb84ef4183a",
-    "previewModeSigningKey": "544ef8480b7dc71ce026eae63263c17d26206a615a15cd5b6747b833116a4d67",
-    "previewModeEncryptionKey": "88558de3407734940c7ff9c5a27a4aee019e0cd3d54731094c714d1dd8b79009"
+    "previewModeId": "b1f8df6f6e79f022b9ac4f55858afe28",
+    "previewModeSigningKey": "961232ad3599872a15792beaf364e5540d60fae487bbc0170f35bd5f2f661275",
+    "previewModeEncryptionKey": "b9453999755596964621170fa4f36f8ed143de3dce03874612b435890163582a"
   }
 }

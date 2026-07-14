@@ -63,7 +63,16 @@ self.__SERVER_FILES_MANIFEST={
           "search": ""
         }
       ],
-      "remotePatterns": [],
+      "remotePatterns": [
+        {
+          "protocol": "https",
+          "hostname": "**"
+        },
+        {
+          "protocol": "http",
+          "hostname": "**"
+        }
+      ],
       "qualities": [
         75
       ],

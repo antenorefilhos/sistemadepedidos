@@ -112,11 +112,20 @@ export default function HermesDashboard({ orders, sellers, products, password })
     }
   };
 
+  // Helper to get order total (resiliente com preços estimados do catálogo)
+  const getOrderTotal = (order) => {
+    if (!order.items || !Array.isArray(order.items)) return 0;
+    return order.items.reduce((sum, item) => {
+      const itemPrice = Number(item.price) || products.find(p => p.title === item.product_title)?.preco || 0;
+      return sum + (itemPrice * (Number(item.quantity) || 1));
+    }, 0);
+  };
+
   // Derived stats
   const calculateTotalRevenue = (completedOnly = false) => {
     return orders.reduce((sum, order) => {
-      if (completedOnly && order.status !== 'concluido') return sum;
-      return sum + Number(order.total || 0);
+      if (completedOnly && order.status !== 'completed') return sum;
+      return sum + getOrderTotal(order);
     }, 0);
   };
 
@@ -126,8 +135,8 @@ export default function HermesDashboard({ orders, sellers, products, password })
       const sName = o.seller_name || 'Site Direto';
       if (!perf[sName]) perf[sName] = { name: sName, count: 0, revenue: 0, pending: 0, completed: 0 };
       perf[sName].count += 1;
-      perf[sName].revenue += Number(o.total || 0);
-      if (o.status === 'concluido') perf[sName].completed += 1;
+      perf[sName].revenue += getOrderTotal(o);
+      if (o.status === 'completed') perf[sName].completed += 1;
       else perf[sName].pending += 1;
     });
     return Object.values(perf).map(p => ({
@@ -142,19 +151,24 @@ export default function HermesDashboard({ orders, sellers, products, password })
     orders.forEach(o => {
       if (o.items && Array.isArray(o.items)) {
         o.items.forEach(item => {
-          if (item.type === 'adega') adega += (item.preco * item.quantidade);
-          else carnes += (item.preco * item.quantidade);
+          const itemPrice = Number(item.price) || products.find(p => p.title === item.product_title)?.preco || 0;
+          // Assume "adega" is a category, else classify as meats
+          if (item.product_category === 'adega' || (item.product_title && item.product_title.toLowerCase().includes('vinho'))) {
+            adega += (itemPrice * (Number(item.quantity) || 1));
+          } else {
+            carnes += (itemPrice * (Number(item.quantity) || 1));
+          }
         });
       }
     });
     return [
-      ['carnes_', carnes],
-      ['adega', adega]
+      ['Boutique de Carnes', carnes],
+      ['Adega de Vinhos', adega]
     ].sort((a, b) => b[1] - a[1]);
   };
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
   useEffect(() => {
@@ -214,18 +228,23 @@ export default function HermesDashboard({ orders, sellers, products, password })
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', animation: 'fadeIn 0.3s ease' }}>
+    <div className="flex flex-col gap-8 animate-[fadeIn_0.3s_ease]">
       <style>{`
-        .hermes-markdown p { margin-top: 0; margin-bottom: 12px; }
+        .hermes-markdown { color: inherit; font-size: 14px; line-height: 1.6; }
+        .hermes-markdown p { margin-top: 0; margin-bottom: 12px; color: inherit; }
         .hermes-markdown p:last-child { margin-bottom: 0; }
-        .hermes-markdown ul, .hermes-markdown ol { margin-top: 0; margin-bottom: 12px; padding-left: 24px; }
+        .hermes-markdown ul, .hermes-markdown ol { margin-top: 0; margin-bottom: 12px; padding-left: 24px; color: inherit; list-style: disc; }
         .hermes-markdown li { margin-bottom: 6px; }
-        .hermes-markdown h1, .hermes-markdown h2, .hermes-markdown h3 { margin-top: 16px; margin-bottom: 8px; color: var(--primary); }
-        .hermes-markdown strong { color: var(--primary-light); }
+        .hermes-markdown h1, .hermes-markdown h2, .hermes-markdown h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
+        .hermes-markdown h3 { font-size: 16px; }
+        .hermes-markdown h2 { font-size: 18px; border-bottom: 1px solid currentColor; padding-bottom: 4px; opacity: 0.8; }
+        .hermes-markdown strong { font-weight: 700; }
+        .hermes-markdown code { background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+        .hermes-markdown pre { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; overflow-x: auto; margin-bottom: 12px; }
       `}</style>
       
       {/* SUPER POWERS TABS */}
-      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
+      <div className="tabs tabs-boxed bg-base-200/50 p-2 gap-2 overflow-x-auto flex-nowrap justify-start">
         {[
           { id: 'chat', icon: 'fa-robot', label: 'Hermes AI (Chat)' },
           { id: 'analytics', icon: 'fa-chart-pie', label: 'Analytics (CMO/CFO)' },
@@ -236,19 +255,7 @@ export default function HermesDashboard({ orders, sellers, products, password })
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="btn"
-            style={{
-              backgroundColor: activeTab === tab.id ? 'var(--primary)' : 'rgba(0,0,0,0.3)',
-              color: activeTab === tab.id ? '#000' : 'var(--text-muted)',
-              border: activeTab === tab.id ? 'none' : '1px solid rgba(171,144,112,0.3)',
-              padding: '10px 20px',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              display: 'flex',
-              gap: '8px',
-              alignItems: 'center',
-              whiteSpace: 'nowrap'
-            }}
+            className={`tab h-12 gap-2 font-bold px-6 whitespace-nowrap transition-all duration-300 ${activeTab === tab.id ? 'tab-active bg-primary text-primary-content shadow-lg' : 'text-base-content/60 hover:text-base-content'}`}
           >
             <i className={`fa-solid ${tab.icon}`}></i> {tab.label}
           </button>
@@ -256,142 +263,122 @@ export default function HermesDashboard({ orders, sellers, products, password })
       </div>
 
       {/* Container Principal Estilo ChatGPT */}
-      <div style={{ display: activeTab === 'chat' ? 'flex' : 'none', gap: '20px', height: '600px' }}>
+      <div className={activeTab === 'chat' ? 'flex gap-6 h-[600px]' : 'hidden'}>
         
         {/* BARRA LATERAL (Histórico) */}
-        <div className="glass" style={{ width: '280px', flexShrink: 0, borderRadius: '16px', border: '1px solid var(--primary-light)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(0,0,0,0.2)' }}>
+        <div className="w-[280px] shrink-0 bg-base-200/50 rounded-2xl border border-base-300 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-base-300 bg-base-300/30">
             <button 
               onClick={startNewChat}
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', backgroundColor: 'var(--primary)', color: '#121418', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              className="btn btn-primary w-full gap-2 shadow-sm"
             >
               <i className="fa-solid fa-plus"></i> Novo Chat
             </button>
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '8px', marginBottom: '4px' }}>Histórico de Sessões</span>
+          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+            <span className="text-[11px] text-base-content/50 uppercase tracking-wider font-bold px-2 mb-1">Histórico de Sessões</span>
             
             {sessions.map(sess => (
               <div 
                 key={sess.id} 
                 onClick={() => selectSession(sess.id)}
-                style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '12px', 
-                  borderRadius: '8px', 
-                  backgroundColor: activeSessionId === sess.id ? 'rgba(171,144,112,0.15)' : 'transparent',
-                  border: activeSessionId === sess.id ? '1px solid rgba(171,144,112,0.3)' : '1px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
+                className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all duration-200 border
+                  ${activeSessionId === sess.id 
+                    ? 'bg-primary/10 border-primary/30' 
+                    : 'bg-transparent border-transparent hover:bg-base-300/50'}`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                  <i className="fa-regular fa-message" style={{ color: activeSessionId === sess.id ? 'var(--primary)' : 'var(--text-muted)', fontSize: '14px' }}></i>
-                  <span style={{ color: activeSessionId === sess.id ? 'white' : 'var(--text-muted)', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <i className={`fa-regular fa-message text-sm ${activeSessionId === sess.id ? 'text-primary' : 'text-base-content/50'}`}></i>
+                  <span className={`text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]
+                    ${activeSessionId === sess.id ? 'text-primary font-bold' : 'text-base-content/70'}`}>
                     {sess.title}
                   </span>
                 </div>
                 <button 
                   onClick={(e) => handleDeleteSession(e, sess.id)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', opacity: activeSessionId === sess.id ? 1 : 0.4 }}
+                  className={`btn btn-ghost btn-xs btn-circle ${activeSessionId === sess.id ? 'opacity-100 text-error' : 'opacity-40 hover:opacity-100 hover:text-error'}`}
                   title="Excluir chat"
                 >
-                  <i className="fa-solid fa-trash-can" style={{ fontSize: '12px' }}></i>
+                  <i className="fa-solid fa-trash-can text-[10px]"></i>
                 </button>
               </div>
             ))}
 
             {sessions.length === 0 && (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+              <div className="p-5 text-center text-base-content/50 text-xs italic">
                 Nenhum chat salvo ainda.
               </div>
             )}
           </div>
           
-          <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <button onClick={openConfig} style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: 'transparent', border: '1px solid rgba(171,144,112,0.3)', color: 'var(--primary)', fontSize: '13px', cursor: 'pointer' }}>
+          <div className="p-4 border-t border-base-300 bg-base-300/30">
+            <button onClick={openConfig} className="btn btn-outline btn-primary btn-sm w-full gap-2">
               <i className="fa-solid fa-gear"></i> Configurações do Agente
             </button>
           </div>
         </div>
 
         {/* ÁREA PRINCIPAL DO CHAT */}
-        <div className="glass" style={{ flex: 1, borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--primary-light)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '20px 24px', backgroundColor: 'rgba(171, 144, 112, 0.15)', borderBottom: '1px solid var(--primary-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '48px', height: '48px', backgroundColor: 'var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 0 20px rgba(171, 144, 112, 0.4)' }}>
+        <div className="flex-1 bg-base-200/50 rounded-2xl border border-base-300 flex flex-col overflow-hidden">
+          <div className="p-5 md:px-6 bg-base-300/30 border-b border-base-300 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary text-primary-content rounded-xl flex items-center justify-center text-2xl shadow-lg shadow-primary/20">
                 🤖
               </div>
               <div>
-                <h3 style={{ margin: 0, color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '22px' }}>Hermes AI Agent</h3>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Módulo de Inteligência de Negócios e Insights</span>
+                <h3 className="m-0 text-primary font-serif text-xl font-bold">Hermes AI Agent</h3>
+                <span className="text-xs text-base-content/60">Módulo de Inteligência de Negócios e Insights</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => handleSendMessage(null, 'Gere um relatório rápido de fechamento do dia destacando os vendedores e o faturamento total.')} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '12px', cursor: 'pointer' }}>
+            <div className="flex gap-2">
+              <button onClick={() => handleSendMessage(null, 'Gere um relatório rápido de fechamento do dia destacando os vendedores e o faturamento total.')} className="btn btn-sm btn-ghost border border-base-content/10 text-xs font-normal">
                 📊 Relatório Rápido
               </button>
-              <button onClick={() => handleSendMessage(null, 'Me dê uma ideia de promoção para tentar aumentar o ticket médio hoje.')} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '12px', cursor: 'pointer' }}>
+              <button onClick={() => handleSendMessage(null, 'Me dê uma ideia de promoção para tentar aumentar o ticket médio hoje.')} className="btn btn-sm btn-ghost border border-base-content/10 text-xs font-normal">
                 💡 Sugestão de Marketing
               </button>
             </div>
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-base-100">
             {messages.map((msg, idx) => (
-              <div key={idx} style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start'
-              }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px', textTransform: 'uppercase' }}>
+              <div key={idx} className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}>
+                <div className="chat-header text-xs opacity-50 mb-1 uppercase tracking-widest font-bold">
                   {msg.role === 'user' ? 'Você' : (msg.role === 'error' ? 'Sistema' : 'Hermes')}
-                </span>
-                <div style={{
-                  maxWidth: '85%',
-                  padding: '16px 20px',
-                  borderRadius: '16px',
-                  borderBottomLeftRadius: msg.role === 'user' ? '16px' : '4px',
-                  borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
-                  backgroundColor: msg.role === 'user' ? 'rgba(255,255,255,0.05)' : (msg.role === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(171,144,112,0.1)'),
-                  border: msg.role === 'user' ? '1px solid rgba(255,255,255,0.1)' : (msg.role === 'error' ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--primary-light)'),
-                  color: msg.role === 'error' ? '#fca5a5' : 'white',
-                  fontSize: '15px',
-                  lineHeight: '1.6'
-                }}>
+                </div>
+                <div className={`chat-bubble text-[15px] leading-relaxed shadow-sm
+                  ${msg.role === 'user' ? 'chat-bubble-neutral' : (msg.role === 'error' ? 'chat-bubble-error' : 'bg-primary/10 text-base-content border border-primary/20')}`}>
                   <div 
                     className="hermes-markdown"
                     dangerouslySetInnerHTML={{ 
                       __html: msg.role === 'user' 
                         ? msg.content.replace(/\n/g, '<br />') 
-                        : marked.parse(msg.content) 
+                        : marked.parse(msg.content, { breaks: true }) 
                     }} 
                   />
                 </div>
               </div>
             ))}
             {loading && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', fontSize: '14px', padding: '16px' }}>
-                <i className="fa-solid fa-circle-notch fa-spin"></i> Hermes está analisando os dados da loja...
+              <div className="flex items-center gap-3 text-primary text-sm p-4 animate-pulse">
+                <span className="loading loading-spinner loading-sm"></span> Hermes está analisando os dados da loja...
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
           
-          <div style={{ padding: '16px 24px', backgroundColor: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '12px' }}>
+          <div className="p-4 md:px-6 bg-base-300/30 border-t border-base-300">
+            <form onSubmit={handleSendMessage} className="flex gap-3">
               <input 
                 type="text" 
                 placeholder="Pergunte ao Hermes sobre as vendas, produtos ou peça uma sugestão..." 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={loading}
-                style={{ flex: 1, padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.03)', color: 'white', fontSize: '15px' }}
+                className="input input-bordered w-full bg-base-100 h-14 text-[15px]"
               />
-              <button type="submit" disabled={loading || !input.trim()} style={{ padding: '0 32px', borderRadius: '12px', backgroundColor: 'var(--primary)', border: 'none', color: '#121418', fontWeight: 'bold', fontSize: '16px', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', opacity: loading || !input.trim() ? 0.5 : 1, transition: 'all 0.2s' }}>
+              <button type="submit" disabled={loading || !input.trim()} className="btn btn-primary h-14 px-8 text-lg shadow-md">
                 <i className="fa-solid fa-paper-plane"></i>
               </button>
             </form>
@@ -400,26 +387,24 @@ export default function HermesDashboard({ orders, sellers, products, password })
       </div>
 
       {/* DASHBOARD GRÁFICOS (MIGRADO DO ANTIGO STATS) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart 1: Sales By Category */}
-        <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-          <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mapeamento de Demanda por Setor</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div className="bg-base-200/50 p-6 rounded-2xl border border-base-300">
+          <h4 className="text-base-content/80 text-sm font-bold uppercase tracking-widest mb-6"><i className="fa-solid fa-chart-pie mr-2"></i>Mapeamento de Demanda por Setor</h4>
+          <div className="flex flex-col gap-6">
             {getSalesByCategory().map(([sector, amount]) => {
               const totalAmt = calculateTotalRevenue(false) || 1;
               const percentage = Math.round((amount / totalAmt) * 100);
               return (
                 <div key={sector}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                    <span style={{ color: 'var(--text-primary)' }}>{sector === 'adega' ? 'Adega de Vinhos' : 'Boutique de Carnes'}</span>
-                    <span style={{ fontWeight: 'bold' }}>
-                      <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-base-content/70">{sector === 'adega' ? 'Adega de Vinhos' : 'Boutique de Carnes'}</span>
+                    <span className="font-bold text-base-content">
+                      <span className="text-[0.7em] mr-1 font-normal text-base-content/50">R$</span>
                       {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({percentage}%)
                     </span>
                   </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: sector === 'adega' ? '#800020' : 'var(--primary)', borderRadius: '4px' }}></div>
-                  </div>
+                  <progress className={`progress w-full h-3 ${sector === 'adega' ? 'progress-error' : 'progress-primary'}`} value={percentage} max="100"></progress>
                 </div>
               );
             })}
@@ -427,24 +412,22 @@ export default function HermesDashboard({ orders, sellers, products, password })
         </div>
 
         {/* Chart 2: Revenue Share by Seller */}
-        <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)' }}>
-          <h4 style={{ color: 'white', fontSize: '14px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Faturamento por Vendedor</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '250px', overflowY: 'auto', paddingRight: '5px' }}>
+        <div className="bg-base-200/50 p-6 rounded-2xl border border-base-300">
+          <h4 className="text-base-content/80 text-sm font-bold uppercase tracking-widest mb-6"><i className="fa-solid fa-users mr-2"></i>Faturamento por Vendedor</h4>
+          <div className="flex flex-col gap-6 max-h-[300px] overflow-y-auto pr-2">
             {getSellersPerformance().map((seller) => {
               const maxRevenue = Math.max(...getSellersPerformance().map(x => x.revenue)) || 1;
               const percentage = Math.round((seller.revenue / maxRevenue) * 100);
               return (
                 <div key={seller.name}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                    <span style={{ color: 'var(--text-primary)' }}>{seller.name}</span>
-                    <span style={{ fontWeight: 'bold' }}>
-                      <span style={{ fontSize: '0.75em', fontWeight: 'normal', color: 'var(--text-muted)' }}>R$ </span>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-base-content/70">{seller.name}</span>
+                    <span className="font-bold text-base-content">
+                      <span className="text-[0.75em] font-normal text-base-content/50 mr-1">R$ </span>
                       {seller.revenue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
                     </span>
                   </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: '#1c1f26', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: seller.name === 'Site Direto' ? 'var(--text-muted)' : 'var(--primary)', borderRadius: '4px' }}></div>
-                  </div>
+                  <progress className={`progress w-full h-3 ${seller.name === 'Site Direto' ? 'progress-neutral' : 'progress-primary'}`} value={percentage} max="100"></progress>
                 </div>
               );
             })}
@@ -453,57 +436,57 @@ export default function HermesDashboard({ orders, sellers, products, password })
       </div>
 
       {/* SUPER POWER: ANALYTICS (CMO/CFO) */}
-      <div style={{ display: activeTab === 'analytics' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
-        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
-          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-chart-pie"></i> Analytics & Telemetria</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Módulo em construção. Integrando com a nova tabela <code>telemetry_events</code> para calcular CAC, LTV e Taxa de Conversão em tempo real.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginTop: '20px' }}>
-             <div style={{ padding: '20px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-               <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Receita Total</h4>
-               <div style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {calculateTotalRevenue(false).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+      <div className={activeTab === 'analytics' ? 'block animate-[fadeIn_0.3s_ease]' : 'hidden'}>
+        <div className="bg-base-200/50 p-8 rounded-2xl border border-base-300">
+          <h2 className="text-primary text-lg font-bold mb-2"><i className="fa-solid fa-chart-pie mr-3"></i>Analytics & Telemetria</h2>
+          <p className="text-base-content/60 text-sm">Módulo em construção. Integrando com a nova tabela <code>telemetry_events</code> para calcular CAC, LTV e Taxa de Conversão em tempo real.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+             <div className="bg-base-100 p-6 rounded-xl border border-base-300 shadow-sm">
+               <h4 className="text-base-content/60 text-xs tracking-widest uppercase font-bold mb-2">Receita Total</h4>
+               <div className="text-xl font-bold text-primary">R$ {calculateTotalRevenue(false).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
              </div>
-             <div style={{ padding: '20px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-               <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Ticket Médio</h4>
-               <div style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>R$ {orders.length > 0 ? (calculateTotalRevenue(false)/orders.length).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '0,00'}</div>
+             <div className="bg-base-100 p-6 rounded-xl border border-base-300 shadow-sm">
+               <h4 className="text-base-content/60 text-xs tracking-widest uppercase font-bold mb-2">Ticket Médio</h4>
+               <div className="text-xl font-bold text-primary">R$ {orders.length > 0 ? (calculateTotalRevenue(false)/orders.length).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '0,00'}</div>
              </div>
-             <div style={{ padding: '20px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-               <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Total de Pedidos</h4>
-               <div style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>{orders.length}</div>
+             <div className="bg-base-100 p-6 rounded-xl border border-base-300 shadow-sm">
+               <h4 className="text-base-content/60 text-xs tracking-widest uppercase font-bold mb-2">Total de Pedidos</h4>
+               <div className="text-xl font-bold text-primary">{orders.length}</div>
              </div>
           </div>
         </div>
       </div>
 
       {/* SUPER POWER: LOGÍSTICA (COO) */}
-      <div style={{ display: activeTab === 'logistics' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
-        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
-          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-truck-fast"></i> Kanban de Logística</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Gerenciamento visual de entrega de orçamentos e despachos. (Em breve: Drag and Drop interativo)</p>
+      <div className={activeTab === 'logistics' ? 'block animate-[fadeIn_0.3s_ease]' : 'hidden'}>
+        <div className="bg-base-200/50 p-8 rounded-2xl border border-base-300">
+          <h2 className="text-primary text-lg font-bold mb-2"><i className="fa-solid fa-truck-fast mr-3"></i>Kanban de Logística</h2>
+          <p className="text-base-content/60 text-sm">Gerenciamento visual de entrega de orçamentos e despachos. (Em breve: Drag and Drop interativo)</p>
         </div>
       </div>
 
       {/* SUPER POWER: INVENTÁRIO (CTO) */}
-      <div style={{ display: activeTab === 'inventory' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
-        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
-          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-boxes-stacked"></i> Alertas de Inventário</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Conectado ao módulo Solidcon. Monitoramento de Ruptura de Estoque Ativo.</p>
+      <div className={activeTab === 'inventory' ? 'block animate-[fadeIn_0.3s_ease]' : 'hidden'}>
+        <div className="bg-base-200/50 p-8 rounded-2xl border border-base-300">
+          <h2 className="text-primary text-lg font-bold mb-2"><i className="fa-solid fa-boxes-stacked mr-3"></i>Alertas de Inventário</h2>
+          <p className="text-base-content/60 text-sm">Conectado ao módulo Solidcon. Monitoramento de Ruptura de Estoque Ativo.</p>
         </div>
       </div>
 
       {/* SUPER POWER: RH & VENDAS (CEO) */}
-      <div style={{ display: activeTab === 'rh' ? 'block' : 'none', animation: 'fadeIn 0.3s ease' }}>
-        <div className="glass" style={{ padding: '30px', borderRadius: '16px', border: '1px solid var(--primary-light)' }}>
-          <h2 style={{ color: 'var(--primary)', marginTop: 0 }}><i className="fa-solid fa-users"></i> Ranking de Vendedores (Leaderboard)</h2>
-          <div style={{ marginTop: '20px' }}>
+      <div className={activeTab === 'rh' ? 'block animate-[fadeIn_0.3s_ease]' : 'hidden'}>
+        <div className="bg-base-200/50 p-8 rounded-2xl border border-base-300">
+          <h2 className="text-primary text-lg font-bold mb-6"><i className="fa-solid fa-users mr-3"></i>Ranking de Vendedores (Leaderboard)</h2>
+          <div className="flex flex-col gap-2">
             {getSellersPerformance().map((s, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: idx === 0 ? 'rgba(171,144,112,0.1)' : 'transparent' }}>
-                <div>
-                  <span style={{ fontWeight: 'bold', fontSize: '18px', marginRight: '15px', color: idx === 0 ? 'var(--primary)' : 'white' }}>#{idx + 1}</span>
-                  <span style={{ fontSize: '16px' }}>{s.name}</span>
+              <div key={idx} className={`flex justify-between items-center p-5 rounded-xl border transition-all ${idx === 0 ? 'bg-primary/10 border-primary/30' : 'bg-base-100 border-base-300 hover:border-base-content/20'}`}>
+                <div className="flex items-center gap-4">
+                  <span className={`text-lg font-bold ${idx === 0 ? 'text-primary' : 'text-base-content/40'}`}>#{idx + 1}</span>
+                  <span className={`text-lg ${idx === 0 ? 'font-bold text-base-content' : 'font-medium text-base-content/80'}`}>{s.name}</span>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ color: 'var(--primary)', fontWeight: 'bold' }}>R$ {s.revenue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{s.count} pedidos (T.M: R$ {s.avgTicket.toLocaleString('pt-BR', {minimumFractionDigits: 2})})</div>
+                <div className="text-right">
+                  <div className="text-primary font-bold text-lg">R$ {s.revenue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                  <div className="text-xs text-base-content/60 mt-1">{s.count} pedidos <span className="opacity-50 mx-1">•</span> T.M: R$ {s.avgTicket.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
                 </div>
               </div>
             ))}
@@ -513,50 +496,59 @@ export default function HermesDashboard({ orders, sellers, products, password })
 
       {/* CONFIG MODAL */}
       {showConfig && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease' }}>
-          <div className="glass" style={{ width: '600px', maxWidth: '90%', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: 'white', fontSize: '18px' }}><i className="fa-solid fa-gear"></i> Configurações do Agente Hermes</h3>
-              <button onClick={() => setShowConfig(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}><i className="fa-solid fa-xmark"></i></button>
+        <dialog className="modal modal-open bg-black/60 backdrop-blur-sm">
+          <div className="modal-box max-w-2xl bg-base-200 border border-base-300 p-0 overflow-hidden shadow-2xl">
+            
+            <div className="p-5 md:px-8 border-b border-base-300 bg-base-300/30 flex justify-between items-center">
+              <h3 className="text-xl font-bold font-serif text-primary flex items-center gap-3">
+                <i className="fa-solid fa-gear"></i> Configurações do Agente Hermes
+              </h3>
+              <button onClick={() => setShowConfig(false)} className="btn btn-sm btn-circle btn-ghost">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
             </div>
-            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            <div className="p-5 md:p-8 flex flex-col gap-6">
               
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>Gemini API Key</label>
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-bold tracking-widest uppercase text-xs">Gemini API Key</span></label>
                 <input 
                   type="password" 
                   placeholder="Cole sua API Key do Google AI Studio"
-                  className="form-control"
-                  style={{ padding: '12px', fontSize: '14px' }}
+                  className="input input-bordered w-full h-14 bg-base-100"
                   value={configForm.api_key}
                   onChange={e => setConfigForm({...configForm, api_key: e.target.value})}
                 />
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', display: 'block' }}>Se deixado em branco, o sistema tentará usar a variável de ambiente \`.env\`.</span>
+                <label className="label"><span className="label-text-alt text-base-content/60">Se deixado em branco, o sistema tentará usar a variável de ambiente `.env`.</span></label>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: '12px', letterSpacing: '0.1em' }}>System Prompt (Regras de Comportamento)</label>
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-bold tracking-widest uppercase text-xs">System Prompt (Regras de Comportamento)</span></label>
                 <textarea 
                   placeholder="Ex: Você é o Hermes, especialista em vendas..."
-                  className="form-control"
-                  style={{ padding: '12px', fontSize: '14px', minHeight: '180px', resize: 'vertical' }}
+                  className="textarea textarea-bordered w-full min-h-[180px] bg-base-100 text-[14px]"
                   value={configForm.system_prompt}
                   onChange={e => setConfigForm({...configForm, system_prompt: e.target.value})}
                 />
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', display: 'block' }}>Instruções base de como a IA deve agir, qual tom usar e quais restrições ela tem.</span>
+                <label className="label"><span className="label-text-alt text-base-content/60">Instruções base de como a IA deve agir, qual tom usar e quais restrições ela tem.</span></label>
               </div>
 
             </div>
-            <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'flex-end', gap: '12px', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-              <button onClick={() => setShowConfig(false)} style={{ padding: '10px 20px', borderRadius: '8px', backgroundColor: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>
+            
+            <div className="p-5 md:px-8 border-t border-base-300 bg-base-300/30 flex justify-end gap-3">
+              <button onClick={() => setShowConfig(false)} className="btn btn-ghost">
                 Cancelar
               </button>
-              <button onClick={saveConfig} disabled={savingConfig} style={{ padding: '10px 20px', borderRadius: '8px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-                {savingConfig ? 'Salvando...' : 'Salvar Configurações'}
+              <button onClick={saveConfig} disabled={savingConfig} className="btn btn-primary">
+                {savingConfig ? <span className="loading loading-spinner"></span> : 'Salvar Configurações'}
               </button>
             </div>
+
           </div>
-        </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setShowConfig(false)}>
+            <button>close</button>
+          </form>
+        </dialog>
       )}
 
     </div>

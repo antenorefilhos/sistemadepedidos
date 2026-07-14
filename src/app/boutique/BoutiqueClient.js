@@ -62,24 +62,34 @@ export default function BoutiqueClient() {
   }, []);
 
   // Filtered products list (only carnes_)
-  const filteredProducts = products.filter(p => {
-    if (p.type !== 'carnes_') return false;
+  const filteredProducts = (() => {
+    let result = products.filter(p => p.type === 'carnes_');
     
-    const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) || 
-                          (p.description && p.description.toLowerCase().includes(search.toLowerCase())) ||
-                          (p.sku && p.sku.includes(search));
-                          
-    const meatSubcategories = ['bovinos', 'cordeiro', 'suinos', 'aves', 'linguicas', 'exoticas'];
-    const matchesCategory = selectedCategory === '' || 
-                            p.categories.some(cat => {
-                              if (selectedCategory === 'carnes') {
-                                return cat.slug === 'carnes' || meatSubcategories.includes(cat.slug);
-                              }
-                              return cat.slug === selectedCategory;
-                            });
-                            
-    return matchesSearch && matchesCategory;
-  });
+    // Filtro de Categoria
+    if (selectedCategory !== '') {
+      const meatSubcategories = ['bovinos', 'cordeiro', 'suinos', 'aves', 'linguicas', 'exoticas'];
+      result = result.filter(p => 
+        p.categories.some(cat => {
+          if (selectedCategory === 'carnes') {
+            return cat.slug === 'carnes' || meatSubcategories.includes(cat.slug);
+          }
+          return cat.slug === selectedCategory;
+        })
+      );
+    }
+    
+    // Filtro de Busca (Fuzzy Search)
+    if (search.trim() !== '') {
+      const Fuse = require('fuse.js').default;
+      const fuse = new Fuse(result, {
+        keys: ['title', 'description', 'sku'],
+        threshold: 0.4
+      });
+      result = fuse.search(search).map(item => item.item);
+    }
+    
+    return result;
+  })();
 
   const addToCart = (id) => {
     const updated = [...cartItems, String(id)];
@@ -353,7 +363,7 @@ export default function BoutiqueClient() {
               </div>
             ) : (
               <div className="product-grid">
-                {filteredProducts.map(product => {
+                {filteredProducts.map((product, idx) => {
                   const itemsInCart = cartItems.filter(id => id === String(product.id)).length;
                   
                   const breedCat = product.categories?.find(c => c.type === 'racas_carnes');
@@ -380,6 +390,7 @@ export default function BoutiqueClient() {
                               className="product-image"
                               fill
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              priority={idx < 4}
                               style={{ objectFit: 'cover' }}
                             />
                           ) : (

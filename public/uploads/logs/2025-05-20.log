@@ -1,0 +1,33 @@
+[20-May-2025 00:48:05 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 00:48:16 UTC] PHP Warning:  Undefined property: stdClass::$splash_page_id in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 129
+[20-May-2025 00:48:16 UTC] PHP Warning:  Undefined property: stdClass::$password in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 194
+[20-May-2025 00:48:16 UTC] PHP Warning:  Undefined property: stdClass::$sensitive_content in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 223
+[20-May-2025 12:08:37 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 13:33:00 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 13:33:10 UTC] PHP Warning:  Undefined property: stdClass::$splash_page_id in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 129
+[20-May-2025 13:33:10 UTC] PHP Warning:  Undefined property: stdClass::$password in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 194
+[20-May-2025 13:33:10 UTC] PHP Warning:  Undefined property: stdClass::$sensitive_content in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 223
+[20-May-2025 14:44:37 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 15:21:29 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 15:21:40 UTC] PHP Warning:  Undefined property: stdClass::$splash_page_id in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 129
+[20-May-2025 15:21:40 UTC] PHP Warning:  Undefined property: stdClass::$password in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 194
+[20-May-2025 15:21:40 UTC] PHP Warning:  Undefined property: stdClass::$sensitive_content in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 223
+[20-May-2025 15:27:23 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 15:27:30 UTC] PHP Warning:  Undefined property: stdClass::$splash_page_id in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 129
+[20-May-2025 15:27:30 UTC] PHP Warning:  Undefined property: stdClass::$password in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 194
+[20-May-2025 15:27:30 UTC] PHP Warning:  Undefined property: stdClass::$sensitive_content in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 223
+[20-May-2025 15:59:33 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 15:59:39 UTC] PHP Warning:  Undefined property: stdClass::$splash_page_id in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 129
+[20-May-2025 15:59:39 UTC] PHP Warning:  Undefined property: stdClass::$password in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 194
+[20-May-2025 15:59:39 UTC] PHP Warning:  Undefined property: stdClass::$sensitive_content in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 223
+[20-May-2025 19:57:47 UTC] PHP Warning:  Undefined array key "text_to_speech" in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/tools/ratings.php on line 117
+[20-May-2025 19:57:47 UTC] PHP Warning:  Attempt to read property "total_ratings" on null in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/tools/ratings.php on line 117
+[20-May-2025 23:22:54 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 23:29:04 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 23:29:18 UTC] PHP Warning:  Undefined property: stdClass::$splash_page_id in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 129
+[20-May-2025 23:29:18 UTC] PHP Warning:  Undefined property: stdClass::$password in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 194
+[20-May-2025 23:29:18 UTC] PHP Warning:  Undefined property: stdClass::$sensitive_content in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 223
+[20-May-2025 23:29:25 UTC] PHP Warning:  Undefined property: stdClass::$biolink_is_enabled in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/themes/altum/views/l/biolink_blocks/phone_collector.php on line 69
+[20-May-2025 23:29:28 UTC] PHP Warning:  Undefined property: stdClass::$splash_page_id in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 129
+[20-May-2025 23:29:28 UTC] PHP Warning:  Undefined property: stdClass::$password in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 194
+[20-May-2025 23:29:28 UTC] PHP Warning:  Undefined property: stdClass::$sensitive_content in /home/u607641063/domains/antenorefilhos.com.br/public_html/links/app/controllers/l/Link.php on line 223

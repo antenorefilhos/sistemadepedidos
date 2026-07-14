@@ -1,10 +1,3 @@
-/* ─────────────────────────────────────────────────────────────────
- * Home Page (page.js) — Layout Classes
- * All spacing uses --space-* tokens from globals.css.
- * No arbitrary px values below; every number maps to the 4pt scale.
- * ───────────────────────────────────────────────────────────────── */
-
-/* ── Hero Section ─────────────────────────────────────────── */
 .hero {
   position: relative;
   height: 100vh;
@@ -61,7 +54,6 @@
   flex-wrap: wrap;
 }
 
-/* ── Section Header (centered, with gold divider) ─────────── */
 .sectionHeader {
   text-align: center;
   max-width: 700px;
@@ -75,15 +67,14 @@
   margin: var(--space-4) auto var(--space-5) auto; /* 16px top, 20px bottom */
 }
 
-/* ── Operation Cards Grid ─────────────────────────────────── */
 .operationGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--card-gap); /* 32px — intentionally generous for glass cards */
+  gap: var(--card-gap);
 }
 
 .operationCard {
-  padding: var(--card-pad); /* 24px inner padding */
+  padding: var(--card-pad);
   display: flex;
   flex-direction: column;
 }
@@ -113,7 +104,6 @@
   gap: var(--space-2);
 }
 
-/* ── Location Section ─────────────────────────────────────── */
 .locationSection {
   background-image: linear-gradient(
       rgba(11, 12, 14, 0.95),
@@ -129,7 +119,7 @@
 .locationGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-12); /* 48px — more air between text and map */
+  gap: var(--space-12);
   align-items: center;
 }
 
@@ -170,7 +160,6 @@
   margin-top: var(--space-1);
 }
 
-/* ── Map Card ─────────────────────────────────────────────── */
 .mapCard {
   height: 350px;
   overflow: hidden;
@@ -209,7 +198,6 @@
   margin-bottom: var(--space-5);
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   .heroButtons {
     flex-direction: column;

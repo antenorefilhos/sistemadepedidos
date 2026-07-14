@@ -88,18 +88,26 @@ export default function AdegaClient() {
   }, []);
 
   // Filtered products list (only adega)
-  const filteredProducts = products.filter(p => {
-    if (p.type !== 'adega') return false;
+  const filteredProducts = (() => {
+    let result = products.filter(p => p.type === 'adega');
     
-    const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) || 
-                          (p.description && p.description.toLowerCase().includes(search.toLowerCase())) ||
-                          (p.sku && p.sku.includes(search));
-                          
-    const matchesCategory = selectedCategory === '' || 
-                            p.categories.some(cat => cat.slug === selectedCategory);
-                            
-    return matchesSearch && matchesCategory;
-  });
+    // Filtro de Categoria
+    if (selectedCategory !== '') {
+      result = result.filter(p => p.categories.some(cat => cat.slug === selectedCategory));
+    }
+    
+    // Filtro de Busca (Fuzzy Search)
+    if (search.trim() !== '') {
+      const Fuse = require('fuse.js').default;
+      const fuse = new Fuse(result, {
+        keys: ['title', 'description', 'sku'],
+        threshold: 0.4
+      });
+      result = fuse.search(search).map(item => item.item);
+    }
+    
+    return result;
+  })();
 
   const addToCart = (id) => {
     const updated = [...cartItems, String(id)];
@@ -291,7 +299,7 @@ export default function AdegaClient() {
               </div>
             ) : (
               <div className="product-grid">
-                {filteredProducts.map(product => {
+                {filteredProducts.map((product, idx) => {
                   const itemsInCart = cartItems.filter(id => id === String(product.id)).length;
                   
                   // Parse multiple ratings (e.g. "RP100 | WS98")
@@ -324,6 +332,7 @@ export default function AdegaClient() {
                               className="product-image"
                               fill
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              priority={idx < 4}
                               style={{ objectFit: 'cover' }}
                             />
                           ) : (

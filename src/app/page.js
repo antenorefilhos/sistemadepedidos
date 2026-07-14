@@ -10,33 +10,67 @@ export const metadata = {
 };
 
 export default function Home() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FoodEstablishment",
+    "name": "Antenor e Filhos Boutique & Adega",
+    "image": "https://antenorefilhos.com.br/img/logo.png",
+    "url": "https://antenorefilhos.com.br",
+    "telephone": "+552422221482",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Estrada União Indústria, 12273",
+      "addressLocality": "Itaipava, Petrópolis",
+      "addressRegion": "RJ",
+      "postalCode": "25730-735",
+      "addressCountry": "BR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": -22.387114,
+      "longitude": -43.136279
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        "opens": "09:00",
+        "closes": "21:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Sunday",
+        "opens": "09:00",
+        "closes": "16:00"
+      }
+    ]
+  };
+
   return (
     <div>
-      {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <span className={styles.heroEyebrow}>
             O CORAÇÃO DA SERRA FLUMINENSE
           </span>
           <h1 className={styles.heroTitle}>
-            O Padrão Ouro em Carnes Nobres e Vinhos
+            A Arte da Alta Gastronomia em Itaipava
           </h1>
           <p className={styles.heroBody}>
-            Da seleção rigorosa de cortes exclusivos à nossa adega premiada. Viva uma experiência sensorial inesquecível em Itaipava.
+            Cortes nobres com padrão de excelência internacional e uma adega exclusiva de vinhos premiados. Criamos valor superior e experiências sensoriais memoráveis para os paladares mais exigentes.
           </p>
           <div className={styles.heroButtons}>
             <Link href="/boutique" className="btn btn-primary">
-              Fazer um Pedido
+              Carnes
             </Link>
-            <a href="#operation" className="btn btn-secondary">
-              Conhecer a Casa
-            </a>
+            <Link href="/adega" className="btn btn-primary">
+              Adega
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Frentes de Excelência ────────────────────────────────── */}
-      <section id="operation" className="section" style={{ backgroundColor: 'var(--bg-main)', position: 'relative' }}>
+      <section id="operation" className="section relative bg-base-100">
         <div className="container">
           <div className={styles.sectionHeader}>
             <h2>Nossas Frentes de Excelência</h2>
@@ -47,7 +81,6 @@ export default function Home() {
           </div>
 
           <div className={styles.operationGrid}>
-            {/* Carnes */}
             <div className={`glass ${styles.operationCard}`}>
               <h3 className={styles.operationCardTitle}>Boutique de Carnes</h3>
               <p className={styles.operationCardBody}>
@@ -58,7 +91,6 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Adega */}
             <div className={`glass ${styles.operationCard}`}>
               <h3 className={styles.operationCardTitle}>Adega &amp; Delicatessen</h3>
               <p className={styles.operationCardBody}>
@@ -69,7 +101,6 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Restaurante */}
             <div className={`glass ${styles.operationCard}`}>
               <h3 className={styles.operationCardTitle}>Restaurante &amp; Brasa</h3>
               <p className={styles.operationCardBody}>
@@ -81,7 +112,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className={styles.operationCardLink}
               >
-                <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)' }}></i>
+                <i className="fa-brands fa-whatsapp text-success"></i>
                 {' '}Reservar uma Mesa &rarr;
               </a>
             </div>
@@ -89,7 +120,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Localização ──────────────────────────────────────────── */}
       <section className={`section ${styles.locationSection}`}>
         <div className={`container ${styles.locationGrid}`}>
           <div>
@@ -107,10 +137,10 @@ export default function Home() {
             <div className={styles.locationInfoGroup}>
               <h4 className={styles.locationInfoLabel}>Telefone / WhatsApp</h4>
               <p className={styles.locationInfoText}>
-                <i className="fa-solid fa-phone" style={{ color: 'var(--primary)', marginRight: '6px' }}></i>
+                <i className="fa-solid fa-phone text-primary mr-1.5"></i>
                 Fixo: (24) 2222-1482
                 {' | '}
-                <i className="fa-brands fa-whatsapp" style={{ color: 'var(--whatsapp)', marginRight: '4px' }}></i>
+                <i className="fa-brands fa-whatsapp text-success mx-1"></i>
                 WhatsApp: (24) 98865-0462
               </p>
             </div>
@@ -135,46 +165,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LocalBusiness JSON-LD Schema Markup */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FoodEstablishment",
-            "name": "Antenor e Filhos Boutique & Adega",
-            "image": "https://antenorefilhos.com.br/img/logo.png",
-            "url": "https://antenorefilhos.com.br",
-            "telephone": "+552422221482",
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": "Estrada União Indústria, 12273",
-              "addressLocality": "Itaipava, Petrópolis",
-              "addressRegion": "RJ",
-              "postalCode": "25730-735",
-              "addressCountry": "BR"
-            },
-            "geo": {
-              "@type": "GeoCoordinates",
-              "latitude": -22.387114,
-              "longitude": -43.136279
-            },
-            "openingHoursSpecification": [
-              {
-                "@type": "OpeningHoursSpecification",
-                "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-                "opens": "09:00",
-                "closes": "21:00"
-              },
-              {
-                "@type": "OpeningHoursSpecification",
-                "dayOfWeek": "Sunday",
-                "opens": "09:00",
-                "closes": "16:00"
-              }
-            ]
-          })
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     </div>
   );

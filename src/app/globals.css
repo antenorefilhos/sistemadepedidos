@@ -1,3 +1,20 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  --color-primary: #ab9070;
+  --color-primary-hover: #d7b994;
+  --color-primary-light: rgba(171, 144, 112, 0.12);
+  --color-accent: #e3cfaf;
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+}
+
 /* Core Premium Design System - Antenor e Filhos */
 
 /* Load exact custom fonts from the main website */
@@ -131,6 +148,43 @@
   --transition-slow: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* --- Top-Tier Micro-interactions & Animations --- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes skeletonLoading {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-fade-in-scale {
+  animation: fadeInScale 0.3s ease-out forwards;
+}
+
+/* Enhancing Hover Effects natively */
+.product-card {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.btn {
+  transition: all 0.2s ease-out;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+
 /* Light Theme overrides */
 .light-theme {
   --bg-main: #fcfcfd;
@@ -155,7 +209,7 @@
 }
 
 /* Base Styles */
-* {
+*:where(:not(body.admin-body *)) {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
@@ -298,34 +352,38 @@ p {
   transform: scale(0.97);
 }
 
-.btn-primary {
+body:not(.admin-body) .btn-primary {
   background-color: var(--primary);
   color: #000000;
   font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-.btn-primary:hover {
+body:not(.admin-body) .btn-primary:hover {
   background-color: var(--primary-hover);
   transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
 }
 
-.btn-secondary {
+body:not(.admin-body) .btn-secondary {
   background-color: transparent;
   color: var(--primary);
   border-color: var(--primary);
+  box-shadow: none !important;
 }
 
-.btn-secondary:hover {
+body:not(.admin-body) .btn-secondary:hover {
   background-color: var(--primary-light);
   color: var(--primary-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
-.btn-danger {
+body:not(.admin-body) .btn-danger {
   background-color: var(--danger);
   color: white;
 }
 
-.btn-danger:hover {
+body:not(.admin-body) .btn-danger:hover {
   background-color: #d32f2f;
 }
 
@@ -1058,10 +1116,10 @@ footer a:hover {
   -webkit-backdrop-filter: blur(20px) !important;
   border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
   z-index: 1000;
-  padding: 80px 24px 40px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
   transition: transform var(--transition-slow);
   box-shadow: var(--shadow-lg);
   will-change: transform;
@@ -1082,15 +1140,25 @@ footer a:hover {
 .mobile-drawer-overlay.open {
   display: block;
 }
+.mobile-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
 .mobile-drawer-close {
-  position: absolute;
-  top: 24px;
-  right: 24px;
   background: none;
   border: none;
   color: #d7b994 !important;
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  transition: color var(--transition-fast);
 }
 .mobile-drawer-close:hover {
   color: #ffffff !important;
@@ -1391,87 +1459,7 @@ footer a:hover {
   padding: 8px 4px;
 }
 
-/* ===================================================
-   Blur Progressivo (Gradient Blur) - Datacrazy / Skiper UI Style
-   =================================================== */
 
-.progressive-blur-container {
-  position: fixed;
-  left: 0;
-  width: 100%;
-  pointer-events: none;
-  z-index: 85; /* Sits behind navbar (100) and cart floating bar (90) but above content */
-}
-
-.progressive-blur-top {
-  top: 0;
-  height: 140px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
-}
-
-.progressive-blur-bottom {
-  bottom: 0;
-  height: 180px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
-}
-
-.progressive-blur-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* Camadas de desfoque gradiente para o topo (fade completo e suave) */
-.p-blur-top-1 {
-  backdrop-filter: blur(4px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(4px) saturate(140%) !important;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-}
-.p-blur-top-2 {
-  backdrop-filter: blur(8px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
-}
-.p-blur-top-3 {
-  backdrop-filter: blur(16px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
-}
-.p-blur-top-4 {
-  backdrop-filter: blur(32px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
-}
-
-/* Camadas de desfoque gradiente para o rodapé (fade completo e suave) */
-.p-blur-bottom-1 {
-  backdrop-filter: blur(4px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(4px) saturate(140%) !important;
-  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-}
-.p-blur-bottom-2 {
-  backdrop-filter: blur(8px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
-  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 75%);
-}
-.p-blur-bottom-3 {
-  backdrop-filter: blur(16px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
-  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%);
-}
-.p-blur-bottom-4 {
-  backdrop-filter: blur(32px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
-  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%);
-}
 
 /* ===================================================
    Mobile Button Tweaks & Hero Adjustments
@@ -1576,4 +1564,151 @@ footer a:hover {
   scrollbar-width: thin;
   scrollbar-color: var(--primary) rgba(0, 0, 0, 0.2);
 }
+
+/* ── Hermes AI Markdown Styling ───────────────────────────────── */
+.hermes-markdown {
+  color: #f3f4f6;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.hermes-markdown p {
+  color: inherit !important;
+  margin-bottom: 12px;
+  max-width: 100% !important;
+}
+
+.hermes-markdown h1, 
+.hermes-markdown h2, 
+.hermes-markdown h3, 
+.hermes-markdown h4 {
+  color: var(--primary);
+  font-family: var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
+  margin-top: 16px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.hermes-markdown h1 { font-size: 20px; }
+.hermes-markdown h2 { font-size: 18px; border-bottom: 1px solid rgba(171, 144, 112, 0.2); padding-bottom: 4px; }
+.hermes-markdown h3 { font-size: 16px; }
+
+.hermes-markdown ul, 
+.hermes-markdown ol {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+
+.hermes-markdown li {
+  margin-bottom: 6px;
+}
+
+.hermes-markdown strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.hermes-markdown pre {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hermes-markdown code {
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+/* ==========================================================================
+   ── ADMIN PANEL (DAISYUI 100%) ──
+   ========================================================================== */
+
+/* Permitir que o DaisyUI controle as cores base, apenas removendo as interferências do site principal */
+body.admin-body {
+  background-color: var(--color-base-200, #f1f5f9) !important;
+  background-image: none !important;
+  color: var(--color-base-content, #0f172a) !important;
+}
+
+/* Ocultar elementos legados na área de administração */
+body.admin-body header,
+body.admin-body footer {
+  display: none !important;
+}
+
+/* Títulos do admin - evitar que herdem uppercase e letter-spacing do marketing */
+body.admin-body h1,
+body.admin-body h2,
+body.admin-body h3,
+body.admin-body h4,
+body.admin-body h5,
+body.admin-body h6 {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  background-image: none !important;
+}
+
+/* Correção para o font-family global que pode vazar para os botões do daisyui se não for resetado */
+body.admin-body .btn,
+body.admin-body .input,
+body.admin-body .select,
+body.admin-body .table {
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* ADMIN PANEL - PREMIUM TIER S DESIGN TWEAKS */
+
+/* Tabelas do admin: cabeçalhos compactos */
+body.admin-body table th {
+  font-size: 0.71875rem !important; /* 11.5px */
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  opacity: 0.65;
+}
+
+body.admin-body table td {
+  font-size: 0.8125rem !important; /* 13px */
+}
+
+/* Sidebar premium adjustments */
+body.admin-body aside {
+  border-right: 1px solid var(--color-base-300, #e2e8f0);
+}
+
+body.admin-body aside .menu a {
+  font-size: 0.8125rem !important; /* 13px */
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  padding: 10px 14px !important;
+  transition: all 0.2s ease;
+}
+
+body.admin-body aside .menu a.active {
+  background-color: var(--color-primary, #ab9070) !important;
+  color: #ffffff !important;
+}
+
+body.admin-body aside h2.font-serif {
+  font-family: var(--font-sans) !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+}
+
+
+
+
+
 

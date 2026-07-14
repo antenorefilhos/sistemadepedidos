@@ -21,6 +21,8 @@ export default function CartPage() {
     whatsapp: '',
     email: '',
     address: '',
+    neighborhood: '',
+    city: '',
     notes: ''
   });
 
@@ -130,11 +132,20 @@ export default function CartPage() {
       price: p.preco || null
     })).filter(item => item.quantity > 0);
 
+    // Concatenar campos de endereço de forma bonita
+    let finalAddress = formData.address || '';
+    if (formData.neighborhood) {
+      finalAddress += finalAddress ? `, Bairro: ${formData.neighborhood}` : `Bairro: ${formData.neighborhood}`;
+    }
+    if (formData.city) {
+      finalAddress += finalAddress ? `, ${formData.city}` : `${formData.city}`;
+    }
+
     const orderPayload = {
       customer_name: formData.name,
       customer_whatsapp: formData.whatsapp,
       customer_email: formData.email,
-      customer_address: formData.address,
+      customer_address: finalAddress || null,
       notes: formData.notes,
       seller_id: activeSeller ? activeSeller.id : null,
       fingerprint: getFingerprint(),
@@ -161,7 +172,7 @@ export default function CartPage() {
         message += `*Cliente:* ${formData.name}\n`;
         message += `*WhatsApp:* ${formData.whatsapp}\n`;
         if (formData.email) message += `*Email:* ${formData.email}\n`;
-        if (formData.address) message += `*Entregar em:* ${formData.address}\n`;
+        if (finalAddress) message += `*Entregar em:* ${finalAddress}\n`;
         if (formData.notes) message += `*Observações:* ${formData.notes}\n`;
         
         if (activeSeller) {
@@ -366,11 +377,36 @@ export default function CartPage() {
                   <input 
                     type="text" 
                     name="address" 
-                    placeholder="Rua, Número, Bairro, Cidade" 
+                    placeholder="Rua, Avenida, Praça e Número" 
                     className="form-control"
                     value={formData.address}
                     onChange={handleInputChange}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group">
+                    <label className="form-label">Bairro</label>
+                    <input 
+                      type="text" 
+                      name="neighborhood" 
+                      placeholder="Ex: Itaipava" 
+                      className="form-control"
+                      value={formData.neighborhood || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Cidade</label>
+                    <input 
+                      type="text" 
+                      name="city" 
+                      placeholder="Ex: Petrópolis" 
+                      className="form-control"
+                      value={formData.city || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
