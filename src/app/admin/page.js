@@ -355,16 +355,9 @@ export default function AdminDashboard() {
     setProductForm({ ...productForm, title: val, slug: slugVal });
   };
 
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     if (role !== 'admin') return;
-
-    if (!isLocalhost) {
-      alert('⚠️ Edição de produtos só funciona em ambiente local (localhost).\n\nPara salvar alterações em produção:\n1. Execute: npm run dev\n2. Acesse: http://localhost:3000/admin\n3. Edite o produto\n4. Execute: ./sync-catalog.ps1\n\nO Vercel redesploa automaticamente após o push.');
-      return;
-    }
 
     const payload = {
       ...productForm,
@@ -396,10 +389,6 @@ export default function AdminDashboard() {
 
   const handleDeleteProduct = async (id) => {
     if (role !== 'admin') return;
-    if (!isLocalhost) {
-      alert('⚠️ Exclusão de produtos só funciona em localhost. Execute npm run dev e acesse http://localhost:3000/admin');
-      return;
-    }
     if (!confirm('Tem certeza que deseja excluir permanentemente este produto?')) return;
 
     try {
@@ -455,10 +444,6 @@ export default function AdminDashboard() {
   const handleSaveCategory = async (e) => {
     e.preventDefault();
     if (role !== 'admin') return;
-    if (!isLocalhost) {
-      alert('⚠️ Edição de categorias só funciona em localhost. Execute npm run dev e acesse http://localhost:3000/admin');
-      return;
-    }
 
     try {
       const method = categoryForm.id ? 'PUT' : 'POST';
