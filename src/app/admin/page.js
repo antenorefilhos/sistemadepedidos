@@ -9,6 +9,7 @@ import StoreSettings from './components/StoreSettings';
 import RecipeEditor from './components/RecipeEditor';
 import MenuRestaurantEditor from './components/MenuRestaurantEditor';
 import BiolinksManager from './components/BiolinksManager';
+import Fuse from 'fuse.js';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -571,7 +572,6 @@ export default function AdminDashboard() {
     
     // Filtro de Busca Fuzzy
     if (orderSearch.trim() !== '') {
-      const Fuse = require('fuse.js').default;
       const fuse = new Fuse(result, {
         keys: ['customer_name', 'id'],
         threshold: 0.4
@@ -593,7 +593,6 @@ export default function AdminDashboard() {
     
     // Filtro de Busca Fuzzy
     if (prodSearch.trim() !== '') {
-      const Fuse = require('fuse.js').default;
       const fuse = new Fuse(result, {
         keys: ['title', 'sku'],
         threshold: 0.4
