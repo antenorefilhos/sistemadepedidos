@@ -812,17 +812,6 @@ export default function AdminDashboard() {
       {/* Main Admin Content Panel */}
       <main className="flex-grow p-4 md:p-8 bg-base-200 overflow-y-auto w-full">
         
-        {/* Banner de Aviso de Produção */}
-        {typeof window !== 'undefined' && 
-         (window.location.hostname === 'antenorefilhos.com.br' || 
-          window.location.hostname === 'www.antenorefilhos.com.br' ||
-          window.location.hostname.includes('vercel.app')) && (
-          <div role="alert" className="alert alert-error shadow-lg mb-6">
-            <i className="fa-solid fa-triangle-exclamation text-xl"></i>
-            <span><strong>Atenção:</strong> Você está visualizando o Painel em PRODUÇÃO. Quaisquer alterações salvas afetarão o site público em tempo real!</span>
-          </div>
-        )}
-        
         {/* Mobile Navigation bar (tabs visible only on mobile) */}
         <div className="md:hidden mb-6">
           <select 
