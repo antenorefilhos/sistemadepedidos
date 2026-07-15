@@ -60,7 +60,7 @@ export default function ProductEditor({
     formData.append('file', file);
 
     try {
-      const res = await fetch(`/api/admin/upload?auth=${encodeURIComponent(password)}`, {
+      const res = await fetch(`/api/admin/upload?auth=${encodeURIComponent(password)}&type=product`, {
         method: 'POST',
         body: formData
       });

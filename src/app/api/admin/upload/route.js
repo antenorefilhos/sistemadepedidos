@@ -21,20 +21,24 @@ export async function POST(request) {
     let filename = `${uniqueSuffix}_${nameWithoutExt}.webp`;
     let contentType = 'image/webp';
 
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+
     // Se o arquivo for uma imagem, fazemos a otimização com a biblioteca sharp
     if (file.type.startsWith('image/')) {
       try {
+        const maxSize = type === 'product' ? 800 : 1400;
         optimizedBuffer = await sharp(buffer)
           .resize({
-            width: 1400,
-            height: 1400,
+            width: maxSize,
+            height: maxSize,
             fit: 'inside',
             withoutEnlargement: true // Não amplia se a imagem for menor
           })
           .webp({ quality: 82 }) // Qualidade premium otimizada sem perda perceptível
           .toBuffer();
           
-        console.log(`Image optimized successfully. Original: ${buffer.length} bytes, Optimized: ${optimizedBuffer.length} bytes`);
+        console.log(`Image optimized successfully (max: ${maxSize}px). Original: ${buffer.length} bytes, Optimized: ${optimizedBuffer.length} bytes`);
       } catch (sharpError) {
         console.error('Error optimizing image with sharp, uploading original:', sharpError);
         filename = `${uniqueSuffix}_${originalName}`;
