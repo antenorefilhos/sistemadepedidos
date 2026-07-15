@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import Fuse from 'fuse.js';
 
 // Map country slugs to flag emojis
 const COUNTRY_FLAG_MAP = {
@@ -98,8 +99,8 @@ export default function AdegaClient() {
     
     // Filtro de Busca (Fuzzy Search)
     if (search.trim() !== '') {
-      const Fuse = require('fuse.js').default;
-      const fuse = new Fuse(result, {
+      const FuseClass = typeof Fuse === 'function' ? Fuse : (Fuse.default || Fuse);
+      const fuse = new FuseClass(result, {
         keys: ['title', 'description', 'sku'],
         threshold: 0.4
       });

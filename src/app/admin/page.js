@@ -572,7 +572,8 @@ export default function AdminDashboard() {
     
     // Filtro de Busca Fuzzy
     if (orderSearch.trim() !== '') {
-      const fuse = new Fuse(result, {
+      const FuseClass = typeof Fuse === 'function' ? Fuse : (Fuse.default || Fuse);
+      const fuse = new FuseClass(result, {
         keys: ['customer_name', 'id'],
         threshold: 0.4
       });
@@ -593,7 +594,8 @@ export default function AdminDashboard() {
     
     // Filtro de Busca Fuzzy
     if (prodSearch.trim() !== '') {
-      const fuse = new Fuse(result, {
+      const FuseClass = typeof Fuse === 'function' ? Fuse : (Fuse.default || Fuse);
+      const fuse = new FuseClass(result, {
         keys: ['title', 'sku'],
         threshold: 0.4
       });
