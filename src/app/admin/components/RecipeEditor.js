@@ -15,6 +15,8 @@ export default function RecipeEditor({ password, products }) {
     id: null,
     title: '',
     description: '',
+    ingredients: '',
+    instructions: '',
     prep_time: '',
     servings: '',
     difficulty: 'Fácil',
@@ -50,6 +52,8 @@ export default function RecipeEditor({ password, products }) {
         id: recipe.id,
         title: recipe.title || '',
         description: recipe.description || '',
+        ingredients: recipe.ingredients || '',
+        instructions: recipe.instructions || '',
         prep_time: recipe.prep_time || '',
         servings: recipe.servings || '',
         difficulty: recipe.difficulty || 'Fácil',
@@ -61,6 +65,8 @@ export default function RecipeEditor({ password, products }) {
         id: null,
         title: '',
         description: '',
+        ingredients: '',
+        instructions: '',
         prep_time: '',
         servings: '',
         difficulty: 'Fácil',
@@ -302,11 +308,33 @@ export default function RecipeEditor({ password, products }) {
                 </div>
 
                 <div className="form-control w-full">
-                  <label className="label"><span className="label-text text-base-content/75 font-semibold">Ingredientes e Modo de Preparo</span></label>
+                  <label className="label"><span className="label-text text-base-content/75 font-semibold">Resumo / Introdução da Receita</span></label>
+                  <textarea 
+                    rows="2"
+                    placeholder="Uma breve introdução sobre o prato..."
+                    className="textarea textarea-bordered w-full"
+                    value={form.description}
+                    onChange={e => setForm({...form, description: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text text-base-content/75 font-semibold">Ingredientes</span></label>
                   <div className="border border-base-300 rounded-lg overflow-hidden">
                     <Editor 
-                      value={form.description} 
-                      onChange={(e) => setForm({...form, description: e.target.value})} 
+                      value={form.ingredients} 
+                      onChange={(e) => setForm({...form, ingredients: e.target.value})} 
+                      containerProps={{ style: { height: '200px', overflowY: 'auto' } }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text text-base-content/75 font-semibold">Modo de Preparo</span></label>
+                  <div className="border border-base-300 rounded-lg overflow-hidden">
+                    <Editor 
+                      value={form.instructions} 
+                      onChange={(e) => setForm({...form, instructions: e.target.value})} 
                       containerProps={{ style: { height: '300px', overflowY: 'auto' } }}
                     />
                   </div>

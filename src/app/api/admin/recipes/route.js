@@ -11,6 +11,18 @@ const getRole = (request) => {
   return null;
 };
 
+const generateSlug = (title) => {
+  if (!title) return '';
+  return title
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
 export async function POST(request) {
   const role = getRole(request);
   if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -18,6 +30,10 @@ export async function POST(request) {
   try {
     const supabase = getSupabase();
     const recipe = await request.json();
+
+    if (recipe.title) {
+      recipe.slug = generateSlug(recipe.title);
+    }
 
     const { data, error } = await supabase
       .from('recipes')
@@ -42,6 +58,10 @@ export async function PUT(request) {
     const { id, ...updateData } = recipe;
 
     if (!id) return NextResponse.json({ error: 'Recipe ID is required' }, { status: 400 });
+
+    if (updateData.title) {
+      updateData.slug = generateSlug(updateData.title);
+    }
 
     const { data, error } = await supabase
       .from('recipes')

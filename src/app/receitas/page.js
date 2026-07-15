@@ -57,7 +57,7 @@ export default async function ReceitasPage() {
             {recipes.map(recipe => (
               <Link 
                 key={recipe.id} 
-                href={`/receitas/${recipe.id}`}
+                href={`/receitas/${recipe.slug || recipe.id}`}
                 className="group product-card"
                 style={{
                   display: 'flex',
