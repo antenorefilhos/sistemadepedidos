@@ -133,24 +133,24 @@ export default async function RecipeDetailsPage({ params }) {
       </div>
 
       <div className="container mx-auto px-6 md:px-12 mt-12 md:mt-20">
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '48px', flexWrap: 'wrap' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
           
           {/* Coluna Esquerda: Descrição e Ingredientes/Preparo */}
-          <div style={{ flex: '2 1 600px', minWidth: '320px' }}>
+          <div className="lg:col-span-2 flex flex-col gap-8">
             
             {recipe.description && (
               <div 
-                className="mb-12 text-lg leading-relaxed italic"
-                style={{ color: 'var(--text-muted)', borderLeft: '2px solid var(--primary)', paddingLeft: '24px', marginBottom: '48px' }}
+                className="mb-4 text-lg leading-relaxed italic"
+                style={{ color: 'var(--text-muted)', borderLeft: '2px solid var(--primary)', paddingLeft: '24px' }}
                 dangerouslySetInnerHTML={{ __html: recipe.description }}
               ></div>
             )}
 
             {/* Renderização Separada (Nova Estrutura) */}
             {recipe.ingredients && (
-              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px', marginBottom: '32px' }}>
+              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px' }}>
                 <h2 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 24px 0', textTransform: 'none' }}>
-                  <i className="fa-solid fa-pepper-hot mr-3 text-sm text-[var(--color-gold)]" style={{ marginRight: '10px' }}></i> Ingredientes
+                  <i className="fa-solid fa-pepper-hot mr-3 text-sm text-[var(--primary)]" style={{ marginRight: '10px' }}></i> Ingredientes
                 </h2>
                 <div 
                   className="prose prose-invert max-w-none text-gray-300 leading-loose prose-ul:list-disc prose-li:my-1"
@@ -160,9 +160,9 @@ export default async function RecipeDetailsPage({ params }) {
             )}
 
             {recipe.instructions && (
-              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px', marginBottom: '48px' }}>
+              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px' }}>
                 <h2 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 24px 0', textTransform: 'none' }}>
-                  <i className="fa-solid fa-kitchen-set mr-3 text-sm text-[var(--color-gold)]" style={{ marginRight: '10px' }}></i> Modo de Preparo
+                  <i className="fa-solid fa-kitchen-set mr-3 text-sm text-[var(--primary)]" style={{ marginRight: '10px' }}></i> Modo de Preparo
                 </h2>
                 <div 
                   className="prose prose-invert max-w-none text-gray-300 leading-loose prose-ol:list-decimal"
@@ -173,7 +173,7 @@ export default async function RecipeDetailsPage({ params }) {
 
             {/* Fallback para receitas antigas que tinham tudo em description */}
             {!recipe.ingredients && !recipe.instructions && (
-              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px', marginBottom: '48px' }}>
+              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px' }}>
                 <h2 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 24px 0', textTransform: 'none' }}>
                   Ingredientes & Preparo
                 </h2>
@@ -184,7 +184,7 @@ export default async function RecipeDetailsPage({ params }) {
               </div>
             )}
             
-            <div className="mt-8" style={{ marginTop: '32px' }}>
+            <div className="mt-4">
                <Link 
                  href="/receitas" 
                  className="btn"
@@ -208,7 +208,7 @@ export default async function RecipeDetailsPage({ params }) {
           </div>
 
           {/* Coluna Direita: Carnes Recomendadas (Produtos Vinculados) */}
-          <div style={{ flex: '1 1 300px', minWidth: '280px' }}>
+          <div className="lg:col-span-1">
             <div className="sticky top-32">
               <h3 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>Cortes Utilizados</h3>
               
