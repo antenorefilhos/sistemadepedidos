@@ -9,21 +9,23 @@ export default function AdminThemeManager() {
   useEffect(() => {
     if (pathname && pathname.startsWith('/admin')) {
       document.body.classList.add('admin-body');
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.documentElement.classList.add('light-theme');
-    } else {
-      document.body.classList.remove('admin-body');
-      document.documentElement.classList.remove('light-theme');
-      // Restaura o tema salvo pelo usuário
       try {
-        const savedTheme = localStorage.getItem('site_theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        if (savedTheme === 'light') {
+        const theme = localStorage.getItem('admin_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        const darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
+        if (darkThemes.indexOf(theme) === -1) {
           document.documentElement.classList.add('light-theme');
+        } else {
+          document.documentElement.classList.remove('light-theme');
         }
       } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.classList.add('light-theme');
       }
+    } else {
+      document.body.classList.remove('admin-body');
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.classList.remove('light-theme');
     }
   }, [pathname]);
 

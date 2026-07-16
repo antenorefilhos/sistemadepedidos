@@ -20,10 +20,10 @@ export async function GET(request) {
     
     if (error) {
       if (error.code === '42P01') {
-        // relation "app_settings" does not exist, return mock
         return NextResponse.json([
           { key: 'company_data', value: { phone: '2422221482', address: 'Estrada União Indústria, 12273 - Itaipava', hours: 'Seg a Sab: 09h às 19h', instagram: '@antenorefilhos' } },
-          { key: 'cardapio_images', value: { food: '/images/alacarte.jpg', drinks: '/images/bebidas.jpg' } }
+          { key: 'cardapio_images', value: { food: '/images/alacarte.jpg', drinks: '/images/bebidas.jpg' } },
+          { key: 'admin_theme', value: { theme: 'light' } }
         ]);
       }
       throw error;

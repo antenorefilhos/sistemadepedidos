@@ -48,31 +48,11 @@ export const viewport = {
   viewportFit: "cover",
   themeColor: "#ab9070"
 };
-export const dynamic = 'force-dynamic';
-
-import { getSupabase } from "@/lib/pgDb";
-
-const DARK_THEMES = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
-
-export default async function RootLayout({ children }) {
+export default function RootLayout({ children }) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID || "G-4H9W5QPE0L";
 
-  let activeTheme = 'dark';
-  try {
-    const supabase = getSupabase();
-    const { data } = await supabase.from('app_settings').select('*').eq('key', 'site_theme').maybeSingle();
-    if (data && data.value && data.value.theme) {
-      activeTheme = data.value.theme;
-    }
-  } catch (e) {
-    console.warn("Erro ao buscar tema do banco no layout, usando dark:", e.message);
-  }
-
-  const isDarkTheme = DARK_THEMES.includes(activeTheme);
-  const themeClass = isDarkTheme ? '' : 'light-theme';
-
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${playfair.variable} ${themeClass}`} data-theme={activeTheme} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${inter.variable} ${playfair.variable}`} data-theme="dark" suppressHydrationWarning>
       <head>
         {/* Theme preservation script to avoid styling flash */}
         <script 
@@ -81,18 +61,17 @@ export default async function RootLayout({ children }) {
               (function() {
                 try {
                   if (window.location.pathname.startsWith('/admin')) {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                  } else {
-                    var theme = localStorage.getItem('site_theme');
-                    if (theme) {
-                      document.documentElement.setAttribute('data-theme', theme);
-                      var darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
-                      if (darkThemes.indexOf(theme) === -1) {
-                        document.documentElement.classList.add('light-theme');
-                      } else {
-                        document.documentElement.classList.remove('light-theme');
-                      }
+                    var theme = localStorage.getItem('admin_theme') || 'light';
+                    document.documentElement.setAttribute('data-theme', theme);
+                    var darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
+                    if (darkThemes.indexOf(theme) === -1) {
+                      document.documentElement.classList.add('light-theme');
+                    } else {
+                      document.documentElement.classList.remove('light-theme');
                     }
+                  } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.classList.remove('light-theme');
                   }
                 } catch (e) {}
               })();

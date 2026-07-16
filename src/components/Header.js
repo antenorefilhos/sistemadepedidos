@@ -12,7 +12,6 @@ export default function Header() {
 
   const [activeSeller, setActiveSeller] = useState(null);
   const [cartCount, setCartCount] = useState(0);
-  const [theme, setTheme] = useState('dark');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -42,17 +41,7 @@ export default function Header() {
     updateSellerFromStorage();
     updateCartCountFromStorage();
 
-    try {
-      const savedTheme = localStorage.getItem('site_theme') || document.documentElement.getAttribute('data-theme') || 'dark';
-      setTheme(savedTheme);
-      const darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
-      if (darkThemes.indexOf(savedTheme) === -1) {
-        document.documentElement.classList.add('light-theme');
-      } else {
-        document.documentElement.classList.remove('light-theme');
-      }
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } catch (e) {}
+
 
     window.addEventListener('seller_changed', updateSellerFromStorage);
     window.addEventListener('cart_changed', updateCartCountFromStorage);
@@ -65,20 +54,7 @@ export default function Header() {
     };
   }, []);
 
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    try {
-      localStorage.setItem('site_theme', next);
-      const darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
-      if (darkThemes.indexOf(next) === -1) {
-        document.documentElement.classList.add('light-theme');
-      } else {
-        document.documentElement.classList.remove('light-theme');
-      }
-      document.documentElement.setAttribute('data-theme', next);
-    } catch (e) {}
-  };
+
 
   const clearSeller = () => {
     localStorage.removeItem('ref_seller');

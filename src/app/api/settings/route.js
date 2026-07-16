@@ -13,7 +13,7 @@ export async function GET() {
         return NextResponse.json([
           { key: 'company_data', value: { phone: '2422221482', address: 'Estrada União Indústria, 12273 - Itaipava', hours: 'Seg a Sab: 09h às 19h', instagram: '@antenorefilhos' } },
           { key: 'cardapio_images', value: { food: '/images/alacarte.jpg', drinks: '/images/bebidas.jpg' } },
-          { key: 'site_theme', value: { theme: 'dark' } }
+          { key: 'admin_theme', value: { theme: 'light' } }
         ]);
       }
       throw error;

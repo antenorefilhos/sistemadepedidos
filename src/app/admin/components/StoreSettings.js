@@ -13,7 +13,7 @@ export default function StoreSettings({ password }) {
   const [settings, setSettings] = useState({
     company_data: { phone: '', address: '', hours: '', instagram: '' },
     cardapio_images: { food: '', drinks: '' },
-    site_theme: { theme: 'dark' }
+    admin_theme: { theme: 'light' }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,10 +55,13 @@ export default function StoreSettings({ password }) {
       });
       if (res.ok) {
         alert('Configurações salvas com sucesso!');
-        if (key === 'site_theme') {
-            const chosenTheme = settings.site_theme.theme;
+        if (key === 'admin_theme') {
+            const chosenTheme = settings.admin_theme?.theme || 'light';
             document.documentElement.setAttribute('data-theme', chosenTheme);
-            try { localStorage.setItem('site_theme', chosenTheme); } catch(e) {}
+            try { 
+              localStorage.setItem('admin_theme', chosenTheme);
+              window.dispatchEvent(new Event('admin_theme_changed'));
+            } catch(e) {}
         }
       } else {
         alert('Erro ao salvar. Verifique se você criou a tabela app_settings no banco.');
@@ -222,22 +225,25 @@ export default function StoreSettings({ password }) {
           <div className="card bg-base-200/50 border border-base-300 shadow-xl">
             <div className="card-body">
               <h3 className="card-title text-primary border-b border-base-300 pb-2 mb-4">
-                <i className="fa-solid fa-palette"></i> Aparência (DaisyUI)
+                <i className="fa-solid fa-palette"></i> Aparência do Painel
               </h3>
               
               <div className="form-control w-full mb-6">
                 <label className="label">
-                  <span className="label-text font-bold">Tema Global</span>
-                  <span className="label-text-alt text-base-content/50">Afeta clientes e admin</span>
+                  <span className="label-text font-bold">Tema do Painel</span>
+                  <span className="label-text-alt text-base-content/50">Afeta apenas a área administrativa</span>
                 </label>
                 <select 
                   className="select select-bordered w-full bg-base-100 focus:border-primary"
-                  value={settings.site_theme.theme}
+                  value={settings.admin_theme?.theme || 'light'}
                   onChange={e => {
                     const chosenTheme = e.target.value;
-                    setSettings({...settings, site_theme: { theme: chosenTheme }});
+                    setSettings({...settings, admin_theme: { theme: chosenTheme }});
                     document.documentElement.setAttribute('data-theme', chosenTheme);
-                    try { localStorage.setItem('site_theme', chosenTheme); } catch(e) {}
+                    try { 
+                      localStorage.setItem('admin_theme', chosenTheme);
+                      window.dispatchEvent(new Event('admin_theme_changed'));
+                    } catch(e) {}
                   }}
                 >
                   {DAISYUI_THEMES.map(t => (
@@ -249,7 +255,7 @@ export default function StoreSettings({ password }) {
               <div className="card-actions justify-end">
                 <button 
                   className="btn btn-primary w-full shadow-md" 
-                  onClick={() => handleSave('site_theme')}
+                  onClick={() => handleSave('admin_theme')}
                   disabled={saving}
                 >
                   Aplicar Tema
