@@ -70,7 +70,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="operation" className="section relative bg-base-100">
+      <section id="operation" className="section relative" style={{ backgroundColor: 'var(--bg-main)' }}>
         <div className="container">
           <div className={styles.sectionHeader}>
             <h2>Nossas Frentes de Excelência</h2>
