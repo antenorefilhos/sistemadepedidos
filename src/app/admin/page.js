@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(null); // 'admin' or 'manager'
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   // Data lists
   const [orders, setOrders] = useState([]);
@@ -67,7 +68,10 @@ export default function AdminDashboard() {
   const [newSeller, setNewSeller] = useState({ name: '', phone: '', slug: '' });
 
   const checkAuth = async (pass) => {
-    if (!pass) return;
+    if (!pass) {
+      setIsCheckingAuth(false);
+      return;
+    }
     setLoading(true);
     try {
       const authRes = await fetch(`/api/admin/auth?auth=${encodeURIComponent(pass)}`);
@@ -79,12 +83,14 @@ export default function AdminDashboard() {
       } else {
         setIsAuthenticated(false);
         setRole(null);
+        sessionStorage.removeItem('admin_auth_pass');
         alert('Senha incorreta. Tente novamente.');
       }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setIsCheckingAuth(false);
     }
   };
 
@@ -93,9 +99,16 @@ export default function AdminDashboard() {
     document.documentElement.setAttribute('data-theme', 'light');
     
     const saved = sessionStorage.getItem('admin_auth_pass');
+    const savedTab = sessionStorage.getItem('admin_active_tab');
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
+    
     if (saved) {
       setPassword(saved);
       checkAuth(saved);
+    } else {
+      setIsCheckingAuth(false);
     }
 
     return () => {
@@ -103,6 +116,12 @@ export default function AdminDashboard() {
       document.documentElement.removeAttribute('data-theme');
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTab) {
+      sessionStorage.setItem('admin_active_tab', activeTab);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -681,6 +700,15 @@ export default function AdminDashboard() {
       };
     }).sort((a, b) => b.revenue - a.revenue);
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-base-200 gap-4" style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <span className="text-xs text-base-content/50 uppercase tracking-wider font-bold">Verificando credenciais...</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
