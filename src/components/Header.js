@@ -43,10 +43,15 @@ export default function Header() {
     updateCartCountFromStorage();
 
     try {
-      const savedTheme = localStorage.getItem('theme') || 'dark';
+      const savedTheme = localStorage.getItem('site_theme') || document.documentElement.getAttribute('data-theme') || 'dark';
       setTheme(savedTheme);
-      if (savedTheme === 'light') document.documentElement.classList.add('light-theme');
-      else document.documentElement.classList.remove('light-theme');
+      const darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
+      if (darkThemes.indexOf(savedTheme) === -1) {
+        document.documentElement.classList.add('light-theme');
+      } else {
+        document.documentElement.classList.remove('light-theme');
+      }
+      document.documentElement.setAttribute('data-theme', savedTheme);
     } catch (e) {}
 
     window.addEventListener('seller_changed', updateSellerFromStorage);
@@ -64,9 +69,14 @@ export default function Header() {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     try {
-      localStorage.setItem('theme', next);
-      if (next === 'light') document.documentElement.classList.add('light-theme');
-      else document.documentElement.classList.remove('light-theme');
+      localStorage.setItem('site_theme', next);
+      const darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
+      if (darkThemes.indexOf(next) === -1) {
+        document.documentElement.classList.add('light-theme');
+      } else {
+        document.documentElement.classList.remove('light-theme');
+      }
+      document.documentElement.setAttribute('data-theme', next);
     } catch (e) {}
   };
 
