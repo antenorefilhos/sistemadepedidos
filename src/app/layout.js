@@ -64,7 +64,8 @@ export default function RootLayout({ children }) {
                   if (window.location.pathname.startsWith('/admin')) {
                     document.documentElement.setAttribute('data-theme', 'light');
                   } else {
-                    var theme = localStorage.getItem('theme');
+                    var theme = localStorage.getItem('site_theme') || 'dark';
+                    document.documentElement.setAttribute('data-theme', theme);
                     if (theme === 'light') {
                       document.documentElement.classList.add('light-theme');
                     }

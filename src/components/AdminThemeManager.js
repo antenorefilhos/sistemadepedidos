@@ -13,8 +13,17 @@ export default function AdminThemeManager() {
       document.documentElement.classList.add('light-theme');
     } else {
       document.body.classList.remove('admin-body');
-      document.documentElement.removeAttribute('data-theme');
       document.documentElement.classList.remove('light-theme');
+      // Restaura o tema salvo pelo usuário
+      try {
+        const savedTheme = localStorage.getItem('site_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'light') {
+          document.documentElement.classList.add('light-theme');
+        }
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     }
   }, [pathname]);
 

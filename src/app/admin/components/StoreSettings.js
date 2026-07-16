@@ -56,7 +56,9 @@ export default function StoreSettings({ password }) {
       if (res.ok) {
         alert('Configurações salvas com sucesso!');
         if (key === 'site_theme') {
-            document.documentElement.setAttribute('data-theme', settings.site_theme.theme);
+            const chosenTheme = settings.site_theme.theme;
+            document.documentElement.setAttribute('data-theme', chosenTheme);
+            try { localStorage.setItem('site_theme', chosenTheme); } catch(e) {}
         }
       } else {
         alert('Erro ao salvar. Verifique se você criou a tabela app_settings no banco.');
@@ -235,6 +237,7 @@ export default function StoreSettings({ password }) {
                     const chosenTheme = e.target.value;
                     setSettings({...settings, site_theme: { theme: chosenTheme }});
                     document.documentElement.setAttribute('data-theme', chosenTheme);
+                    try { localStorage.setItem('site_theme', chosenTheme); } catch(e) {}
                   }}
                 >
                   {DAISYUI_THEMES.map(t => (
