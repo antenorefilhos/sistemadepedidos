@@ -8,7 +8,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const password = searchParams.get('auth') || request.headers.get('Authorization');
     const sessionId = searchParams.get('session_id');
-    const adminPass = process.env.ADMIN_PASSWORD || 'antenor123';
+    const adminPass = process.env.ADMIN_PASSWORD;
     
     if (password !== adminPass) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });

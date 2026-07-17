@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const verifyAdmin = (request) => {
   const { searchParams } = new URL(request.url);
   const password = searchParams.get('auth') || request.headers.get('Authorization');
-  return password === (process.env.ADMIN_PASSWORD || 'antenor123');
+  return password === process.env.ADMIN_PASSWORD;
 };
 
 export async function POST(request) {
