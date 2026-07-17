@@ -194,31 +194,31 @@ export default function StoreSettings({ password }) {
             <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
               <i className="fa-solid fa-store text-xs"></i> Boutique de Carnes & Adega (Loja)
             </h4>
-            <div className="grid grid-cols-1 gap-4 bg-base-100/50 p-4 rounded-lg border border-base-300">
-              <div className="form-control w-full">
-                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Endereço da Boutique</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                  value={settings.company_data.address || ''}
-                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, address: e.target.value}})}
-                  placeholder="Ex: Estrada União Indústria, 12273 - Itaipava"
-                />
-              </div>
+            <div className="flex flex-col gap-4 bg-base-100/50 p-4 rounded-lg border border-base-300">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Endereço da Boutique</span></label>
+                  <input 
+                    type="text" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    value={settings.company_data.address || ''}
+                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, address: e.target.value}})}
+                    placeholder="Ex: Estrada União Indústria, 12273 - Itaipava"
+                  />
+                </div>
                 <div className="form-control w-full">
                   <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">WhatsApp / Contato Boutique</span></label>
                   <input 
                     type="text" 
-                    className="input input-bordered w-full bg-base-100 focus:border-primary mb-3" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
                     value={settings.company_data.phone || ''}
                     onChange={e => setSettings({...settings, company_data: {...settings.company_data, phone: e.target.value}})}
                     placeholder="Ex: (24) 98865-0462"
                   />
                 </div>
-                <div className="form-control w-full">
-                  {renderWeeklyHoursForm('hours')}
-                </div>
+              </div>
+              <div className="form-control w-full">
+                {renderWeeklyHoursForm('hours')}
               </div>
             </div>
           </div>
@@ -228,31 +228,31 @@ export default function StoreSettings({ password }) {
             <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
               <i className="fa-solid fa-utensils text-xs"></i> Restaurante & Bistrô
             </h4>
-            <div className="grid grid-cols-1 gap-4 bg-base-100/50 p-4 rounded-lg border border-base-300">
-              <div className="form-control w-full">
-                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Endereço do Restaurante</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                  value={settings.company_data.restaurant_address || ''}
-                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_address: e.target.value}})}
-                  placeholder="Ex: Estrada União Indústria, 12273 - Itaipava"
-                />
-              </div>
+            <div className="flex flex-col gap-4 bg-base-100/50 p-4 rounded-lg border border-base-300">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Endereço do Restaurante</span></label>
+                  <input 
+                    type="text" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    value={settings.company_data.restaurant_address || ''}
+                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_address: e.target.value}})}
+                    placeholder="Ex: Estrada União Indústria, 12273 - Itaipava"
+                  />
+                </div>
                 <div className="form-control w-full">
                   <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">WhatsApp / Contato Restaurante</span></label>
                   <input 
                     type="text" 
-                    className="input input-bordered w-full bg-base-100 focus:border-primary mb-3" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
                     value={settings.company_data.restaurant_phone || ''}
                     onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_phone: e.target.value}})}
                     placeholder="Ex: (24) 2222-1482"
                   />
                 </div>
-                <div className="form-control w-full">
-                  {renderWeeklyHoursForm('restaurant_hours')}
-                </div>
+              </div>
+              <div className="form-control w-full">
+                {renderWeeklyHoursForm('restaurant_hours')}
               </div>
             </div>
           </div>
