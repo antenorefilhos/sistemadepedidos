@@ -50,12 +50,12 @@ export default function CartPage() {
         return;
       }
 
-      try {
+       try {
         const res = await fetch('/api/products');
         if (res.ok) {
           const prods = await res.json();
-          // Filter products that are in our cart IDs
-          const uniqueIds = new Set(ids);
+          // Filter products that are in our cart IDs, extracting base ID
+          const uniqueIds = new Set(ids.map(id => id.split('_')[0]));
           const filtered = prods.filter(p => uniqueIds.has(String(p.id)));
           setProducts(filtered);
         }
@@ -100,11 +100,54 @@ export default function CartPage() {
     localStorage.setItem('jet_engine_store_carrinho', updatedIds.join(','));
     window.dispatchEvent(new Event('cart_changed'));
 
-    // Remove product details from state if quantity is 0
+    // Remove product details from state if all variations of this product are 0
     if (newQty === 0) {
-      setProducts(products.filter(p => String(p.id) !== String(id)));
+      const realProductId = String(id).split('_')[0];
+      const remainingVariations = updatedIds.some(cartId => cartId.split('_')[0] === realProductId);
+      if (!remainingVariations) {
+        setProducts(products.filter(p => String(p.id) !== String(realProductId)));
+      }
     }
-  };
+  // Compute cart items details with variations
+  const cartItemsDetails = Object.keys(cartQuantities).map(cartKey => {
+    const [realId, unitType] = cartKey.split('_');
+    const product = products.find(p => String(p.id) === String(realId));
+    if (!product) return null;
+
+    let displayPrice = product.preco || 0;
+    let unitLabel = 'Garrafa';
+    let factor = 1;
+
+    if (unitType === 'c6') {
+      displayPrice = displayPrice * 6;
+      unitLabel = 'Caixa com 6un';
+      factor = 6;
+    } else if (unitType === 'c12') {
+      displayPrice = displayPrice * 12;
+      unitLabel = 'Caixa com 12un';
+      factor = 12;
+    }
+
+    return {
+      cartKey,
+      realId,
+      unitType,
+      product,
+      qty: cartQuantities[cartKey] || 0,
+      displayPrice,
+      unitLabel,
+      factor,
+      totalPhysicalUnits: (cartQuantities[cartKey] || 0) * factor
+    };
+  }).filter(Boolean);
+
+  const totalOrderPrice = cartItemsDetails.reduce((acc, item) => {
+    return acc + (item.displayPrice * item.qty);
+  }, 0);
+
+  const totalPhysicalGarrafas = cartItemsDetails.reduce((acc, item) => {
+    return acc + item.totalPhysicalUnits;
+  }, 0);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -123,14 +166,14 @@ export default function CartPage() {
 
     setSubmitting(true);
 
-    // Prepare order items
-    const orderItems = products.map(p => ({
-      product_id: p.id,
-      title: p.title,
-      sku: p.sku || '',
-      quantity: cartQuantities[p.id] || 0,
-      price: p.preco || null
-    })).filter(item => item.quantity > 0);
+    // Prepare order items using details
+    const orderItems = cartItemsDetails.map(item => ({
+      product_id: item.product.id,
+      title: `${item.product.title} (${item.unitLabel})`,
+      sku: item.product.sku || '',
+      quantity: item.qty,
+      price: item.displayPrice
+    }));
 
     // Concatenar campos de endereço de forma bonita
     let finalAddress = formData.address || '';
@@ -181,15 +224,17 @@ export default function CartPage() {
         
         message += `\n*PRODUTOS REQUISITADOS:*\n`;
         
-        products.forEach(p => {
-          const qty = cartQuantities[p.id] || 0;
-          if (qty > 0) {
-            const skuText = p.sku ? ` (Código: ${p.sku})` : '';
-            const weightText = p.peso ? ` [${p.peso} ${p.unidade_peso}]` : '';
-            const priceText = p.preco ? ` - R$ ${p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
-            message += `- ${qty}x ${p.title}${skuText}${weightText}${priceText}\n`;
-          }
+        cartItemsDetails.forEach(item => {
+          const itemTotal = item.displayPrice * item.qty;
+          const skuText = item.product.sku ? ` (EAN: ${item.product.sku})` : '';
+          const priceText = item.displayPrice > 0 
+            ? ` - R$ ${itemTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+            : ' - Preço sob consulta';
+          message += `- ${item.qty}x ${item.product.title} (${item.unitLabel})${skuText}${priceText}\n`;
         });
+
+        message += `\n*TOTAL ESTIMADO:* R$ ${totalOrderPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n`;
+        message += `*TOTAL DE UNIDADES:* ${totalPhysicalGarrafas} item(ns)/garrafa(s)\n`;
         
         message += `\n_Orçamento enviado via antenorefilhos.com.br_`;
 
@@ -252,16 +297,16 @@ export default function CartPage() {
           {/* Cart Items List */}
           <main>
             <h3 style={{ color: 'white', fontSize: '18px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              Produtos Selecionados ({products.length})
+              Produtos Selecionados ({cartItemsDetails.length})
             </h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {products.map(product => {
-                const qty = cartQuantities[product.id] || 0;
+              {cartItemsDetails.map(item => {
+                const { cartKey, product, qty, displayPrice, unitLabel } = item;
                 if (qty === 0) return null;
                 
                 return (
-                  <div key={product.id} className="checkout-item-card">
+                  <div key={cartKey} className="checkout-item-card">
                     {/* Thumbnail (Exactly 1:1) */}
                     <div style={{ position: 'relative', width: '80px', height: '80px', backgroundColor: 'var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
                       {product.image_url ? (
@@ -277,22 +322,27 @@ export default function CartPage() {
                       <div>
                         <h4 
                           style={{ color: 'white', fontSize: '15px', marginBottom: '2px', fontWeight: '500' }}
-                          dangerouslySetInnerHTML={{ __html: product.title }}
+                          dangerouslySetInnerHTML={{ __html: `${product.title} <span style="font-size: 0.8em; color: var(--primary); font-weight: normal; margin-left: 5px;">(${unitLabel})</span>` }}
                         />
                         <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                           {product.sku ? `EAN: ${product.sku}` : ''} 
-                          {product.peso ? ` | Peso: ${product.peso} ${product.unidade_peso}` : ''}
+                          {product.peso ? ` | Peso unitário: ${product.peso} ${product.unidade_peso}` : ''}
                         </p>
                       </div>
                       
                       {/* Bottom: Price and Quantity Controls */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', flexWrap: 'wrap', paddingTop: '4px' }}>
-                        <div>
-                          {product.preco ? (
-                            <span style={{ fontSize: '14px', color: 'var(--primary)', fontWeight: 'bold' }}>
-                              <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
-                              {product.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          {displayPrice > 0 ? (
+                            <>
+                              <span style={{ fontSize: '14px', color: 'white', fontWeight: 'bold' }}>
+                                <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
+                                {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Subtotal: R$ {(displayPrice * qty).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </>
                           ) : (
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Preço sob consulta</span>
                           )}
@@ -301,7 +351,7 @@ export default function CartPage() {
                         {/* Quantity selectors */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <button 
-                            onClick={() => updateQuantity(product.id, qty - 1)}
+                            onClick={() => updateQuantity(cartKey, qty - 1)}
                             className="btn btn-secondary" 
                             style={{ padding: '4px 10px', fontSize: '12px', minWidth: '32px' }}
                           >
@@ -311,7 +361,7 @@ export default function CartPage() {
                             {qty}
                           </span>
                           <button 
-                            onClick={() => updateQuantity(product.id, qty + 1)}
+                            onClick={() => updateQuantity(cartKey, qty + 1)}
                             className="btn btn-secondary" 
                             style={{ padding: '4px 10px', fontSize: '12px', minWidth: '32px' }}
                           >
@@ -447,6 +497,46 @@ export default function CartPage() {
                     {formError}
                   </p>
                 )}
+
+                {/* Resumo de Totais do Orçamento */}
+                <div style={{
+                  borderTop: '1px solid var(--border-color)',
+                  paddingTop: '15px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    <span>Total de Itens:</span>
+                    <span style={{ color: 'white', fontWeight: '500' }}>
+                      {cartItemsDetails.reduce((sum, item) => sum + item.qty, 0)} item(ns)
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    <span>Total Físico (Garrafas/Carnes):</span>
+                    <span style={{ color: 'white', fontWeight: '500' }}>
+                      {totalPhysicalGarrafas} un
+                    </span>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '16px',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    marginTop: '6px',
+                    borderTop: '1px dotted var(--border-color)',
+                    paddingTop: '10px'
+                  }}>
+                    <span>Total Estimado:</span>
+                    <span style={{ color: 'var(--primary)' }}>
+                      R$ {totalOrderPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
 
                 <button 
                   type="submit" 

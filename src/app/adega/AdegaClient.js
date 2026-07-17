@@ -110,15 +110,19 @@ export default function AdegaClient() {
     return result;
   })();
 
-  const addToCart = (id) => {
-    const updated = [...cartItems, String(id)];
+  const [selectedUnits, setSelectedUnits] = useState({});
+
+  const addToCart = (id, unit = 'garrafa') => {
+    const key = unit === 'garrafa' ? String(id) : `${id}_${unit}`;
+    const updated = [...cartItems, key];
     setCartItems(updated);
     localStorage.setItem('jet_engine_store_carrinho', updated.join(','));
     window.dispatchEvent(new Event('cart_changed'));
   };
 
-  const removeFromCart = (id) => {
-    const idx = cartItems.indexOf(String(id));
+  const removeFromCart = (id, unit = 'garrafa') => {
+    const key = unit === 'garrafa' ? String(id) : `${id}_${unit}`;
+    const idx = cartItems.indexOf(key);
     if (idx > -1) {
       const updated = [...cartItems];
       updated.splice(idx, 1);
@@ -301,7 +305,19 @@ export default function AdegaClient() {
             ) : (
               <div className="product-grid">
                 {filteredProducts.map((product, idx) => {
-                  const itemsInCart = cartItems.filter(id => id === String(product.id)).length;
+                  const unit = selectedUnits[product.id] || 'garrafa';
+                  const cartKey = unit === 'garrafa' ? String(product.id) : `${product.id}_${unit}`;
+                  const itemsInCart = cartItems.filter(id => id === cartKey).length;
+                  
+                  let displayPrice = product.preco || 0;
+                  let unitSuffix = 'garrafa';
+                  if (unit === 'c6') {
+                    displayPrice = displayPrice * 6;
+                    unitSuffix = 'caixa (6un)';
+                  } else if (unit === 'c12') {
+                    displayPrice = displayPrice * 12;
+                    unitSuffix = 'caixa (12un)';
+                  }
                   
                   // Parse multiple ratings (e.g. "RP100 | WS98")
                   const parsedRatings = [];
@@ -443,34 +459,112 @@ export default function AdegaClient() {
                           </span>
                         </div>
                         
-                        {itemsInCart > 0 ? (
-                          <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginTop: '15px', gap: '8px' }}>
-                            <button 
-                              onClick={() => removeFromCart(product.id)}
-                              className="btn btn-secondary" 
-                              style={{ width: '40px', padding: '10px', fontWeight: 'bold' }}
-                            >
-                              -
-                            </button>
-                            <div style={{ flexGrow: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: 'white' }}>
-                              {itemsInCart} no orçamento
-                            </div>
-                            <button 
-                              onClick={() => addToCart(product.id)}
-                              className="btn btn-secondary" 
-                              style={{ width: '40px', padding: '10px', fontWeight: 'bold' }}
-                            >
-                              +
-                            </button>
-                          </div>
-                        ) : (
+                        {/* Seletor Segmentado de Unidade (Garrafa / Caixa 6 / Caixa 12) */}
+                        <div style={{
+                          display: 'flex',
+                          gap: '2px',
+                          marginTop: '12px',
+                          width: '100%',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          padding: '2px',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid rgba(255,255,255,0.06)'
+                        }}>
                           <button 
-                            onClick={() => addToCart(product.id)}
-                            className="btn btn-primary product-action" 
+                            onClick={() => setSelectedUnits({...selectedUnits, [product.id]: 'garrafa'})}
+                            style={{
+                              flex: 1,
+                              fontSize: '9.5px',
+                              padding: '5px 2px',
+                              borderRadius: '4px',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              textTransform: 'uppercase',
+                              transition: 'all 0.2s',
+                              backgroundColor: (unit === 'garrafa') ? 'var(--primary)' : 'transparent',
+                              color: (unit === 'garrafa') ? 'white' : 'var(--text-muted)'
+                            }}
                           >
-                            Incluir
+                            Garrafa
                           </button>
+                          <button 
+                            onClick={() => setSelectedUnits({...selectedUnits, [product.id]: 'c6'})}
+                            style={{
+                              flex: 1,
+                              fontSize: '9.5px',
+                              padding: '5px 2px',
+                              borderRadius: '4px',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              textTransform: 'uppercase',
+                              transition: 'all 0.2s',
+                              backgroundColor: (unit === 'c6') ? 'var(--primary)' : 'transparent',
+                              color: (unit === 'c6') ? 'white' : 'var(--text-muted)'
+                            }}
+                          >
+                            Cx 6un
+                          </button>
+                          <button 
+                            onClick={() => setSelectedUnits({...selectedUnits, [product.id]: 'c12'})}
+                            style={{
+                              flex: 1,
+                              fontSize: '9.5px',
+                              padding: '5px 2px',
+                              borderRadius: '4px',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              textTransform: 'uppercase',
+                              transition: 'all 0.2s',
+                              backgroundColor: (unit === 'c12') ? 'var(--primary)' : 'transparent',
+                              color: (unit === 'c12') ? 'white' : 'var(--text-muted)'
+                            }}
+                          >
+                            Cx 12un
+                          </button>
+                        </div>
+
+                        {/* Informação do preço adaptado se for caixa */}
+                        {unit !== 'garrafa' && product.preco && (
+                          <div style={{ fontSize: '11px', color: 'var(--primary)', textAlign: 'right', marginTop: '6px', fontWeight: '500' }}>
+                            Preço {unitSuffix}: R$ {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
                         )}
+
+                        {/* Botões de Ação */}
+                        <div style={{ marginTop: '12px', width: '100%' }}>
+                          {itemsInCart > 0 ? (
+                            <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '8px' }}>
+                              <button 
+                                onClick={() => removeFromCart(product.id, unit)}
+                                className="btn btn-secondary" 
+                                style={{ width: '40px', padding: '10px', fontWeight: 'bold' }}
+                              >
+                                -
+                              </button>
+                              <div style={{ flexGrow: 1, textAlign: 'center', fontSize: '12px', fontWeight: 'bold', color: 'white' }}>
+                                {itemsInCart} {itemsInCart === 1 ? 'no orçamento' : 'no orçamento'}
+                              </div>
+                              <button 
+                                onClick={() => addToCart(product.id, unit)}
+                                className="btn btn-secondary" 
+                                style={{ width: '40px', padding: '10px', fontWeight: 'bold' }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={() => addToCart(product.id, unit)}
+                              className="btn btn-primary product-action" 
+                              style={{ width: '100%' }}
+                            >
+                              Incluir
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

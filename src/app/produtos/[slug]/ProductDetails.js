@@ -105,9 +105,12 @@ function DetailBlock({ title, content }) {
 }
 
 export default function ProductDetails({ product, relatedProducts }) {
+  const [selectedUnit, setSelectedUnit] = useState('garrafa');
   const [qty, setQty] = useState(1);
   const [cartItems, setCartItems] = useState([]);
   const [isInCart, setIsInCart] = useState(false);
+
+  const cartKey = selectedUnit === 'garrafa' ? String(product.id) : `${product.id}_${selectedUnit}`;
 
   useEffect(() => {
     const loadCart = () => {
@@ -116,7 +119,7 @@ export default function ProductDetails({ product, relatedProducts }) {
         const ids = cartStr.split(',').filter(id => id.trim() !== '');
         setCartItems(ids);
         
-        const count = ids.filter(id => id === String(product.id)).length;
+        const count = ids.filter(id => id === cartKey).length;
         if (count > 0) {
           setQty(count);
           setIsInCart(true);
@@ -139,18 +142,18 @@ export default function ProductDetails({ product, relatedProducts }) {
     return () => {
       window.removeEventListener('cart_changed', handleCartChange);
     };
-  }, [product.id]);
+  }, [product.id, cartKey]);
 
   const updateCartQuantity = (newQty) => {
     if (newQty < 1) {
-      const updated = cartItems.filter(id => id !== String(product.id));
+      const updated = cartItems.filter(id => id !== cartKey);
       localStorage.setItem('jet_engine_store_carrinho', updated.join(','));
       setIsInCart(false);
       setQty(1);
     } else {
-      const baseList = cartItems.filter(id => id !== String(product.id));
+      const baseList = cartItems.filter(id => id !== cartKey);
       for (let i = 0; i < newQty; i++) {
-        baseList.push(String(product.id));
+        baseList.push(cartKey);
       }
       localStorage.setItem('jet_engine_store_carrinho', baseList.join(','));
       setIsInCart(true);
@@ -233,6 +236,26 @@ export default function ProductDetails({ product, relatedProducts }) {
       } else if (product.unidade_peso?.toLowerCase() === 'kg') {
         precoPorKg = product.preco / pesoNum;
       }
+    }
+  }
+
+  // Calculate dynamic price based on selected variation (for wine)
+  let displayPrice = product.preco || 0;
+  let unitLabelText = 'Valor Unitário Estimado';
+  let totalLabelText = 'garrafa';
+  if (isWine && product.preco) {
+    if (selectedUnit === 'c6') {
+      displayPrice = product.preco * 6;
+      unitLabelText = 'Valor Estimado (Caixa com 6un)';
+      totalLabelText = 'caixa com 6 unidades';
+    } else if (selectedUnit === 'c12') {
+      displayPrice = product.preco * 12;
+      unitLabelText = 'Valor Estimado (Caixa com 12un)';
+      totalLabelText = 'caixa com 12 unidades';
+    } else {
+      displayPrice = product.preco;
+      unitLabelText = 'Valor Estimado (Garrafa)';
+      totalLabelText = 'garrafa individual';
     }
   }
 
@@ -435,13 +458,13 @@ export default function ProductDetails({ product, relatedProducts }) {
               marginBottom: '28px'
             }}>
               <span style={{ fontSize: '13px', textTransform: 'uppercase', display: 'block', color: 'var(--text-muted)', marginBottom: '5px' }}>
-                Valor Unitário Estimado
+                {isWine ? unitLabelText : 'Valor Unitário Estimado'}
               </span>
               <span style={{ fontSize: '32px', color: 'var(--primary)', fontWeight: 'bold' }}>
                 {product.preco ? (
                   <>
                     <span style={{ fontSize: '0.65em', marginRight: '4px', fontWeight: 'normal' }}>R$</span>
-                    {product.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </>
                 ) : (
                   'Preço sob consulta'
@@ -451,6 +474,11 @@ export default function ProductDetails({ product, relatedProducts }) {
                 <span style={{ fontSize: '14px', color: 'var(--text-muted)', marginLeft: '12px', fontWeight: '500' }}>
                   (R$ {precoPorKg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / kg)
                 </span>
+              )}
+              {isWine && product.preco && selectedUnit !== 'garrafa' && (
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Equivalente a R$ {product.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} por garrafa
+                </div>
               )}
               {product.peso && !isWine ? (
                 <div style={{ marginTop: '12px' }}>
@@ -471,6 +499,79 @@ export default function ProductDetails({ product, relatedProducts }) {
                 </span>
               ) : null}
             </div>
+
+            {/* Seletor Segmentado de Unidade (Somente para Adega/Vinhos) */}
+            {isWine && (
+              <div style={{ marginBottom: '28px' }}>
+                <span style={{ fontSize: '12px', textTransform: 'uppercase', display: 'block', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                  Unidade de Venda
+                </span>
+                <div style={{
+                  display: 'flex',
+                  gap: '3px',
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  padding: '3px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  maxWidth: '360px'
+                }}>
+                  <button 
+                    onClick={() => setSelectedUnit('garrafa')}
+                    style={{
+                      flex: 1,
+                      fontSize: '11px',
+                      padding: '7px 4px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      transition: 'all 0.2s',
+                      backgroundColor: (selectedUnit === 'garrafa') ? 'var(--primary)' : 'transparent',
+                      color: (selectedUnit === 'garrafa') ? 'white' : 'var(--text-muted)'
+                    }}
+                  >
+                    Garrafa
+                  </button>
+                  <button 
+                    onClick={() => setSelectedUnit('c6')}
+                    style={{
+                      flex: 1,
+                      fontSize: '11px',
+                      padding: '7px 4px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      transition: 'all 0.2s',
+                      backgroundColor: (selectedUnit === 'c6') ? 'var(--primary)' : 'transparent',
+                      color: (selectedUnit === 'c6') ? 'white' : 'var(--text-muted)'
+                    }}
+                  >
+                    Caixa 6un
+                  </button>
+                  <button 
+                    onClick={() => setSelectedUnit('c12')}
+                    style={{
+                      flex: 1,
+                      fontSize: '11px',
+                      padding: '7px 4px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      transition: 'all 0.2s',
+                      backgroundColor: (selectedUnit === 'c12') ? 'var(--primary)' : 'transparent',
+                      color: (selectedUnit === 'c12') ? 'white' : 'var(--text-muted)'
+                    }}
+                  >
+                    Caixa 12un
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Description (non-wine only) */}
             {!isWine && (
