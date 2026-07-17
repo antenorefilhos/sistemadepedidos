@@ -163,6 +163,8 @@ export default function StoreSettings({ password }) {
                 {saving ? <span className="loading loading-spinner loading-sm"></span> : 'Salvar Dados'}
               </button>
             </div>
-    </div>
-  );
-}
+          </div>
+        </div>
+      </div>
+    );
+  }
