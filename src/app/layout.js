@@ -61,14 +61,8 @@ export default function RootLayout({ children }) {
               (function() {
                 try {
                   if (window.location.pathname.startsWith('/admin')) {
-                    var theme = localStorage.getItem('admin_theme') || 'light';
-                    document.documentElement.setAttribute('data-theme', theme);
-                    var darkThemes = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'business', 'night', 'coffee', 'dim', 'sunset'];
-                    if (darkThemes.indexOf(theme) === -1) {
-                      document.documentElement.classList.add('light-theme');
-                    } else {
-                      document.documentElement.classList.remove('light-theme');
-                    }
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.classList.add('light-theme');
                   } else {
                     document.documentElement.setAttribute('data-theme', 'dark');
                     document.documentElement.classList.remove('light-theme');

@@ -2,18 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-const DAISYUI_THEMES = [
-  "light", "dark", "cupcake", "bumblebee", "emerald", "corporate", "synthwave", "retro", "cyberpunk", 
-  "valentine", "halloween", "garden", "forest", "aqua", "lofi", "pastel", "fantasy", "wireframe", 
-  "black", "luxury", "dracula", "cmyk", "autumn", "business", "acid", "lemonade", "night", "coffee", 
-  "winter", "dim", "nord", "sunset"
-];
-
 export default function StoreSettings({ password }) {
   const [settings, setSettings] = useState({
     company_data: { phone: '', address: '', hours: '', instagram: '' },
-    cardapio_images: { food: '', drinks: '' },
-    admin_theme: { theme: 'light' }
+    cardapio_images: { food: '', drinks: '' }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,14 +47,6 @@ export default function StoreSettings({ password }) {
       });
       if (res.ok) {
         alert('Configurações salvas com sucesso!');
-        if (key === 'admin_theme') {
-            const chosenTheme = settings.admin_theme?.theme || 'light';
-            document.documentElement.setAttribute('data-theme', chosenTheme);
-            try { 
-              localStorage.setItem('admin_theme', chosenTheme);
-              window.dispatchEvent(new Event('admin_theme_changed'));
-            } catch(e) {}
-        }
       } else {
         alert('Erro ao salvar. Verifique se você criou a tabela app_settings no banco.');
       }
@@ -221,49 +205,6 @@ export default function StoreSettings({ password }) {
         </div>
 
         <div className="flex flex-col gap-6">
-          {/* CARD: APARÊNCIA E TEMA */}
-          <div className="card bg-base-200/50 border border-base-300 shadow-xl">
-            <div className="card-body">
-              <h3 className="card-title text-primary border-b border-base-300 pb-2 mb-4">
-                <i className="fa-solid fa-palette"></i> Aparência do Painel
-              </h3>
-              
-              <div className="form-control w-full mb-6">
-                <label className="label">
-                  <span className="label-text font-bold">Tema do Painel</span>
-                  <span className="label-text-alt text-base-content/50">Afeta apenas a área administrativa</span>
-                </label>
-                <select 
-                  className="select select-bordered w-full bg-base-100 focus:border-primary"
-                  value={settings.admin_theme?.theme || 'light'}
-                  onChange={e => {
-                    const chosenTheme = e.target.value;
-                    setSettings({...settings, admin_theme: { theme: chosenTheme }});
-                    document.documentElement.setAttribute('data-theme', chosenTheme);
-                    try { 
-                      localStorage.setItem('admin_theme', chosenTheme);
-                      window.dispatchEvent(new Event('admin_theme_changed'));
-                    } catch(e) {}
-                  }}
-                >
-                  {DAISYUI_THEMES.map(t => (
-                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="card-actions justify-end">
-                <button 
-                  className="btn btn-primary w-full shadow-md" 
-                  onClick={() => handleSave('admin_theme')}
-                  disabled={saving}
-                >
-                  Aplicar Tema
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* CARD: CARDÁPIO DIGITAL */}
           <div className="card bg-base-200/50 border border-base-300 shadow-xl">
             <div className="card-body">
