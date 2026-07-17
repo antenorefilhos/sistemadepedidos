@@ -54,3 +54,14 @@ next-env.d.ts
 # PHP dependencies
 bio-links/vendor/
 /bio-links/vendor/
+
+# Local tests, notes and screenshots
+/IDEIAS.md
+IDEIAS.md
+*.png
+*.webp
+*.mp4
+*.gif
+/admin_*.png
+/storefront_*.png
+
