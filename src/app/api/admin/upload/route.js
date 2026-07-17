@@ -52,10 +52,13 @@ export async function POST(request) {
     // Conecta no Supabase
     const supabase = getSupabase();
     
+    // Convertemos o Buffer do Node para um Blob nativo para evitar erros de SharedArrayBuffer no Next.js do Vercel
+    const uploadBody = new Blob([optimizedBuffer], { type: contentType });
+
     // Upload do arquivo para o Supabase Storage (bucket 'imagens')
     const { data, error } = await supabase.storage
       .from('imagens')
-      .upload(filename, optimizedBuffer, {
+      .upload(filename, uploadBody, {
         contentType: contentType,
         cacheControl: '31536000, public', // Cache de 1 ano de alta performance
         upsert: true
