@@ -4,7 +4,16 @@ import { useState, useEffect } from 'react';
 
 export default function StoreSettings({ password }) {
   const [settings, setSettings] = useState({
-    company_data: { phone: '', address: '', hours: '', instagram: '' }
+    company_data: { 
+      phone: '', 
+      address: '', 
+      hours: '', 
+      instagram: '',
+      delivery_areas: '',
+      restaurant_phone: '',
+      restaurant_address: '',
+      restaurant_hours: ''
+    }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,103 +77,134 @@ export default function StoreSettings({ password }) {
       </div>
 
       {/* CARD: DADOS DA EMPRESA */}
-        <div className="card bg-base-200/50 border border-base-300 shadow-xl">
-          <div className="card-body">
-            <h3 className="card-title text-primary border-b border-base-300 pb-2 mb-4">
-              <i className="fa-solid fa-building"></i> Dados da Empresa
-            </h3>
-            
-            <div className="form-control w-full mb-3">
-              <label className="label"><span className="label-text font-bold">Endereço Principal</span></label>
-              <input 
-                type="text" 
-                className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                value={settings.company_data.address || ''}
-                onChange={e => setSettings({...settings, company_data: {...settings.company_data, address: e.target.value}})}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+      <div className="card bg-base-200/50 border border-base-300 shadow-xl">
+        <div className="card-body">
+          <h3 className="card-title text-primary border-b border-base-300 pb-2 mb-4">
+            <i className="fa-solid fa-sliders"></i> Dados da Empresa & Operações
+          </h3>
+          
+          {/* SEÇÃO: BOUTIQUE & ADEGA */}
+          <div className="mb-6">
+            <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+              <i className="fa-solid fa-store text-xs"></i> Boutique de Carnes & Adega (Loja)
+            </h4>
+            <div className="grid grid-cols-1 gap-4 bg-base-100/50 p-4 rounded-lg border border-base-300">
               <div className="form-control w-full">
-                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-primary">WhatsApp Loja/Boutique</span></label>
+                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Endereço da Boutique</span></label>
                 <input 
                   type="text" 
                   className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                  value={settings.company_data.phone || ''}
-                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, phone: e.target.value}})}
-                  placeholder="Ex: (24) 98865-0462"
+                  value={settings.company_data.address || ''}
+                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, address: e.target.value}})}
+                  placeholder="Ex: Estrada União Indústria, 12273 - Itaipava"
                 />
               </div>
-              <div className="form-control w-full">
-                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-primary">WhatsApp Restaurante</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                  value={settings.company_data.restaurant_phone || ''}
-                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_phone: e.target.value}})}
-                  placeholder="Ex: (24) 2222-1482"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">WhatsApp / Contato Boutique</span></label>
+                  <input 
+                    type="text" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    value={settings.company_data.phone || ''}
+                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, phone: e.target.value}})}
+                    placeholder="Ex: (24) 98865-0462"
+                  />
+                </div>
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Horário Boutique</span></label>
+                  <input 
+                    type="text" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    value={settings.company_data.hours || ''}
+                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, hours: e.target.value}})}
+                    placeholder="Ex: Seg a Sab: 09h às 19h"
+                  />
+                </div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-              <div className="form-control w-full">
-                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-primary">Horário Loja/Boutique</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                  value={settings.company_data.hours || ''}
-                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, hours: e.target.value}})}
-                  placeholder="Ter a Sáb: 9h às 21h..."
-                />
-              </div>
-              <div className="form-control w-full">
-                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-primary">Horário Restaurante</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                  value={settings.company_data.restaurant_hours || ''}
-                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_hours: e.target.value}})}
-                  placeholder="Qui a Sáb: 12h às 23h..."
-                />
-              </div>
-            </div>
-
-            <div className="form-control w-full mb-3">
-              <label className="label"><span className="label-text font-bold">Instagram (URL ou @)</span></label>
-              <input 
-                type="text" 
-                className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                value={settings.company_data.instagram || ''}
-                onChange={e => setSettings({...settings, company_data: {...settings.company_data, instagram: e.target.value}})}
-              />
-            </div>
-
-            <div className="form-control w-full mb-6">
-              <label className="label">
-                <span className="label-text font-bold">Cidades / Bairros Atendidos (Entrega)</span>
-                <span className="label-text-alt text-base-content/50">Separados por vírgula</span>
-              </label>
-              <input 
-                type="text" 
-                placeholder="Ex: Petrópolis, Itaipava, Nogueira, Corrêas..." 
-                className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                value={settings.company_data.delivery_areas || ''}
-                onChange={e => setSettings({...settings, company_data: {...settings.company_data, delivery_areas: e.target.value}})}
-              />
-            </div>
-
-            <div className="card-actions justify-end mt-auto">
-              <button 
-                className="btn btn-primary w-full shadow-md" 
-                onClick={() => handleSave('company_data')}
-                disabled={saving}
-              >
-                {saving ? <span className="loading loading-spinner loading-sm"></span> : 'Salvar Dados'}
-              </button>
             </div>
           </div>
+
+          {/* SEÇÃO: RESTAURANTE & BISTRÔ */}
+          <div className="mb-6">
+            <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+              <i className="fa-solid fa-utensils text-xs"></i> Restaurante & Bistrô
+            </h4>
+            <div className="grid grid-cols-1 gap-4 bg-base-100/50 p-4 rounded-lg border border-base-300">
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Endereço do Restaurante</span></label>
+                <input 
+                  type="text" 
+                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                  value={settings.company_data.restaurant_address || ''}
+                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_address: e.target.value}})}
+                  placeholder="Ex: Estrada União Indústria, 12273 - Itaipava"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">WhatsApp / Contato Restaurante</span></label>
+                  <input 
+                    type="text" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    value={settings.company_data.restaurant_phone || ''}
+                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_phone: e.target.value}})}
+                    placeholder="Ex: (24) 2222-1482"
+                  />
+                </div>
+                <div className="form-control w-full">
+                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Horário Restaurante</span></label>
+                  <input 
+                    type="text" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    value={settings.company_data.restaurant_hours || ''}
+                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_hours: e.target.value}})}
+                    placeholder="Ex: Qui a Sáb: 12h às 23h"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SEÇÃO: INFORMAÇÕES GERAIS */}
+          <div className="mb-6">
+            <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+              <i className="fa-solid fa-globe text-xs"></i> Informações Gerais & Rede Social
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-base-100/50 p-4 rounded-lg border border-base-300">
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Instagram</span></label>
+                <input 
+                  type="text" 
+                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                  value={settings.company_data.instagram || ''}
+                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, instagram: e.target.value}})}
+                  placeholder="Ex: @antenorefilhos"
+                />
+              </div>
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Cidades / Bairros Atendidos (Entrega)</span></label>
+                <input 
+                  type="text" 
+                  className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                  value={settings.company_data.delivery_areas || ''}
+                  onChange={e => setSettings({...settings, company_data: {...settings.company_data, delivery_areas: e.target.value}})}
+                  placeholder="Ex: Petrópolis, Itaipava, Nogueira, Corrêas..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="card-actions justify-end mt-4">
+            <button 
+              className="btn btn-primary w-full shadow-md" 
+              onClick={() => handleSave('company_data')}
+              disabled={saving}
+            >
+              {saving ? <span className="loading loading-spinner loading-sm"></span> : 'Salvar Dados'}
+            </button>
+          </div>
         </div>
+      </div>
       </div>
     );
   }
