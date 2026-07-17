@@ -21,7 +21,32 @@ export async function GET(request) {
     if (error) {
       if (error.code === '42P01') {
         return NextResponse.json([
-          { key: 'company_data', value: { phone: '24988650462', address: 'Estrada União Indústria, 12273 - Itaipava', hours: 'Seg a Sab: 09h às 19h', instagram: '@antenorefilhos', delivery_areas: 'Petrópolis, Itaipava, Nogueira, Corrêas', restaurant_phone: '2422221482', restaurant_address: 'Estrada União Indústria, 12273 - Itaipava', restaurant_hours: 'Qui a Sáb: 12h às 23h' } },
+          { key: 'company_data', value: { 
+            phone: '24988650462', 
+            address: 'Estrada União Indústria, 12273 - Itaipava', 
+            hours: {
+              seg: { open: '09:00', close: '19:00', closed: false },
+              ter: { open: '09:00', close: '19:00', closed: false },
+              qua: { open: '09:00', close: '19:00', closed: false },
+              qui: { open: '09:00', close: '19:00', closed: false },
+              sex: { open: '09:00', close: '19:00', closed: false },
+              sab: { open: '09:00', close: '19:00', closed: false },
+              dom: { open: '09:00', close: '19:00', closed: true }
+            }, 
+            instagram: '@antenorefilhos', 
+            delivery_areas: 'Petrópolis, Itaipava, Nogueira, Corrêas', 
+            restaurant_phone: '2422221482', 
+            restaurant_address: 'Estrada União Indústria, 12273 - Itaipava', 
+            restaurant_hours: {
+              seg: { open: '12:00', close: '23:00', closed: true },
+              ter: { open: '12:00', close: '23:00', closed: true },
+              qua: { open: '12:00', close: '23:00', closed: true },
+              qui: { open: '12:00', close: '23:00', closed: false },
+              sex: { open: '12:00', close: '23:00', closed: false },
+              sab: { open: '12:00', close: '23:00', closed: false },
+              dom: { open: '12:00', close: '18:00', closed: false }
+            } 
+          } },
           { key: 'cardapio_images', value: { food: '/images/alacarte.jpg', drinks: '/images/bebidas.jpg' } },
           { key: 'admin_theme', value: { theme: 'light' } }
         ]);

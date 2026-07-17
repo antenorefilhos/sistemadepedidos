@@ -2,17 +2,37 @@
 
 import { useState, useEffect } from 'react';
 
+const DAYS_OF_WEEK = [
+  { key: 'seg', label: 'Segunda-feira' },
+  { key: 'ter', label: 'Terça-feira' },
+  { key: 'qua', label: 'Quarta-feira' },
+  { key: 'qui', label: 'Quinta-feira' },
+  { key: 'sex', label: 'Sexta-feira' },
+  { key: 'sab', label: 'Sábado' },
+  { key: 'dom', label: 'Domingo' }
+];
+
+const defaultWeeklyHours = () => ({
+  seg: { open: '09:00', close: '19:00', closed: false },
+  ter: { open: '09:00', close: '19:00', closed: false },
+  qua: { open: '09:00', close: '19:00', closed: false },
+  qui: { open: '09:00', close: '19:00', closed: false },
+  sex: { open: '09:00', close: '19:00', closed: false },
+  sab: { open: '09:00', close: '19:00', closed: false },
+  dom: { open: '09:00', close: '19:00', closed: true }
+});
+
 export default function StoreSettings({ password }) {
   const [settings, setSettings] = useState({
     company_data: { 
       phone: '', 
       address: '', 
-      hours: '', 
+      hours: defaultWeeklyHours(), 
       instagram: '',
       delivery_areas: '',
       restaurant_phone: '',
       restaurant_address: '',
-      restaurant_hours: ''
+      restaurant_hours: defaultWeeklyHours()
     }
   });
   const [loading, setLoading] = useState(true);
@@ -34,6 +54,17 @@ export default function StoreSettings({ password }) {
             newSettings[item.key] = item.value;
           }
         });
+
+        // Garantir que os campos de horários sejam objetos semanais válidos
+        if (newSettings.company_data) {
+          if (typeof newSettings.company_data.hours !== 'object' || newSettings.company_data.hours === null || !newSettings.company_data.hours.seg) {
+            newSettings.company_data.hours = defaultWeeklyHours();
+          }
+          if (typeof newSettings.company_data.restaurant_hours !== 'object' || newSettings.company_data.restaurant_hours === null || !newSettings.company_data.restaurant_hours.seg) {
+            newSettings.company_data.restaurant_hours = defaultWeeklyHours();
+          }
+        }
+
         setSettings(newSettings);
       }
     } catch (err) {
@@ -59,10 +90,85 @@ export default function StoreSettings({ password }) {
       console.error(err);
       alert('Erro de conexão.');
     }
-    setSaving(false);
   };
 
-
+  const renderWeeklyHoursForm = (type) => {
+    const weeklyData = settings.company_data[type] || defaultWeeklyHours();
+    
+    return (
+      <div className="flex flex-col gap-2 mt-2 bg-base-200/30 p-4 rounded-lg border border-base-300 w-full">
+        <label className="label-text font-bold text-xs uppercase tracking-wider text-base-content/60 mb-2">Horários de Funcionamento por Dia</label>
+        {DAYS_OF_WEEK.map(day => {
+          const dayInfo = weeklyData[day.key] || { open: '09:00', close: '19:00', closed: false };
+          
+          return (
+            <div key={day.key} className="flex items-center justify-between gap-4 py-2 border-b border-base-300/10 last:border-b-0">
+              <span className="text-xs font-bold text-base-content/80 w-24 md:w-28">{day.label}</span>
+              
+              <div className="flex items-center gap-4">
+                <label className="label cursor-pointer p-0 gap-1.5">
+                  <input 
+                    type="checkbox" 
+                    className="checkbox checkbox-xs checkbox-primary" 
+                    checked={dayInfo.closed}
+                    onChange={(e) => {
+                      const updated = {
+                        ...weeklyData,
+                        [day.key]: { ...dayInfo, closed: e.target.checked }
+                      };
+                      setSettings({
+                        ...settings,
+                        company_data: { ...settings.company_data, [type]: updated }
+                      });
+                    }}
+                  />
+                  <span className="label-text text-[11px] font-medium">Fechado</span>
+                </label>
+                
+                <div className="flex items-center gap-1">
+                  <input 
+                    type="text" 
+                    placeholder="09:00" 
+                    className="input input-bordered input-xs w-16 text-center bg-base-100 focus:border-primary disabled:opacity-40"
+                    value={dayInfo.open || ''}
+                    disabled={dayInfo.closed}
+                    onChange={(e) => {
+                      const updated = {
+                        ...weeklyData,
+                        [day.key]: { ...dayInfo, open: e.target.value }
+                      };
+                      setSettings({
+                        ...settings,
+                        company_data: { ...settings.company_data, [type]: updated }
+                      });
+                    }}
+                  />
+                  <span className="text-[10px] text-base-content/40">às</span>
+                  <input 
+                    type="text" 
+                    placeholder="19:00" 
+                    className="input input-bordered input-xs w-16 text-center bg-base-100 focus:border-primary disabled:opacity-40"
+                    value={dayInfo.close || ''}
+                    disabled={dayInfo.closed}
+                    onChange={(e) => {
+                      const updated = {
+                        ...weeklyData,
+                        [day.key]: { ...dayInfo, close: e.target.value }
+                      };
+                      setSettings({
+                        ...settings,
+                        company_data: { ...settings.company_data, [type]: updated }
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (loading) return <div className="p-10 flex justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
 
@@ -104,21 +210,14 @@ export default function StoreSettings({ password }) {
                   <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">WhatsApp / Contato Boutique</span></label>
                   <input 
                     type="text" 
-                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary mb-3" 
                     value={settings.company_data.phone || ''}
                     onChange={e => setSettings({...settings, company_data: {...settings.company_data, phone: e.target.value}})}
                     placeholder="Ex: (24) 98865-0462"
                   />
                 </div>
                 <div className="form-control w-full">
-                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Horário Boutique</span></label>
-                  <input 
-                    type="text" 
-                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                    value={settings.company_data.hours || ''}
-                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, hours: e.target.value}})}
-                    placeholder="Ex: Seg a Sab: 09h às 19h"
-                  />
+                  {renderWeeklyHoursForm('hours')}
                 </div>
               </div>
             </div>
@@ -145,21 +244,14 @@ export default function StoreSettings({ password }) {
                   <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">WhatsApp / Contato Restaurante</span></label>
                   <input 
                     type="text" 
-                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
+                    className="input input-bordered w-full bg-base-100 focus:border-primary mb-3" 
                     value={settings.company_data.restaurant_phone || ''}
                     onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_phone: e.target.value}})}
                     placeholder="Ex: (24) 2222-1482"
                   />
                 </div>
                 <div className="form-control w-full">
-                  <label className="label"><span className="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Horário Restaurante</span></label>
-                  <input 
-                    type="text" 
-                    className="input input-bordered w-full bg-base-100 focus:border-primary" 
-                    value={settings.company_data.restaurant_hours || ''}
-                    onChange={e => setSettings({...settings, company_data: {...settings.company_data, restaurant_hours: e.target.value}})}
-                    placeholder="Ex: Qui a Sáb: 12h às 23h"
-                  />
+                  {renderWeeklyHoursForm('restaurant_hours')}
                 </div>
               </div>
             </div>
