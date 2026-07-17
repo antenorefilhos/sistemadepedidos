@@ -57,3 +57,9 @@ D:\NOVA ORGANIZAÇÃO\PROJETOS\Obsidian\Antenor e Filhos\Sistema de Pedidos (ant
   chore: Outros
 
 <!-- END:commit-rules -->
+
+<!-- BEGIN:versioning-rules -->
+- Documente cada melhoria, release e incremento de versão no arquivo `versionamento.md` na vault do Obsidian.
+- Correlacione as versões semânticas (ex: v1.5.0) com a lista de commits Git correspondentes e melhorias explicadas no `walkthrough.md`.
+- Mantenha o histórico estruturado em ordem cronológica reversa (a versão mais recente sempre no topo).
+<!-- END:versioning-rules -->
