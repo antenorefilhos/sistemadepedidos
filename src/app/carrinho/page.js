@@ -108,6 +108,8 @@ export default function CartPage() {
         setProducts(products.filter(p => String(p.id) !== String(realProductId)));
       }
     }
+  };
+
   // Compute cart items details with variations
   const cartItemsDetails = Object.keys(cartQuantities).map(cartKey => {
     const [realId, unitType] = cartKey.split('_');
