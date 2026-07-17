@@ -703,7 +703,7 @@ export default function AdminDashboard() {
 
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-base-200 gap-4" style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
+      <div className="w-full flex-1 min-h-[calc(100vh-3rem)] flex flex-col items-center justify-center p-4 bg-base-200 gap-4" style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
         <span className="loading loading-spinner loading-lg text-primary"></span>
         <span className="text-xs text-base-content/50 uppercase tracking-wider font-bold">Verificando credenciais...</span>
       </div>
@@ -712,7 +712,7 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-base-200">
+      <div className="w-full flex-1 min-h-[calc(100vh-3rem)] flex items-center justify-center p-4 bg-base-200 animate-[fadeIn_0.3s_ease]">
         <div className="card w-full max-w-sm bg-base-100 shadow-xl border border-primary/20">
           <form onSubmit={handleLogin} className="card-body">
             <h2 className="card-title justify-center text-primary font-bold mb-4 text-lg">Painel Gerencial</h2>
