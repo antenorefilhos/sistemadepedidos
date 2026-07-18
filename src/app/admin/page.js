@@ -10,6 +10,7 @@ import RecipeEditor from './components/RecipeEditor';
 import MenuRestaurantEditor from './components/MenuRestaurantEditor';
 import BiolinksManager from './components/BiolinksManager';
 import ReviewsModerator from './components/ReviewsModerator';
+import CustomersManager from './components/CustomersManager';
 import Fuse from 'fuse.js';
 
 export default function AdminDashboard() {
@@ -25,8 +26,32 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState([]);
   
   const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'products', 'categories', 'sellers', 'stats'
+  const [dbLatency, setDbLatency] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  useEffect(() => {
+    const measureLatency = async () => {
+      const start = performance.now();
+      try {
+        // Fast settings query to measure database latency
+        const res = await fetch(`/api/admin/settings?auth=${encodeURIComponent(password)}`);
+        if (res.ok) {
+          const end = performance.now();
+          setDbLatency(Math.round(end - start));
+        } else {
+          setDbLatency(-1); // offline
+        }
+      } catch (err) {
+        setDbLatency(-1);
+      }
+    };
+    if (isAuthenticated) {
+      measureLatency();
+      const interval = setInterval(measureLatency, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, password]);
   
   // Pagination/Search/Filters for products and orders
   const [prodSearch, setProdSearch] = useState('');
@@ -844,6 +869,11 @@ export default function AdminDashboard() {
             </button>
           </li>
           <li>
+            <button onClick={() => setActiveTab('customers')} className={activeTab === 'customers' ? 'active' : ''}>
+              <i className="fa-solid fa-address-book w-5 text-center"></i> Clientes
+            </button>
+          </li>
+          <li>
             <button onClick={() => setActiveTab('stats')} className={activeTab === 'stats' ? 'active' : ''}>
               <i className="fa-solid fa-brain w-5 text-center"></i> Inteligência AI
             </button>
@@ -905,6 +935,14 @@ export default function AdminDashboard() {
         </ul>
 
         <div className="p-4 border-t border-base-200 mt-auto bg-base-300">
+          <div className="text-[10px] text-base-content/65 uppercase tracking-wider mb-2 font-bold text-center">Status do Sistema</div>
+          <div className="p-2.5 bg-base-200 rounded-lg flex items-center justify-between text-xs border border-base-100 mb-3">
+            <span className="flex items-center gap-1.5 font-bold text-base-content/75">
+              <span className={`w-2 h-2 rounded-full ${dbLatency !== -1 ? 'bg-success' : 'bg-error'} ${dbLatency !== -1 && dbLatency !== null ? 'animate-pulse' : ''}`}></span>
+              Supabase DB
+            </span>
+            <span className="font-mono opacity-80 text-[10px]">{dbLatency !== null ? (dbLatency !== -1 ? `${dbLatency}ms` : 'offline') : 'lendo...'}</span>
+          </div>
           <div className="text-xs text-base-content/70 mb-3 text-center">
             Usuário: <span className="font-bold">{role === 'admin' ? 'Administrador' : 'Gerente'}</span>
           </div>
@@ -1490,6 +1528,11 @@ export default function AdminDashboard() {
             {/* TAB 7: STORE SETTINGS */}
             {activeTab === 'settings' && (
               <StoreSettings password={password} />
+            )}
+
+            {/* TAB 7.5: CUSTOMERS MANAGER */}
+            {activeTab === 'customers' && (
+              <CustomersManager password={password} />
             )}
 
             {/* TAB 8: RECIPES */}

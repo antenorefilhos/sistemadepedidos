@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import Fuse from 'fuse.js';
 
 // Carregar WYSIWYG dinamicamente para não quebrar SSR (apesar do Admin já ser client-side)
 const Editor = dynamic(() => import('react-simple-wysiwyg').then(mod => mod.DefaultEditor), { ssr: false });
@@ -27,6 +28,18 @@ export default function RecipeEditor({ password, products }) {
   const [saving, setSaving] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const fileInputRef = useRef(null);
+
+  // Fuzzy Search for product relation
+  const getFilteredProducts = () => {
+    if (!products) return [];
+    if (!productSearch.trim()) return products;
+    const fuse = new Fuse(products, {
+      keys: ['title'],
+      threshold: 0.4
+    });
+    return fuse.search(productSearch).map(res => res.item);
+  };
+  const filteredProducts = getFilteredProducts();
 
   useEffect(() => {
     fetchRecipes();
@@ -354,7 +367,7 @@ export default function RecipeEditor({ password, products }) {
                     />
                   </div>
                   <div className="bg-base-200 border border-base-300 rounded-lg p-2 max-h-60 overflow-y-auto flex flex-col gap-1">
-                    {products?.filter(p => p.title.toLowerCase().includes(productSearch.toLowerCase())).map(prod => {
+                    {filteredProducts.map(prod => {
                       const idStr = String(prod.id);
                       const isSelected = form.related_products.includes(idStr);
                       return (
@@ -369,7 +382,7 @@ export default function RecipeEditor({ password, products }) {
                         </label>
                       );
                     })}
-                    {products?.filter(p => p.title.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                    {filteredProducts.length === 0 && (
                       <div className="text-center p-4 text-xs text-base-content/50 italic">Nenhum produto encontrado.</div>
                     )}
                   </div>
