@@ -18,6 +18,7 @@ export function generateEmailHtml(order, sellerText) {
         <tr><td style="font-weight: bold;">WhatsApp:</td><td>${order.customer_whatsapp}</td></tr>
         <tr><td style="font-weight: bold;">Email:</td><td>${order.customer_email || 'Não informado'}</td></tr>
         <tr><td style="font-weight: bold;">Endereço:</td><td>${order.customer_address || 'Não informado'}</td></tr>
+        ${order.delivery_date ? `<tr><td style="font-weight: bold;">Entrega Programada:</td><td>${order.delivery_date.split('-').reverse().join('/')} (${order.delivery_period || 'Qualquer Horário'})</td></tr>` : ''}
         <tr><td style="font-weight: bold;">Observações:</td><td>${order.notes || 'Nenhuma'}</td></tr>
         ${sellerText}
       </table>

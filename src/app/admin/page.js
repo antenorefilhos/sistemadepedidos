@@ -9,6 +9,7 @@ import StoreSettings from './components/StoreSettings';
 import RecipeEditor from './components/RecipeEditor';
 import MenuRestaurantEditor from './components/MenuRestaurantEditor';
 import BiolinksManager from './components/BiolinksManager';
+import ReviewsModerator from './components/ReviewsModerator';
 import Fuse from 'fuse.js';
 
 export default function AdminDashboard() {
@@ -36,6 +37,8 @@ export default function AdminDashboard() {
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('');
   const [orderSellerFilter, setOrderSellerFilter] = useState('');
+  const [orderStartDate, setOrderStartDate] = useState('');
+  const [orderEndDate, setOrderEndDate] = useState('');
 
   // New/Editing Product Form Modal State
   const [showProductModal, setShowProductModal] = useState(false);
@@ -123,10 +126,61 @@ export default function AdminDashboard() {
     }
   }, [activeTab]);
 
+  const playNotificationSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.warn('AudioContext blocked or unsupported:', e);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchData();
     }
+  }, [isAuthenticated, password]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Polling silencioso a cada 30 segundos para novos pedidos de orçamento com alerta sonoro
+    const interval = setInterval(async () => {
+      try {
+        const ordersRes = await fetch(`/api/admin/orders?auth=${encodeURIComponent(password)}`);
+        if (ordersRes.ok) {
+          const latestOrders = await ordersRes.json();
+          
+          setOrders(prevOrders => {
+            if (prevOrders.length > 0 && latestOrders.length > 0) {
+              const prevIds = new Set(prevOrders.map(o => o.id));
+              const hasNew = latestOrders.some(o => !prevIds.has(o.id));
+              if (hasNew) {
+                playNotificationSound();
+              }
+            }
+            return latestOrders;
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to poll latest orders:', err);
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [isAuthenticated, password]);
 
   const fetchData = async () => {
@@ -240,6 +294,7 @@ export default function AdminDashboard() {
           <p><b>Cliente:</b> ${order.customer_name}</p>
           <p><b>WhatsApp:</b> ${order.customer_whatsapp}</p>
           ${order.customer_address ? `<p><b>Entrega:</b> ${order.customer_address}</p>` : ''}
+          ${order.delivery_date ? `<p><b>Agenda Entrega:</b> ${order.delivery_date.split('-').reverse().join('/')} (${order.delivery_period || 'Qualquer Horário'})</p>` : ''}
           <p><b>Atendente:</b> ${order.seller_name || 'Site Direto'}</p>
           <div class="divider"></div>
           <table>
@@ -266,9 +321,12 @@ export default function AdminDashboard() {
 
   // CSV Export for Orders
   const exportToCSV = () => {
-    if (orders.length === 0) return;
+    if (filteredOrders.length === 0) {
+      alert('Não há orçamentos filtrados para exportar.');
+      return;
+    }
     const headers = ['Pedido ID', 'Data', 'Cliente', 'WhatsApp', 'Email', 'Endereco de Entrega', 'Vendedor', 'Status', 'Itens Requisitados', 'Observacoes'];
-    const rows = orders.map(o => {
+    const rows = filteredOrders.map(o => {
       const itemStrings = o.items.map(i => `${i.quantity}x ${i.product_title} [EAN:${i.sku || ''}]`).join(' | ');
       return [
         o.id,
@@ -556,7 +614,7 @@ export default function AdminDashboard() {
     return d.toLocaleString('pt-BR');
   };
 
-  // Filtering Orders (Fuzzy Search)
+  // Filtering Orders (Fuzzy Search & Dates)
   const filteredOrders = (() => {
     let result = orders;
     
@@ -572,6 +630,20 @@ export default function AdminDashboard() {
       } else {
         result = result.filter(o => o.seller_id === Number(orderSellerFilter));
       }
+    }
+
+    // Filtro de Data Inicial
+    if (orderStartDate !== '') {
+      const start = new Date(orderStartDate);
+      start.setHours(0, 0, 0, 0);
+      result = result.filter(o => new Date(o.created_at) >= start);
+    }
+
+    // Filtro de Data Final
+    if (orderEndDate !== '') {
+      const end = new Date(orderEndDate);
+      end.setHours(23, 59, 59, 999);
+      result = result.filter(o => new Date(o.created_at) <= end);
     }
     
     // Filtro de Busca Fuzzy
@@ -804,6 +876,11 @@ export default function AdminDashboard() {
             </button>
           </li>
           <li>
+            <button onClick={() => setActiveTab('reviews')} className={activeTab === 'reviews' ? 'active' : ''}>
+              <i className="fa-solid fa-star w-5 text-center"></i> Avaliações
+            </button>
+          </li>
+          <li>
             <button onClick={() => setActiveTab('settings')} className={activeTab === 'settings' ? 'active' : ''}>
               <i className="fa-solid fa-gear w-5 text-center"></i> Configurações
             </button>
@@ -946,39 +1023,68 @@ export default function AdminDashboard() {
                     <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/80 mb-3 flex items-center gap-2">
                       <i className="fa-solid fa-magnifying-glass text-primary"></i> Filtros de Pesquisa
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <input 
-                        type="text" 
-                        placeholder="Pesquisar por cliente ou ID..." 
-                        className="input input-bordered w-full"
-                        value={orderSearch}
-                        onChange={(e) => setOrderSearch(e.target.value)}
-                      />
-                      <select
-                        className="select select-bordered w-full"
-                        value={orderStatusFilter}
-                        onChange={(e) => setOrderStatusFilter(e.target.value)}
-                      >
-                        <option value="">Todos os Status</option>
-                        <option value="processing">🟡 Pendente</option>
-                        <option value="viewed">🔵 Visualizado</option>
-                        <option value="completed">🟢 Finalizado</option>
-                        <option value="cancelled">🔴 Cancelado</option>
-                      </select>
-                      <select
-                        className="select select-bordered w-full"
-                        value={orderSellerFilter}
-                        onChange={(e) => setOrderSellerFilter(e.target.value)}
-                      >
-                        <option value="">Filtrar por Vendedor</option>
-                        <option value="direto">Site Direto</option>
-                        {sellers.map(s => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </select>
-                      <button onClick={exportToCSV} className="btn btn-outline btn-primary w-full">
-                        <i className="fa-solid fa-file-csv mr-2"></i> Exportar CSV
-                      </button>
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                      <div className="form-control w-full">
+                        <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/60">Pesquisa</span></label>
+                        <input 
+                          type="text" 
+                          placeholder="Cliente ou ID..." 
+                          className="input input-bordered w-full"
+                          value={orderSearch}
+                          onChange={(e) => setOrderSearch(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-control w-full">
+                        <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/60">Status</span></label>
+                        <select
+                          className="select select-bordered w-full"
+                          value={orderStatusFilter}
+                          onChange={(e) => setOrderStatusFilter(e.target.value)}
+                        >
+                          <option value="">Todos os Status</option>
+                          <option value="processing">🟡 Pendente</option>
+                          <option value="viewed">🔵 Visualizado</option>
+                          <option value="completed">🟢 Finalizado</option>
+                          <option value="cancelled">🔴 Cancelado</option>
+                        </select>
+                      </div>
+                      <div className="form-control w-full">
+                        <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/60">Vendedor</span></label>
+                        <select
+                          className="select select-bordered w-full"
+                          value={orderSellerFilter}
+                          onChange={(e) => setOrderSellerFilter(e.target.value)}
+                        >
+                          <option value="">Filtrar por Vendedor</option>
+                          <option value="direto">Site Direto</option>
+                          {sellers.map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-control w-full">
+                        <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/60">Data Inicial</span></label>
+                        <input 
+                          type="date"
+                          className="input input-bordered w-full"
+                          value={orderStartDate}
+                          onChange={(e) => setOrderStartDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-control w-full">
+                        <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/60">Data Final</span></label>
+                        <input 
+                          type="date"
+                          className="input input-bordered w-full"
+                          value={orderEndDate}
+                          onChange={(e) => setOrderEndDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-control w-full">
+                        <button onClick={exportToCSV} className="btn btn-outline btn-primary w-full gap-2 h-[48px] min-h-[48px]">
+                          <i className="fa-solid fa-file-csv text-lg"></i> Exportar CSV
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1024,24 +1130,22 @@ export default function AdminDashboard() {
                             </td>
                             <td>{order.seller_name || <span className="text-base-content/50 italic">Site Direto</span>}</td>
                             <td>
-                              <div className={`badge font-bold text-xs uppercase ${
-                                order.status === 'processing' ? 'badge-warning bg-warning/20 border-warning text-warning-content' : 
-                                order.status === 'completed' ? 'badge-success bg-success/20 border-success text-success-content' : 
-                                order.status === 'cancelled' ? 'badge-error bg-error/20 border-error text-error-content' : 
-                                'badge-info bg-info/20 border-info text-info-content'
-                              } gap-1 p-3 min-w-[125px] justify-center`}>
-                                <select 
-                                  value={order.status}
-                                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                  className="bg-transparent border-none text-xs font-bold text-inherit focus:outline-none cursor-pointer text-center select-xs appearance-none py-0 pr-0"
-                                  style={{ textAlignLast: 'center' }}
-                                >
-                                  <option value="processing" className="bg-base-100 text-warning-content">Pendente</option>
-                                  <option value="viewed" className="bg-base-100 text-info-content">Visualizado</option>
-                                  <option value="completed" className="bg-base-100 text-success-content">Finalizado</option>
-                                  <option value="cancelled" className="bg-base-100 text-error-content">Cancelado</option>
-                                </select>
-                              </div>
+                              <select 
+                                value={order.status}
+                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                className={`select select-xs font-bold uppercase text-[10px] tracking-wider text-center ${
+                                  order.status === 'processing' ? 'bg-warning/20 border-warning/30 text-warning hover:bg-warning/35' : 
+                                  order.status === 'completed' ? 'bg-success/20 border-success/30 text-success hover:bg-success/35' : 
+                                  order.status === 'cancelled' ? 'bg-error/20 border-error/30 text-error hover:bg-error/35' : 
+                                  'bg-info/20 border-info/30 text-info hover:bg-info/35'
+                                } focus:outline-none focus:ring-0 focus:border-current cursor-pointer`}
+                                style={{ textAlignLast: 'center', minWidth: '120px' }}
+                              >
+                                <option value="processing" className="bg-base-100 text-warning font-bold">Pendente</option>
+                                <option value="viewed" className="bg-base-100 text-info font-bold">Visualizado</option>
+                                <option value="completed" className="bg-base-100 text-success font-bold">Finalizado</option>
+                                <option value="cancelled" className="bg-base-100 text-error font-bold">Cancelado</option>
+                              </select>
                             </td>
                             <td>
                               <div className="flex gap-2">
@@ -1402,6 +1506,11 @@ export default function AdminDashboard() {
             {activeTab === 'biolinks' && (
               <BiolinksManager password={password} />
             )}
+
+            {/* TAB 11: REVIEWS MODERATION */}
+            {activeTab === 'reviews' && (
+              <ReviewsModerator password={password} />
+            )}
           </div>
         )}
       </main>
@@ -1533,6 +1642,15 @@ export default function AdminDashboard() {
                       <div className="bg-base-200 p-4 rounded-box border border-base-300 md:col-span-2">
                         <div className="text-[10px] text-base-content/60 mb-1 font-bold">ENDEREÇO DE ENTREGA</div>
                         <div className="text-sm text-base-content">{order.customer_address}</div>
+                      </div>
+                    )}
+                    {order.delivery_date && (
+                      <div className="bg-base-200 p-4 rounded-box border border-base-300 md:col-span-2">
+                        <div className="text-[10px] text-base-content/60 mb-1 font-bold">AGENDA DE ENTREGA</div>
+                        <div className="text-sm font-bold text-primary flex items-center gap-2">
+                          <i className="fa-solid fa-calendar-days"></i>
+                          {order.delivery_date.split('-').reverse().join('/')} - Período: {order.delivery_period || 'Qualquer Horário'}
+                        </div>
                       </div>
                     )}
                   </div>

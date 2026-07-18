@@ -109,6 +109,51 @@ export default function ProductDetails({ product, relatedProducts }) {
   const [qty, setQty] = useState(1);
   const [cartItems, setCartItems] = useState([]);
   const [isInCart, setIsInCart] = useState(false);
+  
+  // Reviews States
+  const [reviews, setReviews] = useState([]);
+  const [reviewForm, setReviewForm] = useState({ customer_name: '', rating: 5, comment: '' });
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    if (product?.id) {
+      setReviewsLoading(true);
+      fetch(`/api/reviews?product_id=${product.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setReviews(data);
+        })
+        .catch(err => console.error(err))
+        .finally(() => setReviewsLoading(false));
+    }
+  }, [product?.id]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.customer_name || !reviewForm.rating) return;
+    setSubmittingReview(true);
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: product.id,
+          customer_name: reviewForm.customer_name,
+          rating: Number(reviewForm.rating),
+          comment: reviewForm.comment
+        })
+      });
+      if (res.ok) {
+        setReviewSubmitted(true);
+        setReviewForm({ customer_name: '', rating: 5, comment: '' });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setSubmittingReview(false);
+  };
 
   const cartKey = selectedUnit === 'garrafa' ? String(product.id) : `${product.id}_${selectedUnit}`;
 
@@ -818,6 +863,120 @@ export default function ProductDetails({ product, relatedProducts }) {
 
           </div>
         )}
+
+        {/* Seção de Avaliações */}
+        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '50px', marginTop: '40px', marginBottom: '40px' }}>
+          <h2 style={{ fontSize: '24px', color: 'var(--text-primary)', marginBottom: '30px', fontFamily: 'var(--font-serif)' }}>
+            Avaliações dos Clientes
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            {/* Listagem de avaliações */}
+            <div className="md:col-span-2">
+              {reviewsLoading ? (
+                <p className="text-base-content/60 italic">Carregando avaliações...</p>
+              ) : reviews.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '14px' }}>Este produto ainda não possui avaliações. Seja o primeiro a avaliar!</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {reviews.map(r => (
+                    <div key={r.id} className="glass" style={{ padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 'bold', color: 'white', fontSize: '14px' }}>{r.customer_name}</span>
+                        <div style={{ display: 'flex', gap: '2px', color: '#fbbf24' }}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <i key={i} className={i < r.rating ? "fa-solid fa-star text-xs" : "fa-regular fa-star text-xs"}></i>
+                          ))}
+                        </div>
+                      </div>
+                      {r.comment && <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>{r.comment}</p>}
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', marginTop: '10px' }}>
+                        {new Date(r.created_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Formulário de envio */}
+            <div>
+              <div className="glass" style={{ padding: '25px', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <h3 style={{ fontSize: '16px', color: 'white', marginBottom: '20px', fontWeight: 'bold' }}>Avaliar este produto</h3>
+                
+                {reviewSubmitted ? (
+                  <div className="alert alert-success text-xs font-semibold" style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#4ade80', padding: '15px', borderRadius: 'var(--radius-md)', display: 'flex', gap: '10px', alignItems: 'start' }}>
+                    <i className="fa-solid fa-circle-check text-lg" style={{ marginTop: '2px' }}></i>
+                    <div>
+                      <h4 className="font-bold">Obrigado!</h4>
+                      <p className="text-[11px] opacity-80 mt-1" style={{ lineHeight: '1.4' }}>Sua avaliação foi enviada com sucesso e está pendente de aprovação pela equipe do Antenor & Filhos.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Seu Nome</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="Ex: Carlos Silva" 
+                        className="form-control"
+                        style={{ height: '40px', fontSize: '13px' }}
+                        value={reviewForm.customer_name}
+                        onChange={e => setReviewForm({ ...reviewForm, customer_name: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Classificação</label>
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                        {Array.from({ length: 5 }).map((_, idx) => {
+                          const val = idx + 1;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setReviewForm({ ...reviewForm, rating: val })}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            >
+                              <i 
+                                className={val <= reviewForm.rating ? "fa-solid fa-star" : "fa-regular fa-star"} 
+                                style={{ fontSize: '20px', color: val <= reviewForm.rating ? '#fbbf24' : 'var(--text-muted)' }}
+                              ></i>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Comentário (Opcional)</label>
+                      <textarea 
+                        rows="3" 
+                        placeholder="O que achou deste corte ou rótulo?" 
+                        className="form-control"
+                        style={{ fontSize: '13px', padding: '10px' }}
+                        value={reviewForm.comment}
+                        onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      disabled={submittingReview} 
+                      className="btn btn-primary w-full"
+                      style={{ height: '42px', fontSize: '13px', fontWeight: 'bold' }}
+                    >
+                      {submittingReview ? 'Enviando...' : 'Enviar Avaliação'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
 
         {/* Related Products Showcase */}
         {relatedProducts.length > 0 && (

@@ -31,6 +31,8 @@ export async function POST(request) {
       notes,
       seller_id,
       fingerprint,
+      delivery_date,
+      delivery_period,
       items
     } = body;
 
@@ -53,7 +55,9 @@ export async function POST(request) {
         customer_address: customer_address || null,
         notes: notes || null,
         seller_id: seller_id || null,
-        fingerprint: fingerprint || null
+        fingerprint: fingerprint || null,
+        delivery_date: delivery_date || null,
+        delivery_period: delivery_period || null
       })
       .select('id')
       .single();
@@ -99,6 +103,8 @@ export async function POST(request) {
         customer_address,
         notes,
         seller,
+        delivery_date,
+        delivery_period,
         items
       }).catch(err => console.error('Error sending order email:', err));
     }

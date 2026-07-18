@@ -23,7 +23,9 @@ export default function CartPage() {
     address: '',
     neighborhood: '',
     city: '',
-    notes: ''
+    notes: '',
+    delivery_date: '',
+    delivery_period: ''
   });
 
   useEffect(() => {
@@ -153,6 +155,14 @@ export default function CartPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'delivery_date' && value) {
+      const day = new Date(value + 'T00:00:00').getDay();
+      if (day === 0) {
+        alert('Não realizamos entregas aos domingos. Por favor, escolha outro dia útil ou sábado.');
+        setFormData({ ...formData, [name]: '' });
+        return;
+      }
+    }
     setFormData({ ...formData, [name]: value });
   };
 
@@ -194,6 +204,8 @@ export default function CartPage() {
       notes: formData.notes,
       seller_id: activeSeller ? activeSeller.id : null,
       fingerprint: getFingerprint(),
+      delivery_date: formData.delivery_date || null,
+      delivery_period: formData.delivery_period || null,
       items: orderItems
     };
 
@@ -218,6 +230,11 @@ export default function CartPage() {
         message += `*WhatsApp:* ${formData.whatsapp}\n`;
         if (formData.email) message += `*Email:* ${formData.email}\n`;
         if (finalAddress) message += `*Entregar em:* ${finalAddress}\n`;
+        if (formData.delivery_date) {
+          const dateFormatted = formData.delivery_date.split('-').reverse().join('/');
+          const periodText = formData.delivery_period ? ` (${formData.delivery_period})` : '';
+          message += `*Entrega Programada:* ${dateFormatted}${periodText}\n`;
+        }
         if (formData.notes) message += `*Observações:* ${formData.notes}\n`;
         
         if (activeSeller) {
@@ -458,6 +475,34 @@ export default function CartPage() {
                       value={formData.city || ''}
                       onChange={handleInputChange}
                     />
+                  </div>
+                </div>
+
+
+                <div className="grid grid-cols-2 gap-4" style={{ marginBottom: '15px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Data de Entrega (Opcional)</label>
+                    <input 
+                      type="date" 
+                      name="delivery_date" 
+                      className="form-control"
+                      min={new Date().toISOString().split('T')[0]}
+                      value={formData.delivery_date || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Período de Entrega</label>
+                    <select 
+                      name="delivery_period" 
+                      className="form-control"
+                      value={formData.delivery_period || ''}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Qualquer Horário</option>
+                      <option value="Manhã">Manhã (09h às 13h)</option>
+                      <option value="Tarde">Tarde (13h às 18h)</option>
+                    </select>
                   </div>
                 </div>
 

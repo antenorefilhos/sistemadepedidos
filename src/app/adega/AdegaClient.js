@@ -31,6 +31,13 @@ function getCountryBadge(categories) {
   return { flag, name: countryCat.name.replace(/[\u{1F1E0}-\u{1F1FF}]{2}/gu, '').trim() };
 }
 
+function getMaxScore(pontuacao) {
+  if (!pontuacao) return 0;
+  const matches = pontuacao.match(/\d+/g);
+  if (!matches) return 0;
+  return Math.max(...matches.map(Number));
+}
+
 export default function AdegaClient() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -40,6 +47,8 @@ export default function AdegaClient() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [mobileFiltersActive, setMobileFiltersActive] = useState(false);
+  const [priceRange, setPriceRange] = useState('');
+  const [selectedScore, setSelectedScore] = useState('');
   
   // Cart State (stored in localStorage.jet_engine_store_carrinho)
   const [cartItems, setCartItems] = useState([]);
@@ -95,6 +104,25 @@ export default function AdegaClient() {
     // Filtro de Categoria
     if (selectedCategory !== '') {
       result = result.filter(p => p.categories.some(cat => cat.slug === selectedCategory));
+    }
+
+    // Filtro de Faixa de Preço
+    if (priceRange !== '') {
+      if (priceRange === '150') {
+        result = result.filter(p => p.preco && p.preco <= 150);
+      } else if (priceRange === '500') {
+        result = result.filter(p => p.preco && p.preco > 150 && p.preco <= 500);
+      } else if (priceRange === 'above_500') {
+        result = result.filter(p => p.preco && p.preco > 500);
+      }
+    }
+
+    // Filtro de Pontuação
+    if (selectedScore !== '') {
+      result = result.filter(p => {
+        const maxScore = getMaxScore(p.pontuacao);
+        return maxScore >= Number(selectedScore);
+      });
     }
     
     // Filtro de Busca (Fuzzy Search)
@@ -286,6 +314,165 @@ export default function AdegaClient() {
                     </>
                   )}
                 </div>
+              )}
+
+              {/* Filtro de Faixa de Preço */}
+              <div style={{ marginBottom: '30px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                <h4 style={{ color: 'white', fontSize: '13px', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.05em' }}>
+                  Faixa de Preço
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    onClick={() => setPriceRange(priceRange === '150' ? '' : '150')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: priceRange === '150' ? 'var(--primary)' : 'var(--text-secondary)',
+                      fontWeight: priceRange === '150' ? '600' : '400',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {priceRange === '150' ? (
+                      <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                    ) : (
+                      <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                    )}
+                    Até R$ 150
+                  </button>
+                  <button 
+                    onClick={() => setPriceRange(priceRange === '500' ? '' : '500')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: priceRange === '500' ? 'var(--primary)' : 'var(--text-secondary)',
+                      fontWeight: priceRange === '500' ? '600' : '400',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {priceRange === '500' ? (
+                      <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                    ) : (
+                      <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                    )}
+                    R$ 150 a R$ 500
+                  </button>
+                  <button 
+                    onClick={() => setPriceRange(priceRange === 'above_500' ? '' : 'above_500')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: priceRange === 'above_500' ? 'var(--primary)' : 'var(--text-secondary)',
+                      fontWeight: priceRange === 'above_500' ? '600' : '400',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {priceRange === 'above_500' ? (
+                      <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                    ) : (
+                      <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                    )}
+                    Acima de R$ 500
+                  </button>
+                </div>
+              </div>
+
+              {/* Filtro de Pontuação */}
+              <div style={{ marginBottom: '30px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                <h4 style={{ color: 'white', fontSize: '13px', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.05em' }}>
+                  Pontuação e Destaques
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    onClick={() => setSelectedScore(selectedScore === '90' ? '' : '90')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: selectedScore === '90' ? 'var(--primary)' : 'var(--text-secondary)',
+                      fontWeight: selectedScore === '90' ? '600' : '400',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {selectedScore === '90' ? (
+                      <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                    ) : (
+                      <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                    )}
+                    Rótulos 90+ Pontos
+                  </button>
+                  <button 
+                    onClick={() => setSelectedScore(selectedScore === '95' ? '' : '95')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: selectedScore === '95' ? 'var(--primary)' : 'var(--text-secondary)',
+                      fontWeight: selectedScore === '95' ? '600' : '400',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {selectedScore === '95' ? (
+                      <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                    ) : (
+                      <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                    )}
+                    Rótulos Premium 95+ Pontos
+                  </button>
+                </div>
+              </div>
+
+              {/* Botão de Limpar Filtros */}
+              {(selectedCategory !== '' || priceRange !== '' || selectedScore !== '' || search !== '') && (
+                <button 
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setPriceRange('');
+                    setSelectedScore('');
+                    setSearch('');
+                  }}
+                  className="btn btn-outline font-bold"
+                  style={{
+                    width: '100%',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                    backgroundColor: 'rgba(255,255,255,0.02)',
+                    color: 'var(--text-secondary)',
+                    marginTop: '10px',
+                    height: '38px',
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  Limpar Filtros
+                </button>
               )}
 
             </div>
