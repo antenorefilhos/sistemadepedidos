@@ -55,6 +55,7 @@ export default function ProductEditor({
       return;
     }
 
+    const oldImageUrl = productForm.image_url;
     setUploading(true);
     const formData = new FormData();
     formData.append('file', file);
@@ -69,6 +70,15 @@ export default function ProductEditor({
       
       if (res.ok && data.success) {
         setProductForm(prev => ({ ...prev, image_url: data.url }));
+        
+        // Se tinha imagem antiga do Supabase, apaga silenciosamente em segundo plano
+        if (oldImageUrl && oldImageUrl.includes('/storage/v1/object/public/imagens/')) {
+          fetch(`/api/admin/upload?auth=${encodeURIComponent(password)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: oldImageUrl })
+          }).catch(err => console.warn('Falha silenciosa ao remover imagem substituida:', err));
+        }
       } else {
         alert(data.error || 'Erro ao fazer upload da imagem.');
       }
@@ -78,6 +88,45 @@ export default function ProductEditor({
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!productForm.image_url) return;
+    
+    const oldUrl = productForm.image_url;
+    
+    // Se for URL externa (não do nosso bucket), apenas limpa no form local
+    if (!oldUrl.includes('/storage/v1/object/public/imagens/')) {
+      setProductForm(prev => ({ ...prev, image_url: '' }));
+      return;
+    }
+
+    if (!confirm('Deseja realmente apagar esta imagem? Ela será excluída permanentemente do armazenamento.')) {
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const res = await fetch(`/api/admin/upload?auth=${encodeURIComponent(password)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: oldUrl })
+      });
+      
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setProductForm(prev => ({ ...prev, image_url: '' }));
+      } else {
+        alert(data.error || 'Erro ao apagar arquivo no storage.');
+        setProductForm(prev => ({ ...prev, image_url: '' }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao remover imagem.');
+      setProductForm(prev => ({ ...prev, image_url: '' }));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -274,31 +323,52 @@ export default function ProductEditor({
                       <span className="label-text text-xs tracking-widest uppercase font-bold">Galeria (Imagem Principal)</span>
                     </label>
                     
-                    {/* Premium Drag and Drop Area */}
-                    <div 
-                      onDragEnter={handleDrag}
-                      onDragLeave={handleDrag}
-                      onDragOver={handleDrag}
-                      onDrop={handleDrop}
-                      onClick={onButtonClick}
-                      className={`w-full h-80 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden border-2 border-dashed
-                        ${dragActive ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20'}`}
-                    >
-                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
-                      
-                      {uploading ? (
-                        <div className="text-primary flex flex-col items-center gap-4">
-                          <span className="loading loading-spinner loading-lg"></span>
-                          <span className="font-bold">Enviando arquivo...</span>
+                    {uploading ? (
+                      <div className="w-full h-80 rounded-2xl border-2 border-dashed border-primary bg-primary/5 flex flex-col items-center justify-center text-primary gap-4">
+                        <span className="loading loading-spinner loading-lg"></span>
+                        <span className="font-bold">Enviando arquivo...</span>
+                      </div>
+                    ) : productForm.image_url ? (
+                      /* Container de Visualização Isolado */
+                      <div className="flex flex-col gap-4">
+                        <div className="w-full h-80 bg-base-300 rounded-2xl border border-base-300 overflow-hidden relative flex items-center justify-center p-4">
+                          <img 
+                            src={productForm.image_url} 
+                            alt="Pré-visualização do produto" 
+                            className="max-w-full max-h-full object-contain rounded-xl"
+                          />
                         </div>
-                      ) : productForm.image_url ? (
-                        <div className="relative w-full h-[240px] bg-base-300 rounded-xl border border-base-300 overflow-hidden">
-                          <img src={productForm.image_url} alt="Pré-visualização do produto" className="w-full h-full object-contain p-4" />
-                          <button className="absolute bottom-0 left-0 right-0 bg-base-content/90 p-4 text-center text-sm text-base-100 flex justify-center gap-3 font-bold hover:bg-base-content transition-colors">
-                            <i className="fa-solid fa-upload"></i> Clique ou Arraste nova imagem para substituir
+                        <div className="flex gap-4">
+                          <button 
+                            type="button"
+                            onClick={onButtonClick}
+                            className="btn btn-outline flex-1 gap-2 font-bold h-12"
+                          >
+                            <i className="fa-solid fa-arrows-rotate"></i> Substituir Foto
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={handleDeleteImage}
+                            className="btn btn-error btn-outline gap-2 font-bold h-12"
+                            title="Apagar foto e remover do storage"
+                          >
+                            <i className="fa-solid fa-trash-can"></i> Remover Foto
                           </button>
                         </div>
-                      ) : (
+                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
+                      </div>
+                    ) : (
+                      /* Área de Drag & Drop quando não há imagem */
+                      <div 
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                        onClick={onButtonClick}
+                        className={`w-full h-80 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden border-2 border-dashed
+                          ${dragActive ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20'}`}
+                      >
+                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
                         <div className="text-center p-10 text-base-content/60 flex flex-col items-center">
                           <div className="w-20 h-20 bg-base-content/5 rounded-full flex items-center justify-center mb-5 text-base-content">
                             <i className="fa-regular fa-image text-3xl"></i>
@@ -309,8 +379,8 @@ export default function ProductEditor({
                             JPG, PNG ou WEBP • Máx 2MB
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="divider text-xs text-base-content/50 uppercase tracking-widest font-bold">OU FORNEÇA UMA URL EXTERNA</div>

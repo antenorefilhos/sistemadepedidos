@@ -87,3 +87,46 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Falha no processamento do upload do arquivo.' }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const authPassword = searchParams.get('auth');
+
+    if (!authPassword || authPassword !== 'Aef@1945*') {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+    }
+
+    const { url } = await request.json();
+    if (!url) {
+      return NextResponse.json({ error: 'Nenhuma URL de imagem fornecida.' }, { status: 400 });
+    }
+
+    // Extrair o nome do arquivo a partir da URL do Supabase Storage
+    const searchString = '/storage/v1/object/public/imagens/';
+    const index = url.indexOf(searchString);
+    if (index === -1) {
+      return NextResponse.json({ success: true, message: 'URL externa ignorada (não apagada do storage)' });
+    }
+
+    const filename = url.substring(index + searchString.length);
+    
+    // Conecta no Supabase
+    const supabase = getSupabase();
+    
+    // Remove do bucket 'imagens'
+    const { error } = await supabase.storage
+      .from('imagens')
+      .remove([filename]);
+
+    if (error) {
+      console.error('Error deleting file from Supabase Storage:', error);
+      return NextResponse.json({ error: `Erro ao apagar arquivo: ${error.message}` }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Arquivo apagado do storage com sucesso' });
+  } catch (error) {
+    console.error('Error in DELETE handler:', error);
+    return NextResponse.json({ error: 'Falha no processamento de exclusão da imagem.' }, { status: 500 });
+  }
+}
