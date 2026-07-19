@@ -13,6 +13,26 @@ import ReviewsModerator from './components/ReviewsModerator';
 import CustomersManager from './components/CustomersManager';
 import Fuse from 'fuse.js';
 
+const showNativeNotification = (order) => {
+  try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      const notification = new Notification('Novo Orçamento Recebido!', {
+        body: `Cliente: ${order.customer_name}\nTelefone: ${order.customer_whatsapp}`,
+        icon: '/novo/wp-content/uploads/DELI-LOGO-PRETO.png',
+        tag: `order-${order.id}`,
+        requireInteraction: true
+      });
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
+  } catch (err) {
+    console.error('Error showing native notification:', err);
+  }
+};
+
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -180,9 +200,17 @@ export default function AdminDashboard() {
   }, [isAuthenticated, password]);
 
   useEffect(() => {
+    if (isAuthenticated && 'Notification' in window) {
+      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Polling silencioso a cada 30 segundos para novos pedidos de orçamento com alerta sonoro
+    // Polling silencioso a cada 30 segundos para novos pedidos de orçamento com alerta sonoro e push nativo
     const interval = setInterval(async () => {
       try {
         const ordersRes = await fetch(`/api/admin/orders?auth=${encodeURIComponent(password)}`);
@@ -192,9 +220,18 @@ export default function AdminDashboard() {
           setOrders(prevOrders => {
             if (prevOrders.length > 0 && latestOrders.length > 0) {
               const prevIds = new Set(prevOrders.map(o => o.id));
-              const hasNew = latestOrders.some(o => !prevIds.has(o.id));
-              if (hasNew) {
-                playNotificationSound();
+              const newOrders = latestOrders.filter(o => !prevIds.has(o.id));
+              
+              if (newOrders.length > 0) {
+                // Checar se alertas estão ativados no localStorage (default true se não configurado ainda)
+                const soundEnabled = localStorage.getItem('admin_sound_enabled') !== 'false';
+                
+                if (soundEnabled) {
+                  playNotificationSound();
+                  newOrders.forEach(order => {
+                    showNativeNotification(order);
+                  });
+                }
               }
             }
             return latestOrders;

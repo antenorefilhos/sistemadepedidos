@@ -55,7 +55,14 @@ export default function LiveOrdersMonitor({ password }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastOrderId, setLastOrderId] = useState(0);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true); // Default true
+
+  useEffect(() => {
+    const saved = localStorage.getItem('admin_sound_enabled');
+    if (saved === 'false') {
+      setIsSoundEnabled(false);
+    }
+  }, []);
   
   const pollingInterval = useRef(null);
 
@@ -130,14 +137,17 @@ export default function LiveOrdersMonitor({ password }) {
   const preparingOrders = orders.filter(o => o.status === 'preparing' || o.status === 'processing');
   const completedOrders = orders.filter(o => o.status === 'completed').slice(0, 10);
 
-  const enableSound = () => {
-    setIsSoundEnabled(true);
-    playNotificationSound();
+  const toggleSound = () => {
+    const nextState = !isSoundEnabled;
+    setIsSoundEnabled(nextState);
+    localStorage.setItem('admin_sound_enabled', String(nextState));
     
-    // Solicitar permissão de notificação do navegador ao habilitar o som
-    if ('Notification' in window) {
-      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        Notification.requestPermission();
+    if (nextState) {
+      playNotificationSound();
+      if ('Notification' in window) {
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+          Notification.requestPermission();
+        }
       }
     }
   };
@@ -153,10 +163,10 @@ export default function LiveOrdersMonitor({ password }) {
         </div>
         
         <button 
-          onClick={enableSound}
+          onClick={toggleSound}
           className={`btn shadow-sm gap-2 ${isSoundEnabled ? 'btn-success bg-success/20 text-success hover:bg-success/30 border-success/30' : 'btn-error bg-error/20 text-error hover:bg-error/30 border-error/30'}`}
         >
-          {isSoundEnabled ? '🔊 Alertas & Notificações Ativadas' : '🔇 Ativar Alertas & Notificações'}
+          {isSoundEnabled ? '🔊 Alertas & Notificações Ativadas' : '🔇 Alertas & Notificações Desativadas'}
         </button>
       </div>
 
