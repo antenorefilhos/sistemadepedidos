@@ -588,10 +588,42 @@ export default function CartPage() {
                 <button 
                   type="submit" 
                   disabled={submitting}
-                  className="btn btn-primary" 
-                  style={{ width: '100%', padding: '14px', fontSize: '15px' }}
+                  className="btn gap-2 shadow-lg" 
+                  style={{ 
+                    width: '100%', 
+                    padding: '14px', 
+                    fontSize: '15px',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    backgroundColor: '#25D366',
+                    borderColor: '#25D366',
+                    color: 'white',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#128C7E';
+                    e.currentTarget.style.borderColor = '#128C7E';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(18, 140, 126, 0.6)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#25D366';
+                    e.currentTarget.style.borderColor = '#25D366';
+                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 211, 102, 0.4)';
+                  }}
                 >
-                  {submitting ? 'Enviando orçamento...' : 'Solicitar Orçamento via WhatsApp'}
+                  {submitting ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Enviando Pedido...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-brands fa-whatsapp text-lg"></i>
+                      Finalizar no WhatsApp
+                    </>
+                  )}
                 </button>
               </form>
             </div>

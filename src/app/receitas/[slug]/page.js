@@ -2,6 +2,7 @@ import { getSupabase } from '@/lib/pgDb';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import RecipeImage from '@/components/RecipeImage';
+import InteractiveIngredients from '@/components/InteractiveIngredients';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,193 +67,184 @@ export default async function RecipeDetailsPage({ params }) {
   }
 
   return (
-    <div className="bg-[var(--bg-main)] text-white min-h-screen" style={{ paddingTop: '120px', paddingBottom: '120px' }}>
-      
-      {/* Banner Principal da Receita */}
-      <div className="relative w-full h-[40vh] md:h-[60vh] bg-black" style={{ borderBottom: '1px solid var(--border-color)' }}>
-        <RecipeImage 
-          src={recipe.image_url} 
-          alt={recipe.title} 
-          className="w-full h-full object-cover opacity-60" 
-          iconSizeClass="text-6xl"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-transparent to-transparent"></div>
+    <div className="bg-[var(--bg-main)] text-white min-h-screen" style={{ paddingTop: '100px', paddingBottom: '80px' }}>
+      <div className="container mx-auto px-4 max-w-3xl">
         
-        <div className="absolute bottom-0 left-0 w-full p-8 md:p-16">
-          <div className="container mx-auto px-6 md:px-12">
-             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px', zIndex: 3 }}>
-               <div style={{
-                 background: 'rgba(0, 0, 0, 0.85)',
-                 border: '1px solid var(--border-color)',
-                 padding: '6px 14px',
-                 fontSize: '11px',
-                 fontWeight: 'bold',
-                 textTransform: 'uppercase',
-                 color: 'var(--primary)',
-                 display: 'flex',
-                 alignItems: 'center',
-                 gap: '8px',
-                 borderRadius: '0px'
-               }}>
-                 <i className="fa-regular fa-clock"></i> {recipe.prep_time || '45 min'}
-               </div>
-               <div style={{
-                 background: 'rgba(0, 0, 0, 0.85)',
-                 border: '1px solid var(--border-color)',
-                 padding: '6px 14px',
-                 fontSize: '11px',
-                 fontWeight: 'bold',
-                 textTransform: 'uppercase',
-                 color: 'var(--primary)',
-                 display: 'flex',
-                 alignItems: 'center',
-                 gap: '8px',
-                 borderRadius: '0px'
-               }}>
-                 <i className="fa-solid fa-users"></i> {recipe.servings ? `${recipe.servings} porções` : '4 porções'}
-               </div>
-               <div style={{
-                 background: 'rgba(0, 0, 0, 0.85)',
-                 border: '1px solid var(--border-color)',
-                 padding: '6px 14px',
-                 fontSize: '11px',
-                 fontWeight: 'bold',
-                 textTransform: 'uppercase',
-                 color: 'var(--primary)',
-                 display: 'flex',
-                 alignItems: 'center',
-                 gap: '8px',
-                 borderRadius: '0px'
-               }}>
-                 <i className="fa-solid fa-fire-burner"></i> {recipe.difficulty || 'Fácil'}
-               </div>
-             </div>
-             <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl text-white mb-4 drop-shadow-lg" style={{ fontFamily: 'var(--font-serif)', textTransform: 'none' }}>{recipe.title}</h1>
+        {/* Imagem de Destaque no Topo */}
+        <div 
+          className="w-full overflow-hidden relative shadow-2xl"
+          style={{ aspectRatio: '16/9' }}
+        >
+          <RecipeImage 
+            src={recipe.image_url} 
+            alt={recipe.title} 
+            className="w-full h-full object-cover" 
+            iconSizeClass="text-7xl"
+          />
+        </div>
+
+        {/* Título & Badges de Informação */}
+        <div className="mt-6 mb-8">
+          <h1 
+            className="text-2xl md:text-4xl text-white mb-4 font-bold" 
+            style={{ fontFamily: 'var(--font-serif)', lineHeight: '1.25', textTransform: 'none' }}
+          >
+            {recipe.title}
+          </h1>
+          
+          <div className="flex flex-wrap gap-2">
+            {[{
+              icon: 'fa-regular fa-clock',
+              label: recipe.prep_time || '45 min'
+            }, {
+              icon: 'fa-solid fa-users',
+              label: recipe.servings ? `${recipe.servings} porções` : '4 porções'
+            }, {
+              icon: 'fa-solid fa-fire-burner',
+              label: recipe.difficulty || 'Fácil'
+            }].map((badge, i) => (
+              <div key={i} style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid var(--border-color)',
+                padding: '5px 12px',
+                fontSize: '11px',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                color: 'var(--primary)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                letterSpacing: '0.5px'
+              }}>
+                <i className={`${badge.icon}`} style={{ fontSize: '11px' }}></i>
+                {badge.label}
+              </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-6 md:px-12 mt-12 md:mt-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        {/* Conteúdo Empilhado Verticalmente (Coluna Única) */}
+        <div className="flex flex-col gap-6">
           
-          {/* Coluna Esquerda: Descrição e Ingredientes/Preparo */}
-          <div className="lg:col-span-2 flex flex-col gap-8">
-            
-            {recipe.description && (
+          {recipe.description && (
+            <div 
+              className="text-base leading-relaxed italic"
+              style={{ color: 'var(--text-muted)', borderLeft: '2px solid var(--primary)', paddingLeft: '16px', fontSize: '15px' }}
+              dangerouslySetInnerHTML={{ __html: recipe.description }}
+            ></div>
+          )}
+
+          {/* Bloco de Ingredientes com Checklist Interativo */}
+          {recipe.ingredients && (
+            <div style={{ padding: '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+              <h2 className="flex items-center gap-2" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 20px 0', paddingBottom: '12px', fontSize: '20px', textTransform: 'none' }}>
+                <i className="fa-solid fa-pepper-hot" style={{ fontSize: '16px' }}></i>
+                <span>Ingredientes</span>
+              </h2>
+              <InteractiveIngredients html={recipe.ingredients} />
+            </div>
+          )}
+
+          {/* Bloco de Modo de Preparo */}
+          {recipe.instructions && (
+            <div style={{ padding: '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+              <h2 className="flex items-center gap-2" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 20px 0', paddingBottom: '12px', fontSize: '20px', textTransform: 'none' }}>
+                <i className="fa-solid fa-kitchen-set" style={{ fontSize: '16px' }}></i>
+                <span>Modo de Preparo</span>
+              </h2>
               <div 
-                className="mb-4 text-lg leading-relaxed italic"
-                style={{ color: 'var(--text-muted)', borderLeft: '2px solid var(--primary)', paddingLeft: '24px' }}
+                className="prose prose-invert max-w-none text-gray-300 prose-ol:list-decimal prose-ol:pl-4"
+                style={{ fontSize: '15px', lineHeight: '1.8' }}
+                dangerouslySetInnerHTML={{ __html: recipe.instructions }}
+              ></div>
+            </div>
+          )}
+
+          {/* Fallback de receitas antigas sem divisão ingredientes/preparo */}
+          {!recipe.ingredients && !recipe.instructions && (
+            <div style={{ padding: '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+              <h2 style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 20px 0', paddingBottom: '12px', fontSize: '20px', textTransform: 'none' }}>
+                Ingredientes & Preparo
+              </h2>
+              <div 
+                className="prose prose-invert max-w-none text-gray-300"
+                style={{ fontSize: '15px', lineHeight: '1.8' }}
                 dangerouslySetInnerHTML={{ __html: recipe.description }}
               ></div>
-            )}
-
-            {/* Renderização Separada (Nova Estrutura) */}
-            {recipe.ingredients && (
-              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px' }}>
-                <h2 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 24px 0', textTransform: 'none' }}>
-                  <i className="fa-solid fa-pepper-hot mr-3 text-sm text-[var(--primary)]" style={{ marginRight: '10px' }}></i> Ingredientes
-                </h2>
-                <div 
-                  className="prose prose-invert max-w-none text-gray-300 leading-loose prose-ul:list-disc prose-li:my-1"
-                  dangerouslySetInnerHTML={{ __html: recipe.ingredients }}
-                ></div>
-              </div>
-            )}
-
-            {recipe.instructions && (
-              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px' }}>
-                <h2 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 24px 0', textTransform: 'none' }}>
-                  <i className="fa-solid fa-kitchen-set mr-3 text-sm text-[var(--primary)]" style={{ marginRight: '10px' }}></i> Modo de Preparo
-                </h2>
-                <div 
-                  className="prose prose-invert max-w-none text-gray-300 leading-loose prose-ol:list-decimal"
-                  dangerouslySetInnerHTML={{ __html: recipe.instructions }}
-                ></div>
-              </div>
-            )}
-
-            {/* Fallback para receitas antigas que tinham tudo em description */}
-            {!recipe.ingredients && !recipe.instructions && (
-              <div className="product-card" style={{ padding: '40px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px' }}>
-                <h2 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', margin: '0 0 24px 0', textTransform: 'none' }}>
-                  Ingredientes & Preparo
-                </h2>
-                <div 
-                  className="prose prose-invert max-w-none text-gray-300 leading-loose"
-                  dangerouslySetInnerHTML={{ __html: recipe.description }}
-                ></div>
-              </div>
-            )}
-            
-            <div className="mt-4">
-               <Link 
-                 href="/receitas" 
-                 className="btn"
-                 style={{
-                   display: 'inline-flex',
-                   alignItems: 'center',
-                   border: '1px solid var(--border-color)',
-                   background: 'transparent',
-                   color: 'white',
-                   borderRadius: '0px',
-                   textTransform: 'uppercase',
-                   fontSize: '12px',
-                   fontWeight: 'bold',
-                   padding: '12px 24px',
-                   letterSpacing: 'var(--ls-wider)'
-                 }}
-               >
-                 <i className="fa-solid fa-arrow-left mr-2" style={{ marginRight: '8px' }}></i> Voltar para Receitas
-               </Link>
             </div>
+          )}
+
+          {/* Cortes Utilizados (Vitrine no Rodapé) */}
+          <div className="mt-2">
+            <h3 
+              style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', marginBottom: '20px', paddingBottom: '12px', fontSize: '20px', textTransform: 'none' }}
+            >
+              Cortes Utilizados
+            </h3>
+            
+            {relatedProducts.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {relatedProducts.map(prod => (
+                  <Link 
+                    key={prod.id} 
+                    href={`/produtos/${prod.slug}`}
+                    className="group"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      textDecoration: 'none',
+                      padding: '12px',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)'
+                    }}
+                  >
+                    <div style={{ width: '100%', aspectRatio: '1/1', background: '#000', overflow: 'hidden', position: 'relative', marginBottom: '10px' }}>
+                       <RecipeImage 
+                         src={prod.image_url} 
+                         alt={prod.title} 
+                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                         iconSizeClass="text-2xl"
+                       />
+                    </div>
+                    <h4 
+                      className="text-white group-hover:text-[var(--primary-hover)] line-clamp-2" 
+                      style={{ margin: '0 0 6px 0', fontSize: '13px', fontWeight: '600', transition: 'color 0.2s ease' }} 
+                      dangerouslySetInnerHTML={{ __html: prod.title }}
+                    ></h4>
+                    <div style={{ color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '16px' }}>
+                      R$ {Number(prod.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: '20px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>
+                Nenhum corte específico vinculado. Pode ser preparado com a carne de sua preferência.
+              </div>
+            )}
           </div>
 
-          {/* Coluna Direita: Carnes Recomendadas (Produtos Vinculados) */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-32">
-              <h3 className="font-serif text-2xl mb-6 pb-3" style={{ fontFamily: 'var(--font-serif)', color: 'var(--primary)', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>Cortes Utilizados</h3>
-              
-              {relatedProducts.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {relatedProducts.map(prod => (
-                    <Link 
-                      key={prod.id} 
-                      href={`/produtos/${prod.slug}`}
-                      className="group product-card"
-                      style={{
-                        display: 'flex',
-                        gap: '16px',
-                        alignItems: 'center',
-                        textDecoration: 'none',
-                        borderRadius: '0px',
-                        padding: '16px',
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border-color)'
-                      }}
-                    >
-                      <div style={{ width: '80px', height: '80px', background: '#000', overflow: 'hidden', flexShrink: 0, position: 'relative', borderRadius: '0px' }}>
-                         <RecipeImage 
-                           src={prod.image_url} 
-                           alt={prod.title} 
-                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                           iconSizeClass="text-xl"
-                         />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-sm text-white group-hover:text-[var(--primary-hover)] transition-colors mb-1 line-clamp-2" style={{ margin: '0 0 4px 0', fontSize: '14px', transition: 'color var(--transition-fast)' }} dangerouslySetInnerHTML={{ __html: prod.title }}></h4>
-                        <div className="font-serif text-lg" style={{ color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '18px' }}>
-                          R$ {Number(prod.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ padding: '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '0px', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>
-                  Nenhum corte específico vinculado. Pode ser preparado com a carne de sua preferência.
-                </div>
-              )}
-            </div>
+          {/* Ação de Voltar */}
+          <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
+             <Link 
+               href="/receitas" 
+               style={{
+                 display: 'inline-flex',
+                 alignItems: 'center',
+                 border: '1px solid var(--border-color)',
+                 background: 'transparent',
+                 color: 'white',
+                 textTransform: 'uppercase',
+                 fontSize: '11px',
+                 fontWeight: '600',
+                 padding: '10px 20px',
+                 letterSpacing: '1px',
+                 textDecoration: 'none',
+                 transition: 'all 0.2s ease'
+               }}
+             >
+               <i className="fa-solid fa-arrow-left" style={{ marginRight: '8px', fontSize: '10px' }}></i> Voltar para Receitas
+             </Link>
           </div>
 
         </div>

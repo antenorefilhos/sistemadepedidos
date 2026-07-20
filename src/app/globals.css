@@ -409,25 +409,12 @@ body:not(.admin-body) .btn-danger:hover {
   height: 72px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(171, 144, 112, 0.12);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.3);
-  transition: border-color 0.35s ease, box-shadow 0.35s ease;
-  background: transparent !important;
-}
-
-.navbar::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(5, 6, 10, 0.45);
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  z-index: -1;
-  transition: background-color 0.35s ease, backdrop-filter 0.35s ease;
-  pointer-events: none;
+  background: rgba(8, 9, 14, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(171, 144, 112, 0.15);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 4px 24px rgba(0,0,0,0.4);
+  transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 /* Shimmer line at top edge */
@@ -437,19 +424,14 @@ body:not(.admin-body) .btn-danger:hover {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(171,144,112,0.5) 30%, rgba(215,185,148,0.8) 50%, rgba(171,144,112,0.5) 70%, transparent 100%);
-  opacity: 0.6;
-}
-
-.navbar-scrolled::before {
-  background-color: rgba(4, 5, 8, 0.7);
-  backdrop-filter: blur(32px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+  background: linear-gradient(90deg, transparent 0%, rgba(171,144,112,0.4) 30%, rgba(215,185,148,0.7) 50%, rgba(171,144,112,0.4) 70%, transparent 100%);
+  opacity: 0.5;
 }
 
 .navbar-scrolled {
+  background: rgba(6, 7, 11, 0.97);
   border-bottom-color: rgba(171, 144, 112, 0.2);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 12px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 8px 40px rgba(0,0,0,0.6);
 }
 
 .navbar-logo-img {
