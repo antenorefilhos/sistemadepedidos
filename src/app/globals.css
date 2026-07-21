@@ -1682,12 +1682,63 @@ body.admin-body aside .menu a.active {
   color: #ffffff !important;
 }
 
-body.admin-body aside h2.font-serif {
-  font-family: var(--font-sans) !important;
-  font-size: 1.35rem !important;
-  font-weight: 800 !important;
+body.admin-body aside .font-serif {
+  font-family: var(--font-serif) !important;
   letter-spacing: -0.01em !important;
 }
+
+/* Correção de token quebrado: var(--danger) não existe no tema do admin (era um copy/paste de --color-error) */
+body.admin-body .text-danger {
+  color: var(--color-error, #ef4444) !important;
+}
+
+/* WysiwygField.js — CSS de tema único do react-simple-wysiwyg (antes duplicado/ausente por arquivo) */
+body.admin-body .rsw-field-wrapper .rsw-editor {
+  min-height: var(--rsw-height, 200px);
+  font-family: inherit;
+  font-size: 15px;
+  border: 1px solid var(--color-base-300, #e2e8f0);
+  border-radius: var(--radius-field, 6px);
+  color: inherit;
+  background-color: var(--color-base-100, #ffffff);
+}
+
+body.admin-body .rsw-field-wrapper .rsw-toolbar {
+  border-bottom: 1px solid var(--color-base-300, #e2e8f0);
+  background-color: var(--color-base-200, #f8fafc);
+  border-radius: var(--radius-field, 6px) var(--radius-field, 6px) 0 0;
+}
+
+body.admin-body .rsw-field-wrapper .rsw-btn {
+  color: inherit;
+}
+
+body.admin-body .rsw-field-wrapper .rsw-btn:hover {
+  background-color: var(--color-base-300, #e2e8f0);
+}
+
+/* SolidconIntegration.js — cursor piscando no terminal de logs (antes injetado via <style> inline) */
+.pulsing-text {
+  animation: admin-pulse 1s infinite;
+}
+
+@keyframes admin-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* HermesChatPanel.js — markdown renderizado das respostas da IA (antes injetado via <style> inline) */
+.hermes-markdown { color: inherit; font-size: 14px; line-height: 1.6; }
+.hermes-markdown p { margin-top: 0; margin-bottom: 12px; color: inherit; }
+.hermes-markdown p:last-child { margin-bottom: 0; }
+.hermes-markdown ul, .hermes-markdown ol { margin-top: 0; margin-bottom: 12px; padding-left: 24px; color: inherit; list-style: disc; }
+.hermes-markdown li { margin-bottom: 6px; }
+.hermes-markdown h1, .hermes-markdown h2, .hermes-markdown h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
+.hermes-markdown h3 { font-size: 16px; }
+.hermes-markdown h2 { font-size: 18px; border-bottom: 1px solid currentColor; padding-bottom: 4px; opacity: 0.8; }
+.hermes-markdown strong { font-weight: 700; }
+.hermes-markdown code { background: rgba(0, 0, 0, 0.3); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+.hermes-markdown pre { background: rgba(0, 0, 0, 0.4); padding: 12px; border-radius: 8px; overflow-x: auto; margin-bottom: 12px; }
 
 
 

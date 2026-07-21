@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/pgDb';
+import { getRole } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-
-const getRole = (request) => {
-  const { searchParams } = new URL(request.url);
-  const password = searchParams.get('auth') || request.headers.get('Authorization');
-  const adminPass = process.env.ADMIN_PASSWORD || 'antenor123';
-  if (password === adminPass) return 'admin';
-  return null;
-};
 
 // 1. Criar ou Atualizar Bloco de Biolink
 export async function POST(request) {

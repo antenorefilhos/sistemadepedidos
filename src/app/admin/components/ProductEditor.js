@@ -1,134 +1,19 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import dynamic from 'next/dynamic';
+import { useState } from 'react';
+import ImageUploadField from '@/components/admin/ui/ImageUploadField';
+import WysiwygField from '@/components/admin/ui/WysiwygField';
 
-const Editor = dynamic(() => import('react-simple-wysiwyg'), { ssr: false });
-
-export default function ProductEditor({ 
-  productForm, 
-  setProductForm, 
-  categories, 
-  handleSaveProduct, 
+export default function ProductEditor({
+  productForm,
+  setProductForm,
+  categories,
+  handleSaveProduct,
   onClose,
   handleProductTitleChange,
-  password
+  password,
 }) {
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
   const [activeTab, setActiveTab] = useState('geral');
-  const fileInputRef = useRef(null);
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      await handleUpload(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleChange = async (e) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      await handleUpload(e.target.files[0]);
-    }
-  };
-
-  const onButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleUpload = async (file) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, envie apenas imagens (JPG, PNG, WEBP).');
-      return;
-    }
-
-    const oldImageUrl = productForm.image_url;
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch(`/api/admin/upload?auth=${encodeURIComponent(password)}&type=product`, {
-        method: 'POST',
-        body: formData
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok && data.success) {
-        setProductForm(prev => ({ ...prev, image_url: data.url }));
-        
-        // Se tinha imagem antiga do Supabase, apaga silenciosamente em segundo plano
-        if (oldImageUrl && oldImageUrl.includes('/storage/v1/object/public/imagens/')) {
-          fetch(`/api/admin/upload?auth=${encodeURIComponent(password)}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: oldImageUrl })
-          }).catch(err => console.warn('Falha silenciosa ao remover imagem substituida:', err));
-        }
-      } else {
-        alert(data.error || 'Erro ao fazer upload da imagem.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Erro de conexão ao enviar imagem.');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleDeleteImage = async () => {
-    if (!productForm.image_url) return;
-    
-    const oldUrl = productForm.image_url;
-    
-    // Se for URL externa (não do nosso bucket), apenas limpa no form local
-    if (!oldUrl.includes('/storage/v1/object/public/imagens/')) {
-      setProductForm(prev => ({ ...prev, image_url: '' }));
-      return;
-    }
-
-    if (!confirm('Deseja realmente apagar esta imagem? Ela será excluída permanentemente do armazenamento.')) {
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const res = await fetch(`/api/admin/upload?auth=${encodeURIComponent(password)}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: oldUrl })
-      });
-      
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setProductForm(prev => ({ ...prev, image_url: '' }));
-      } else {
-        alert(data.error || 'Erro ao apagar arquivo no storage.');
-        setProductForm(prev => ({ ...prev, image_url: '' }));
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Erro de conexão ao remover imagem.');
-      setProductForm(prev => ({ ...prev, image_url: '' }));
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const renderTabButton = (id, icon, label, description) => (
     <button 
@@ -145,7 +30,7 @@ export default function ProductEditor({
       </div>
       <div className="flex flex-col">
         <span className="text-sm font-bold tracking-wide">{label}</span>
-        <span className={`text-[11px] mt-0.5 ${activeTab === id ? 'opacity-100 text-base-content/80' : 'opacity-70 text-base-content/50'}`}>
+        <span className={`text-xs mt-0.5 ${activeTab === id ? 'opacity-100 text-base-content/80' : 'opacity-70 text-base-content/50'}`}>
           {description}
         </span>
       </div>
@@ -160,10 +45,10 @@ export default function ProductEditor({
         <div className="p-6 md:px-8 border-b border-base-300 flex justify-between items-center bg-base-200/50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary text-xl">
-              <i className="fa-solid fa-box-open"></i>
+              <i className="fa-solid fa-box-open" aria-hidden="true"></i>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-base-content font-serif m-0">
+              <h2 className="text-base font-bold text-base-content m-0">
                 {productForm.id ? 'Editor de Produto' : 'Novo Produto'}
               </h2>
               <span className="text-sm text-base-content/60">
@@ -172,8 +57,8 @@ export default function ProductEditor({
             </div>
           </div>
           
-          <button type="button" onClick={onClose} className="btn btn-circle btn-ghost btn-sm text-base-content/60 hover:text-base-content hover:bg-base-content/10">
-            <i className="fa-solid fa-xmark text-lg"></i>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="btn btn-circle btn-ghost btn-sm text-base-content/60 hover:text-base-content hover:bg-base-content/10">
+            <i className="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
           </button>
         </div>
 
@@ -182,12 +67,12 @@ export default function ProductEditor({
           
           {/* Menu Lateral Abas */}
           <div className="w-[280px] bg-base-300/30 border-r border-base-300 flex flex-col pt-4 shrink-0">
-            {renderTabButton('geral', <i className="fa-solid fa-align-left"></i>, 'Informações', 'Nome, EAN e Descrição')}
-            {renderTabButton('preco', <i className="fa-solid fa-tag"></i>, 'Preços & Pesos', 'Valores e dimensões')}
-            {renderTabButton('midia', <i className="fa-regular fa-image"></i>, 'Mídia Visual', 'Fotos do produto')}
-            {productForm.type === 'adega' && renderTabButton('vinho', <i className="fa-solid fa-wine-glass"></i>, 'Ficha Técnica', 'Atributos de Vinhos')}
-            {renderTabButton('categoria', <i className="fa-solid fa-layer-group"></i>, 'Classificação', 'Setores e categorias')}
-            {renderTabButton('seo', <i className="fa-solid fa-globe"></i>, 'Visibilidade', 'Status e links diretos')}
+            {renderTabButton('geral', <i className="fa-solid fa-align-left" aria-hidden="true"></i>, 'Informações', 'Nome, EAN e Descrição')}
+            {renderTabButton('preco', <i className="fa-solid fa-tag" aria-hidden="true"></i>, 'Preços & Pesos', 'Valores e dimensões')}
+            {renderTabButton('midia', <i className="fa-regular fa-image" aria-hidden="true"></i>, 'Mídia Visual', 'Fotos do produto')}
+            {productForm.type === 'adega' && renderTabButton('vinho', <i className="fa-solid fa-wine-glass" aria-hidden="true"></i>, 'Ficha Técnica', 'Atributos de Vinhos')}
+            {renderTabButton('categoria', <i className="fa-solid fa-layer-group" aria-hidden="true"></i>, 'Classificação', 'Setores e categorias')}
+            {renderTabButton('seo', <i className="fa-solid fa-globe" aria-hidden="true"></i>, 'Visibilidade', 'Status e links diretos')}
           </div>
 
           {/* Conteúdo da Aba */}
@@ -227,14 +112,8 @@ export default function ProductEditor({
                     <label className="label">
                       <span className="label-text text-xs tracking-widest uppercase font-bold">Descrição / Notas de Degustação</span>
                     </label>
-                    <style>{`
-                      .rsw-editor { min-height: 200px; font-family: inherit; font-size: 15px; border: 1px solid var(--fallback-bc,oklch(var(--bc)/0.2)) !important; border-radius: var(--rounded-btn, 0.5rem); color: inherit; background-color: var(--fallback-b1,oklch(var(--b1)/1)) !important; }
-                      .rsw-toolbar { border-bottom: 1px solid var(--fallback-bc,oklch(var(--bc)/0.2)) !important; background-color: var(--fallback-b2,oklch(var(--b2)/1)) !important; border-radius: var(--rounded-btn, 0.5rem) var(--rounded-btn, 0.5rem) 0 0; }
-                      .rsw-btn { color: inherit !important; }
-                      .rsw-btn:hover { background-color: var(--fallback-bc,oklch(var(--bc)/0.1)) !important; }
-                    `}</style>
-                    <Editor 
-                      value={productForm.description || ''} 
+                    <WysiwygField
+                      value={productForm.description}
                       onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                     />
                   </div>
@@ -260,7 +139,7 @@ export default function ProductEditor({
                     <div className="form-control w-full">
                       <label className="label">
                         <span className="label-text text-xs tracking-widest uppercase font-bold text-base-content/50">
-                          Preço Promocional <i className="fa-solid fa-lock text-[10px] ml-1"></i>
+                          Preço Promocional <i className="fa-solid fa-lock text-xs ml-1" aria-hidden="true"></i>
                         </span>
                       </label>
                       <input 
@@ -303,7 +182,7 @@ export default function ProductEditor({
                   <div className="form-control w-full">
                     <label className="label">
                       <span className="label-text text-xs tracking-widest uppercase font-bold text-base-content/50">
-                        Estoque Sincronizado <i className="fa-solid fa-lock text-[10px] ml-1"></i>
+                        Estoque Sincronizado <i className="fa-solid fa-lock text-xs ml-1" aria-hidden="true"></i>
                       </span>
                     </label>
                     <input 
@@ -318,76 +197,20 @@ export default function ProductEditor({
               {activeTab === 'midia' && (
                 <div className="flex flex-col gap-8 animate-[fadeInTab_0.3s_ease]">
                   
-                  <div className="form-control w-full">
-                    <label className="label">
-                      <span className="label-text text-xs tracking-widest uppercase font-bold">Galeria (Imagem Principal)</span>
-                    </label>
-                    
-                    {uploading ? (
-                      <div className="w-full h-80 rounded-2xl border-2 border-dashed border-primary bg-primary/5 flex flex-col items-center justify-center text-primary gap-4">
-                        <span className="loading loading-spinner loading-lg"></span>
-                        <span className="font-bold">Enviando arquivo...</span>
-                      </div>
-                    ) : productForm.image_url ? (
-                      /* Container de Visualização Isolado */
-                      <div className="flex flex-col gap-4">
-                        <div className="w-full h-80 bg-base-300 rounded-2xl border border-base-300 overflow-hidden relative flex items-center justify-center p-4">
-                          <img 
-                            src={productForm.image_url} 
-                            alt="Pré-visualização do produto" 
-                            className="max-w-full max-h-full object-contain rounded-xl"
-                          />
-                        </div>
-                        <div className="flex gap-4">
-                          <button 
-                            type="button"
-                            onClick={onButtonClick}
-                            className="btn btn-outline flex-1 gap-2 font-bold h-12"
-                          >
-                            <i className="fa-solid fa-arrows-rotate"></i> Substituir Foto
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={handleDeleteImage}
-                            className="btn btn-error btn-outline gap-2 font-bold h-12"
-                            title="Apagar foto e remover do storage"
-                          >
-                            <i className="fa-solid fa-trash-can"></i> Remover Foto
-                          </button>
-                        </div>
-                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
-                      </div>
-                    ) : (
-                      /* Área de Drag & Drop quando não há imagem */
-                      <div 
-                        onDragEnter={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDragOver={handleDrag}
-                        onDrop={handleDrop}
-                        onClick={onButtonClick}
-                        className={`w-full h-80 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden border-2 border-dashed
-                          ${dragActive ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20'}`}
-                      >
-                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
-                        <div className="text-center p-10 text-base-content/60 flex flex-col items-center">
-                          <div className="w-20 h-20 bg-base-content/5 rounded-full flex items-center justify-center mb-5 text-base-content">
-                            <i className="fa-regular fa-image text-3xl"></i>
-                          </div>
-                          <div className="text-lg text-base-content font-bold mb-2">Arraste uma foto aqui</div>
-                          <div className="text-sm">ou clique para procurar no seu computador</div>
-                          <div className="text-xs mt-5 opacity-60 bg-base-content/5 px-4 py-2 rounded-full">
-                            JPG, PNG ou WEBP • Máx 2MB
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <ImageUploadField
+                    value={productForm.image_url}
+                    onChange={(url) => setProductForm({ ...productForm, image_url: url })}
+                    uploadType="product"
+                    password={password}
+                    label="Galeria (Imagem Principal)"
+                    hint="JPG, PNG ou WEBP • Máx 2MB"
+                  />
 
                   <div className="divider text-xs text-base-content/50 uppercase tracking-widest font-bold">OU FORNEÇA UMA URL EXTERNA</div>
 
                   <div className="form-control w-full">
                     <div className="relative">
-                      <i className="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50"></i>
+                      <i className="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50" aria-hidden="true"></i>
                       <input 
                         type="text" placeholder="https://meusite.com/imagem.jpg" 
                         className="input input-bordered w-full pl-12 h-14"
@@ -619,7 +442,7 @@ export default function ProductEditor({
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary gap-2">
-            <i className="fa-solid fa-check"></i> Salvar Produto no Catálogo
+            <i className="fa-solid fa-check" aria-hidden="true"></i> Salvar Produto no Catálogo
           </button>
         </div>
 

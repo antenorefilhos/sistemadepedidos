@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/pgDb';
+import { getRole } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-
-const getRole = (request) => {
-  const { searchParams } = new URL(request.url);
-  const password = searchParams.get('auth') || request.headers.get('Authorization');
-  const adminPass = process.env.ADMIN_PASSWORD || 'antenor123';
-  const managerPass = process.env.MANAGER_PASSWORD || 'manager123';
-  if (password === adminPass) return 'admin';
-  if (password === managerPass) return 'manager';
-  return null;
-};
 
 // GET: list all categories with product count
 export async function GET(request) {

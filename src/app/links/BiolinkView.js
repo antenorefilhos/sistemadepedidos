@@ -15,9 +15,13 @@ export default function BiolinkView({ slug }) {
         const res = await fetch(`/api/settings`);
         if (!res.ok) throw new Error('Falha ao carregar configurações');
         
-        // Carrega o biolink direto do supabase via fetch de API
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://iwcgjjfcckkolrwjheqr.supabase.co';
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3Y2dqamZjY2trb2xyd2poZXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDg4OTAsImV4cCI6MjA5Nzg4NDg5MH0.oZbqjF9F0_gHFiEfOd7E_l6PSmQHP9obLSneF8J_xMk';
+        // Carrega o biolink via Supabase REST API
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !supabaseAnonKey) {
+          throw new Error('Credenciais do Supabase não configuradas no ambiente.');
+        }
 
         // Fetch do biolink principal
         const bioRes = await fetch(`${supabaseUrl}/rest/v1/biolinks?slug=eq.${slug}&select=*`, {
@@ -101,8 +105,10 @@ export default function BiolinkView({ slug }) {
 
   const trackBlockClick = async (blockId) => {
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://iwcgjjfcckkolrwjheqr.supabase.co';
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3Y2dqamZjY2trb2xyd2poZXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDg4OTAsImV4cCI6MjA5Nzg4NDg5MH0.oZbqjF9F0_gHFiEfOd7E_l6PSmQHP9obLSneF8J_xMk';
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey) return;
       
       // Incrementa cliques localmente de forma fire-and-forget
       fetch(`${supabaseUrl}/rest/v1/biolink_blocks?id=eq.${blockId}`, {

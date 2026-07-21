@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/pgDb';
+import { getRole } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-
-const getRole = (request) => {
-  const { searchParams } = new URL(request.url);
-  const password = searchParams.get('auth') || request.headers.get('Authorization');
-  const adminPass = process.env.ADMIN_PASSWORD || 'Aef@1945*';
-  if (password === adminPass) return 'admin';
-  return null;
-};
 
 // The SQL to run in Supabase SQL Editor (for reference)
 // This endpoint just validates the connection and seeds initial sellers.

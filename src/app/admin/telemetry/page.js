@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import StatCard from '@/components/admin/ui/StatCard';
 
 export default function TelemetryDashboard() {
   const [data, setData] = useState(null);
@@ -41,8 +42,8 @@ export default function TelemetryDashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-10 border-b border-base-300 pb-5">
           <div>
-            <h1 className="text-3xl font-serif text-primary mb-1">
-              Telemetria & Inteligência
+            <h1 className="text-2xl font-bold text-primary mb-1">
+              Telemetria &amp; Inteligência
             </h1>
             <p className="text-sm text-base-content/60 m-0">
               Visão em tempo real da jornada de compra do usuário (Top Tier Analytics)
@@ -50,7 +51,7 @@ export default function TelemetryDashboard() {
           </div>
           <Link href="/admin">
             <button className="btn btn-outline btn-sm shadow-sm">
-              <i className="fa-solid fa-arrow-left mr-2"></i> Voltar ao Admin
+              <i className="fa-solid fa-arrow-left mr-2" aria-hidden="true"></i> Voltar ao Admin
             </button>
           </Link>
         </div>
@@ -63,64 +64,28 @@ export default function TelemetryDashboard() {
           </div>
         ) : error ? (
           <div className="alert alert-error bg-error/20 text-error border-error/30 rounded-xl">
-            <i className="fa-solid fa-triangle-exclamation"></i>
+            <i className="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
             <span>{error}</span>
           </div>
         ) : data ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            
-            {/* KPI 1 */}
-            <div className="card bg-base-100 border border-base-300 shadow-sm flex flex-col items-center text-center p-6">
-              <i className="fa-solid fa-users text-3xl text-primary mb-4"></i>
-              <h3 className="text-xs text-base-content/60 uppercase tracking-widest mb-2">
-                Visitantes Únicos
-              </h3>
-              <p className="text-4xl font-bold text-base-content m-0 leading-none">
-                {data.totalUniqueVisitors}
-              </p>
-            </div>
-
-            {/* KPI 2 */}
-            <div className="card bg-base-100 border border-base-300 shadow-sm flex flex-col items-center text-center p-6">
-              <i className="fa-solid fa-cart-shopping text-3xl text-primary mb-4"></i>
-              <h3 className="text-xs text-base-content/60 uppercase tracking-widest mb-2">
-                Eventos Add ao Carrinho
-              </h3>
-              <p className="text-4xl font-bold text-base-content m-0 leading-none">
-                {data.addToCartCount}
-              </p>
-            </div>
-
-            {/* KPI 3 */}
-            <div className="card bg-base-100 border border-base-300 shadow-sm flex flex-col items-center text-center p-6">
-              <i className="fa-brands fa-whatsapp text-3xl text-success mb-4"></i>
-              <h3 className="text-xs text-base-content/60 uppercase tracking-widest mb-2">
-                Checkouts Convertidos
-              </h3>
-              <p className="text-4xl font-bold text-base-content m-0 leading-none">
-                {data.checkoutCount}
-              </p>
-            </div>
-
-            {/* KPI 4 */}
-            <div className="card bg-base-100 border border-base-300 shadow-sm flex flex-col items-center text-center p-6">
-              <i className={`fa-solid fa-chart-line text-3xl mb-4 ${data.cartAbandonmentRate > 50 ? 'text-error' : 'text-primary'}`}></i>
-              <h3 className="text-xs text-base-content/60 uppercase tracking-widest mb-2">
-                Taxa de Abandono
-              </h3>
-              <p className="text-4xl font-bold text-base-content m-0 leading-none">
-                {data.cartAbandonmentRate}%
-              </p>
-            </div>
-
+            <StatCard icon="fa-users" tone="primary" label="Visitantes Únicos" value={data.totalUniqueVisitors} />
+            <StatCard icon="fa-cart-shopping" tone="primary" label="Eventos Add ao Carrinho" value={data.addToCartCount} />
+            <StatCard icon="fa-whatsapp" iconStyle="fa-brands" tone="success" label="Checkouts Convertidos" value={data.checkoutCount} />
+            <StatCard
+              icon="fa-chart-line"
+              tone={data.cartAbandonmentRate > 50 ? 'error' : 'primary'}
+              label="Taxa de Abandono"
+              value={`${data.cartAbandonmentRate}%`}
+            />
           </div>
         ) : null}
 
         {/* Detalhamento Visual do Funil (Native CSS Chart Example) */}
         {data && (
           <div className="card bg-base-100 border border-base-300 shadow-sm p-8">
-            <h3 className="text-xl text-base-content mb-8 flex items-center gap-3">
-              <i className="fa-solid fa-filter text-primary"></i> Funil de Conversão
+            <h3 className="text-lg font-bold text-base-content mb-8 flex items-center gap-3">
+              <i className="fa-solid fa-filter text-primary" aria-hidden="true"></i> Funil de Conversão
             </h3>
             
             <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full">

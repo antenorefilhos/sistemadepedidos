@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import sharp from 'sharp';
 import { getSupabase } from '@/lib/pgDb';
+import { verifyAdmin, unauthorizedResponse } from '@/lib/auth';
 
 export async function POST(request) {
+  const auth = verifyAdmin(request);
+  if (!auth.authorized) return unauthorizedResponse(auth);
+
   try {
     const formData = await request.formData();
     const file = formData.get('file');
@@ -89,13 +93,10 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const authPassword = searchParams.get('auth');
+  const auth = verifyAdmin(request);
+  if (!auth.authorized) return unauthorizedResponse(auth);
 
-    if (!authPassword || authPassword !== 'Aef@1945*') {
-      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
-    }
+  try {
 
     const { url } = await request.json();
     if (!url) {

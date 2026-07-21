@@ -28,7 +28,10 @@ export async function GET(request) {
     if (type) query = query.eq('type', type);
 
     if (search) {
-      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,sku.ilike.%${search}%`);
+      const cleanSearch = search.replace(/[,()%\\]/g, '').trim();
+      if (cleanSearch) {
+        query = query.or(`title.ilike.%${cleanSearch}%,description.ilike.%${cleanSearch}%,sku.ilike.%${cleanSearch}%`);
+      }
     }
 
     const { data: products, error } = await query;

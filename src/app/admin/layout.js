@@ -1,12 +1,17 @@
+import AdminUIProvider from '@/components/admin/ui/AdminUIProvider';
+
 export default function AdminLayout({ children }) {
   const adminThemeStyles = {
-    '--color-primary': '#ab9070',
-    '--color-primary-hover': '#d7b994',
-    '--color-primary-content': '#ffffff',
+    // Gold oficial da marca (DESIGN.md). Hover escurece (fundo do admin é claro),
+    // em vez do valor anterior que clareava o primary.
+    '--color-primary': '#D2BB8A',
+    '--color-primary-hover': '#c2a877',
+    '--color-primary-content': '#232122',
+    '--color-wine': '#5D082A',
     '--color-success': '#10b981',
     '--color-warning': '#f59e0b',
     '--color-error': '#ef4444',
-    
+
     // Garantir base clara perfeita no admin
     '--color-base-100': '#ffffff',
     '--color-base-200': '#f8fafc',
@@ -25,7 +30,7 @@ export default function AdminLayout({ children }) {
     '--radius-round': '9999px',
 
     // Forçar a fonte padrão limpa do sistema/Inter no escopo do admin
-    'font-family': 'var(--font-inter), sans-serif',
+    fontFamily: 'var(--font-inter), sans-serif',
 
     // Escala Tipográfica Compacta Global (Tier S)
     '--text-xs': '11px',
@@ -40,7 +45,7 @@ export default function AdminLayout({ children }) {
   return (
     <div data-theme="light" className="bg-base-200 text-base-content min-h-screen p-0 md:p-6 flex items-center justify-center w-full" style={adminThemeStyles}>
       <div className="w-full max-w-[1680px] mx-auto bg-base-100 rounded-box shadow-2xl border border-base-300 min-h-[calc(100vh-3rem)] flex flex-col md:flex-row overflow-hidden">
-        {children}
+        <AdminUIProvider>{children}</AdminUIProvider>
       </div>
     </div>
   );

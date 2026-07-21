@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auditoria Técnica — Antenor &amp; Filhos</title>
+<style>
+  :root {
+    --charcoal: #1c1a17;
+    --ink: #232122;
+    --gold: #ab9070;
+    --gold-deep: #8a7256;
+    --wine: #5D082A;
+    --paper: #fbfaf8;
+    --paper-alt: #f3f1ec;
+    --line: #e4dfd6;
+    --text: #29261f;
+    --text-muted: #6b6558;
+    --danger: #b3261e;
+    --danger-bg: #fdecea;
+    --warn: #8a5a00;
+    --warn-bg: #fdf3d9;
+    --ok: #2e6b4f;
+    --ok-bg: #e8f3ec;
+    --info: #1f5c8b;
+    --info-bg: #e9f2f8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: var(--paper-alt);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .doc {
+    max-width: 880px;
+    margin: 0 auto;
+    background: var(--paper);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.06);
+  }
+
+  header.cover {
+    background: linear-gradient(160deg, var(--charcoal) 0%, var(--ink) 55%, #2c261d 100%);
+    color: #f4efe6;
+    padding: 64px 56px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header.cover::after {
+    content: "";
+    position: absolute;
+    right: -80px;
+    top: -80px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(171,144,112,0.35) 0%, rgba(171,144,112,0) 70%);
+  }
+
+  header.cover .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  header.cover h1 {
+    font-family: Georgia, 'Playfair Display', serif;
+    font-size: 34px;
+    line-height: 1.25;
+    margin: 0 0 14px;
+    max-width: 34ch;
+  }
+
+  header.cover p.lead {
+    font-size: 15px;
+    color: #cfc7b8;
+    max-width: 60ch;
+    margin: 0 0 28px;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .meta-chip {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #efe9dc;
+  }
+
+  main {
+    padding: 48px 56px 64px;
+  }
+
+  nav.toc {
+    background: var(--paper-alt);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 48px;
+  }
+
+  nav.toc h2 {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 12px;
+    font-weight: 700;
+  }
+
+  nav.toc ol {
+    margin: 0;
+    padding-left: 20px;
+    columns: 1;
+  }
+
+  nav.toc li { margin-bottom: 6px; }
+  nav.toc a { color: var(--text); text-decoration: none; font-size: 14.5px; }
+  nav.toc a:hover { color: var(--gold-deep); text-decoration: underline; }
+
+  section { margin-bottom: 52px; }
+
+  section > h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 22px;
+    margin: 0 0 22px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  section > h2 .num {
+    font-family: Georgia, serif;
+    font-size: 15px;
+    color: var(--paper);
+    background: var(--ink);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gold-deep);
+    margin: 28px 0 12px;
+  }
+
+  p { margin: 0 0 14px; font-size: 15px; }
+
+  ul, ol.findings { margin: 0 0 14px; padding-left: 22px; }
+  ul li, ol.findings li { margin-bottom: 10px; font-size: 15px; }
+
+  code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 13px;
+    background: var(--paper-alt);
+    border: 1px solid var(--line);
+    padding: 1px 6px;
+    border-radius: 5px;
+    color: var(--wine);
+  }
+
+  strong { color: var(--ink); }
+
+  /* Cards de destaque */
+  .card {
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 16px 0;
+    border-left: 4px solid var(--line);
+    background: var(--paper-alt);
+  }
+
+  .card.ok { border-left-color: var(--ok); background: var(--ok-bg); }
+
+  .findings-list { list-style: none; padding: 0; margin: 0; counter-reset: item; }
+
+  .finding {
+    counter-increment: item;
+    position: relative;
+    padding: 18px 20px 18px 56px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    background: var(--paper-alt);
+    border: 1px solid var(--line);
+  }
+
+  .finding::before {
+    content: counter(item);
+    position: absolute;
+    left: 16px;
+    top: 18px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: #fff;
+    background: var(--danger);
+  }
+
+  .finding p { margin: 0 0 8px; }
+  .finding p:last-child { margin: 0; }
+  .finding .sub-list { margin: 8px 0 0 18px; padding: 0; }
+  .finding .sub-list li { font-size: 14px; margin-bottom: 6px; }
+
+  .severity-note {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    margin-bottom: 10px;
+  }
+
+  .callout {
+    background: var(--info-bg);
+    border: 1px solid #c6dfef;
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-size: 14.5px;
+  }
+
+  .callout strong { color: var(--info); }
+
+  footer.doc-footer {
+    padding: 32px 56px 48px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 640px) {
+    header.cover, main, footer.doc-footer { padding-left: 24px; padding-right: 24px; }
+    header.cover h1 { font-size: 26px; }
+  }
+
+  @media print {
+    body { background: #fff; }
+    .doc { box-shadow: none; }
+    nav.toc { break-inside: avoid; }
+    .finding, .card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header class="cover">
+    <div class="eyebrow">Relatório de Auditoria Técnica</div>
+    <h1>Sistema de Pedidos &amp; E-commerce — Antenor &amp; Filhos</h1>
+    <p class="lead">Boutique de Carnes Nobres, Adega de Vinhos e Restaurante — Itaipava/RJ. Auditoria irrestrita de arquitetura, performance, segurança, UX/UI e camada de dados, cobrindo storefront público, painel admin, API routes e infraestrutura.</p>
+    <div class="meta-row">
+      <span class="meta-chip">Next.js 16 · App Router</span>
+      <span class="meta-chip">React 19</span>
+      <span class="meta-chip">Supabase / PostgreSQL</span>
+      <span class="meta-chip">Tailwind v4 + DaisyUI v5</span>
+      <span class="meta-chip">21/07/2026</span>
+    </div>
+  </header>
+
+  <main>
+    <nav class="toc">
+      <h2>Sumário</h2>
+      <ol>
+        <li><a href="#pontos-fortes">🌟 Pontos Fortes</a></li>
+        <li><a href="#ajustes-imediatos">⚠️ Ajustes Imediatos (Alta Prioridade)</a></li>
+        <li><a href="#arquitetura">🛠️ Melhorias de Arquitetura &amp; Código (Média Prioridade)</a></li>
+        <li><a href="#ux-ui">🎨 Evolução de UX/UI &amp; Experiência Mobile</a></li>
+        <li><a href="#inovacao">💡 Propostas de Inovação</a></li>
+        <li><a href="#priorizacao">Recomendação de Priorização</a></li>
+      </ol>
+    </nav>
+
+    <section id="pontos-fortes">
+      <h2><span class="num">1</span> 🌟 Pontos Fortes</h2>
+      <ul>
+        <li><strong>Stack moderna e bem escolhida</strong>: Next.js 16 App Router + React 19 + Tailwind v4 (arquitetura CSS-first <code>@theme</code>) + DaisyUI v5 + Supabase/Postgres. Nenhuma dessas escolhas está datada ou é questionável para o porte do negócio.</li>
+        <li><strong>Uso correto de Server Components onde importa mais</strong>: <code>produtos/[slug]/page.js</code> e <code>receitas/[slug]/page.js</code> fazem fetch direto no servidor via <code>getSupabase()</code>, com <code>generateMetadata</code> dinâmico bem implementado (título, descrição, Open Graph a partir do produto/receita real).</li>
+        <li><code>SellerReferralTracker</code> usa <code>useSearchParams</code> corretamente isolado em <code>&lt;Suspense fallback={null}&gt;</code> — padrão certo para não bloquear SSR.</li>
+        <li><strong>Pipeline de upload de imagem já otimizado</strong>: conversão automática para WebP via <code>sharp</code> no backend, com resize por tipo (800px produto vs 1400px genérico) — compensa parcialmente o <code>images.unoptimized: true</code>.</li>
+        <li><strong>RLS parcialmente implementado</strong> nas tabelas centrais do domínio de vendas (<code>products</code>, <code>orders</code>, <code>order_items</code>, <code>sellers</code>, <code>categories</code>) — a base do modelo de segurança existe, só não está completa.</li>
+        <li><strong>Painel admin</strong>: depois do trabalho desta sessão, hoje tem um kit de UI compartilhado (<code>Modal</code>, <code>Toast</code>, <code>ConfirmDialog</code>, <code>StatusBadge</code>, <code>Tag</code>, <code>StatCard</code>, <code>DataTable</code>, <code>ImageUploadField</code>), autenticação/fetch centralizados (<code>adminFetch</code>), tipografia unificada, nenhum arquivo com mais de ~530 linhas, e dois bugs de negócio reais corrigidos. É a área mais saudável do projeto hoje.</li>
+        <li><strong>JSON-LD na home</strong> (<code>FoodEstablishment</code> com endereço, geo, horário) — presente e correto, só não replicado em outras páginas.</li>
+      </ul>
+    </section>
+
+    <section id="ajustes-imediatos">
+      <h2><span class="num">2</span> ⚠️ Ajustes Imediatos (Alta Prioridade)</h2>
+      <p>Ordenado por severidade real, não por facilidade de correção.</p>
+
+      <ol class="findings-list">
+        <li class="finding">
+          <p><strong>Senha de administrador real, hardcoded como fallback, commitada no histórico do git.</strong> A string <code>'Aef@1945*'</code> aparece idêntica em <code>src/app/api/admin/{customers,migrate,orders,reviews}/route.js:9</code> e <code>src/app/api/admin/upload/route.js:96</code>. Não é uma senha de exemplo genérica — o padrão sugere ser a senha real de produção.</p>
+          <p>Se <code>ADMIN_PASSWORD</code> faltar em qualquer ambiente, o painel inteiro fica acessível com essa senha pública no código-fonte. Precisa ser trocada imediatamente na Vercel e o fallback eliminado do código. Como o repositório está no GitHub, essa senha deve ser considerada <strong>comprometida</strong>.</p>
+        </li>
+        <li class="finding">
+          <p><strong>Rota de upload sem autenticação no POST.</strong> <code>src/app/api/admin/upload/route.js</code> — o handler <code>POST</code> (linhas 6-89) não verifica senha alguma. Qualquer visitante anônimo pode subir arquivos para o bucket público <code>imagens</code> do Supabase Storage, sem limite de tamanho ou whitelist de MIME.</p>
+        </li>
+        <li class="finding">
+          <p><strong>Checkout confia cegamente no preço enviado pelo cliente.</strong> <code>src/app/api/orders/route.js:69-76</code> grava <code>price: item.price</code> direto do payload JSON, sem consultar <code>products.preco</code>. Via DevTools, qualquer visitante pode alterar preço/quantidade antes do POST. Mitigado operacionalmente (confirmação humana por WhatsApp), não tecnicamente.</p>
+        </li>
+        <li class="finding">
+          <p><strong>Anon key do Supabase de produção hardcoded no bundle client, contornando toda a autenticação admin.</strong> <code>src/app/links/BiolinkView.js:19-20,104-105</code> tem fallback literal com URL e anon key JWT completas, e faz <code>fetch</code>/<code>PATCH</code> direto em <code>/rest/v1/biolinks...</code>, sem passar pelas rotas <code>/api/admin/biolinks*</code>. A segurança depende inteiramente de RLS — sem evidência disso para essas tabelas.</p>
+        </li>
+        <li class="finding">
+          <p><strong>RLS ausente ou incompleto em tabelas com dado sensível ou gravação pública.</strong></p>
+          <ul class="sub-list">
+            <li><code>app_settings</code> — criada sem RLS habilitado.</li>
+            <li><code>customer_notes</code> — CRM interno de clientes, sem política em nenhum script.</li>
+            <li><code>product_reviews</code> — sem política.</li>
+            <li><code>biolinks</code>/<code>biolink_blocks</code> — sem política (agravado pelo item anterior).</li>
+            <li><code>supabase_recipes.sql:25-29</code> cria política <code>USING (true) WITH CHECK (true)</code> que libera INSERT/UPDATE/DELETE para qualquer requisição.</li>
+          </ul>
+        </li>
+        <li class="finding">
+          <p><strong>Sincronização com o ERP Solidcon trafega em HTTP puro, sem TLS.</strong> <code>api/sync/prices</code> e <code>api/admin/solidcon</code> chamam <code>http://45.239.193.56:5001/...</code> — IP fixo, sem HTTPS. Preço/estoque em texto claro, suscetível a interceptação.</p>
+        </li>
+        <li class="finding">
+          <p><strong>Senha/token passados via query string</strong> em vários pontos, expostos em logs de servidor/proxy/CDN e no header <code>Referer</code>: <code>server.js:51</code>, <code>api/admin/solidcon/route.js:9</code>, e o padrão geral do front-end admin (<code>?auth=</code> em ~20 rotas). Migrar para header <code>Authorization</code>.</p>
+        </li>
+        <li class="finding">
+          <p><strong><code>.git</code> do repositório com 456 MB</strong>, sendo 85% (13.104 arquivos) uma aplicação PHP de terceiros (<code>bio-links/</code>) com <code>vendor/</code> do Composer inteiro commitado — SDKs completos de AWS, Stripe, Laravel, dumps SQL. Mais bancos SQLite binários, XMLs de export e um <code>test-tailwind.css</code> de 475 KB.</p>
+        </li>
+        <li class="finding">
+          <p><strong><code>npm run lint</code> está quebrado</strong> — falta o pacote <code>typescript</code> como dependência transitiva de <code>@typescript-eslint</code>. Nenhum lint roda hoje, localmente ou em CI.</p>
+        </li>
+        <li class="finding">
+          <p><strong><code>server.js</code> é código morto</strong> que descreve uma sincronização automática que não roda (nenhum script npm o chama). Um dev futuro vai assumir que ela funciona em produção — não funciona. A sincronização real já existe via <code>/api/cron/sync</code>.</p>
+        </li>
+        <li class="finding">
+          <p><strong>Filtro de busca de produtos vulnerável a injeção de sintaxe PostgREST.</strong> <code>src/app/api/products/route.js:31</code> interpola <code>search</code> cru dentro de <code>.or(...)</code>. Vírgulas e parênteses têm significado especial na sintaxe de filtro — precisa de escaping antes de interpolar.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="arquitetura">
+      <h2><span class="num">3</span> 🛠️ Melhorias de Arquitetura &amp; Código (Média Prioridade)</h2>
+
+      <h3>Autenticação/autorização</h3>
+      <ul>
+        <li>Verificação de senha admin reimplementada quase identicamente em ~17 arquivos de rota diferentes, cada um com pequenas variações não documentadas. Centralizar em <code>src/lib/auth.js</code>.</li>
+        <li>Modelo de senha única compartilhada (sem sessão, sem expiração, sem log de quem fez o quê) é frágil para equipe com múltiplos vendedores/administradores. Migrar para autenticação real com usuários individuais.</li>
+      </ul>
+
+      <h3>Data fetching / cache</h3>
+      <ul>
+        <li>Zero ISR/SSG em qualquer rota pública — <code>force-dynamic</code> espalhado em todas as API routes e em <code>receitas/*</code>. Catálogo, categorias e receitas mudam pouco: candidatos naturais a <code>revalidate</code> com revalidação sob demanda.</li>
+        <li><code>BoutiqueClient.js</code>/<code>AdegaClient.js</code> fazem fetch client-side via <code>useEffect</code> quando poderiam ser Server Components — eliminaria o spinner inicial em duas páginas centrais do site.</li>
+        <li><code>ProductDetails.js</code> busca reviews via waterfall client-side em vez de paralelo no Server Component pai.</li>
+      </ul>
+
+      <h3>Duplicação de lógica (storefront)</h3>
+      <ul>
+        <li>Formatação de preço reimplementada em pelo menos 6 arquivos — sem <code>formatPrice()</code> compartilhado.</li>
+        <li>Lógica de bandeira de país do vinho copiada literalmente entre <code>AdegaClient.js</code> e <code>ProductDetails.js</code>.</li>
+        <li>Parsing de pontuação de vinho duplicado 3 vezes (2x no mesmo arquivo).</li>
+        <li>Carrinho via <code>localStorage</code> reimplementado em 4 arquivos, sem hook <code>useCart()</code>. <code>Header.js</code> ainda faz polling de 1500ms redundante.</li>
+        <li>"Card de produto" duplicado em 3 lugares em vez de um componente <code>&lt;ProductCard /&gt;</code>.</li>
+      </ul>
+
+      <h3>API/backend</h3>
+      <ul>
+        <li>Sincronização ERP duplicada quase byte-a-byte entre <code>api/sync/prices</code> e <code>api/admin/solidcon</code>.</li>
+        <li>N+1 sequencial em <code>api/sync</code> e <code>api/cron/sync</code> — gargalo conforme o catálogo cresce.</li>
+        <li>Nenhuma paginação em <code>/api/products</code>, <code>/api/admin/orders</code>, <code>/api/admin/customers</code>.</li>
+        <li>Sem índices confirmados em <code>products.sku</code>, <code>products.status</code>, <code>orders.customer_whatsapp</code> no schema Postgres atual.</li>
+        <li>Mensagens de erro vazando <code>error.message</code> do Postgres em ~10 rotas.</li>
+      </ul>
+
+      <h3>Frontend geral</h3>
+      <ul>
+        <li><code>HomeClient.js</code> (GSAP + parallax) não é importado por nenhuma rota — código morto carregando GSAP inteiro no dependency tree.</li>
+        <li>Nenhum uso de <code>prefers-reduced-motion</code> em todo o código.</li>
+        <li><code>InteractiveIngredients.js</code> manipula DOM imperativamente em vez de <code>useState</code>.</li>
+        <li><code>globals.css</code> com 1.747 linhas e 93 cores hex hardcoded fora do sistema de tokens <code>@theme</code>.</li>
+        <li>Fontes customizadas carregadas do domínio WordPress legado em vez de <code>/public/fonts</code>.</li>
+      </ul>
+    </section>
+
+    <section id="ux-ui">
+      <h2><span class="num">4</span> 🎨 Evolução de UX/UI &amp; Experiência Mobile</h2>
+      <div class="card">
+        <p><strong>Sanitização de HTML ausente end-to-end</strong>: título/descrição de produtos e receitas gravados sem sanitização, renderizados via <code>dangerouslySetInnerHTML</code> em pelo menos 8 pontos do storefront. Combinado com a auth fraca do admin, a cadeia senha fraca → gravação sem sanitização → XSS armazenado é real, não teórica.</p>
+      </div>
+      <ul>
+        <li><strong>Checklist de ingredientes não é acessível</strong>: sem <code>role="checkbox"</code>/<code>aria-checked</code>, não operável por teclado (o <code>&lt;li&gt;</code> não é focável).</li>
+        <li><strong>SEO estruturado incompleto</strong>: só a home tem JSON-LD. Produto e receita mereceriam <code>Product</code>/<code>Recipe</code> schema. Sem <code>sitemap.xml</code> nem <code>robots.txt</code> gerados.</li>
+        <li><code>cardapio/page.js</code> define título via <code>document.title</code> no client em vez de <code>generateMetadata</code> — título real ausente para crawlers.</li>
+        <li><strong>Mobile</strong>: styling majoritariamente inline com <code>clamp()</code>/<code>flexWrap</code> em vez de breakpoints Tailwind — funciona, mas difícil de auditar por tela.</li>
+        <li>Imagens de cardápio e logo sem <code>loading="lazy"</code>, sem <code>width</code>/<code>height</code> — risco de CLS/LCP numa página provavelmente muito acessada via QR code.</li>
+        <li><strong>Consistência visual</strong>: "card de produto" com 3 implementações JSX distintas — o mesmo padrão de inconsistência já corrigido no admin (StatCard, Tag, StatusBadge) ainda não foi aplicado ao storefront.</li>
+      </ul>
+    </section>
+
+    <section id="inovacao">
+      <h2><span class="num">5</span> 💡 Propostas de Inovação (Liberdade Total)</h2>
+      <ul>
+        <li><strong>Fechar o loop de confiança do checkout</strong>: revalidar preço/status do produto no servidor no POST de <code>/api/orders</code>, sinalizando no admin pedidos com preço divergente do catálogo.</li>
+        <li><strong>Sincronização ERP real via Vercel Cron</strong> declarado em <code>vercel.json</code>, substituindo o mecanismo hoje simulado/não declarado.</li>
+        <li><strong>Programa de fidelidade / histórico de compras</strong>: área "Minha Conta" simples (login por WhatsApp + código) mostrando pedidos anteriores e permitindo "repetir pedido".</li>
+        <li><strong>Zoom de produto com galeria multi-imagem</strong> — corte, selo de certificação, rótulo — via tabela <code>product_images</code>.</li>
+        <li><strong>Notificação push real</strong> (Web Push ou WhatsApp Business API oficial) substituindo o polling + som do navegador.</li>
+        <li><strong>Rich snippets de Receita + Produto no Google</strong> — potencial de tráfego orgânico gratuito para marca regional.</li>
+        <li><strong>Consolidar a "reforma de consistência" do admin para o storefront</strong>: <code>&lt;ProductCard /&gt;</code>, <code>useCart()</code> e <code>formatPrice()</code> compartilhados.</li>
+        <li><strong>Separar <code>bio-links/</code> em repositório próprio</strong> (ou remover) — reduziria o <code>.git</code> de 456 MB para uma fração disso.</li>
+      </ul>
+    </section>
+
+    <section id="priorizacao">
+      <h2><span class="num">✓</span> Recomendação de Priorização</h2>
+      <div class="callout">
+        <p>Dado o volume de achados, a sugestão prática é começar pelos itens <strong>1, 2, 3 e 4</strong> da seção "Ajustes Imediatos" (as duas senhas hardcoded, a rota de upload aberta e a anon key exposta) — os únicos com exposição de segurança real e ativa — antes de qualquer trabalho de arquitetura ou UX.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="doc-footer">
+    Sistema de Pedidos &amp; E-commerce — Antenor &amp; Filhos · Auditoria técnica gerada em 21/07/2026 · Achados verificados por leitura direta do código-fonte.
+  </footer>
+
+</div>
+</body>
+</html>

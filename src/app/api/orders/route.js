@@ -65,15 +65,35 @@ export async function POST(request) {
     if (orderError) throw orderError;
     const orderId = order.id;
 
-    // 2. Insert items
-    const itemsPayload = items.map(item => ({
-      order_id: orderId,
-      product_id: item.product_id,
-      product_title: item.title,
-      sku: item.sku || null,
-      quantity: item.quantity,
-      price: item.price || null
-    }));
+    // 2. Fetch real product prices from database to prevent client-side price tampering
+    const productIds = items.map(item => item.product_id).filter(Boolean);
+    let dbPriceMap = new Map();
+    if (productIds.length > 0) {
+      const { data: dbProducts } = await supabase
+        .from('products')
+        .select('id, preco, title, sku')
+        .in('id', productIds);
+      
+      if (dbProducts) {
+        dbProducts.forEach(p => dbPriceMap.set(p.id, p));
+      }
+    }
+
+    const itemsPayload = items.map(item => {
+      const dbProduct = dbPriceMap.get(item.product_id);
+      const validatedPrice = (dbProduct && dbProduct.preco !== null && dbProduct.preco !== undefined) 
+        ? dbProduct.preco 
+        : (item.price || null);
+
+      return {
+        order_id: orderId,
+        product_id: item.product_id,
+        product_title: dbProduct?.title || item.title,
+        sku: dbProduct?.sku || item.sku || null,
+        quantity: item.quantity,
+        price: validatedPrice
+      };
+    });
 
     const { error: itemsError } = await supabase
       .from('order_items')
