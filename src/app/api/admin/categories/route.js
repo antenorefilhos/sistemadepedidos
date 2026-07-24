@@ -26,6 +26,8 @@ export async function GET(request) {
       name: c.name,
       slug: c.slug,
       type: c.type,
+      parent_id: c.parent_id ?? null,
+      position: c.position ?? 0,
       products_count: c.product_categories ? c.product_categories.length : 0
     }));
 
@@ -42,15 +44,20 @@ export async function POST(request) {
   if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { name, slug, type } = await request.json();
+    const { name, slug, type, parent_id, position } = await request.json();
     if (!name || !slug || !type) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const supabase = getSupabase();
-    const { error } = await supabase
-      .from('categories')
-      .insert({ name, slug, type });
+    const catData = { name, slug, type, parent_id: parent_id || null, position: position ?? 0 };
+    let { error } = await supabase.from('categories').insert(catData);
+    // Tolerante: se as colunas de hierarquia ainda não existem (migração não rodada), salva sem elas
+    if (error && error.code === '42703') {
+      delete catData.parent_id;
+      delete catData.position;
+      ({ error } = await supabase.from('categories').insert(catData));
+    }
 
     if (error) throw error;
 
@@ -67,16 +74,20 @@ export async function PUT(request) {
   if (role !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { id, name, slug } = await request.json();
+    const { id, name, slug, parent_id, position } = await request.json();
     if (!id || !name || !slug) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const supabase = getSupabase();
-    const { error } = await supabase
-      .from('categories')
-      .update({ name, slug })
-      .eq('id', id);
+    const catData = { name, slug };
+    if (parent_id !== undefined) catData.parent_id = parent_id || null;
+    if (position !== undefined) catData.position = position;
+    let { error } = await supabase.from('categories').update(catData).eq('id', id);
+    // Tolerante: se as colunas de hierarquia ainda não existem, atualiza só nome/slug
+    if (error && error.code === '42703') {
+      ({ error } = await supabase.from('categories').update({ name, slug }).eq('id', id));
+    }
 
     if (error) throw error;
 
