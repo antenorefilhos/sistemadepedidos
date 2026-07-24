@@ -12,7 +12,7 @@ const EMPTY_FORM = { id: null, name: '', slug: '', type: 'sessoes_carnes_', pare
 
 // Taxonomias (o campo `type`). Cada uma tem sua própria árvore de categorias/subcategorias.
 const TAXONOMIES = [
-  { key: 'sessoes_carnes_', label: 'Boutique · Categorias' },
+  { key: 'sessoes_carnes_', label: 'Boutique · Carnes' },
   { key: 'racas_carnes', label: 'Boutique · Raças' },
   { key: 'embalagem_carnes', label: 'Boutique · Embalagens' },
   { key: 'tipos_vinho_', label: 'Adega · Tipos' },

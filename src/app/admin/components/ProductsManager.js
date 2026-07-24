@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Fuse from 'fuse.js';
 import ProductEditor from './ProductEditor';
+import Modal from '@/components/admin/ui/Modal';
 import StatusBadge from '@/components/admin/ui/StatusBadge';
 import Tag from '@/components/admin/ui/Tag';
 import { useToast } from '@/components/admin/ui/Toast';
@@ -54,6 +55,11 @@ export default function ProductsManager({ products, categories, role, password, 
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_PRODUCT);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [showReclassify, setShowReclassify] = useState(false);
+  const [reclassifyAction, setReclassifyAction] = useState('add');
+  const [reclassifyCats, setReclassifyCats] = useState([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
   const toast = useToast();
   const confirm = useConfirm();
 
@@ -159,6 +165,71 @@ export default function ProductsManager({ products, categories, role, password, 
     }
   };
 
+  const pageIds = paginatedProducts.map((p) => p.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllPage = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) pageIds.forEach((id) => next.delete(id));
+      else pageIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+  const toggleReclassifyCat = (id) =>
+    setReclassifyCats((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+
+  const categoriesGrouped = useMemo(() => {
+    const LABELS = {
+      sessoes_carnes_: 'Boutique · Carnes',
+      racas_carnes: 'Boutique · Raças',
+      embalagem_carnes: 'Boutique · Embalagens',
+      tipos_vinho_: 'Adega · Tipos',
+      sessoes_vinho_: 'Adega · Países / Regiões',
+    };
+    const groups = {};
+    (categories || []).forEach((c) => {
+      (groups[c.type] = groups[c.type] || []).push(c);
+    });
+    return Object.entries(groups).map(([key, cats]) => ({
+      key,
+      label: LABELS[key] || key,
+      cats: [...cats].sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+  }, [categories]);
+
+  const handleReclassify = async () => {
+    if (role !== 'admin' || selectedIds.size === 0 || reclassifyCats.length === 0) return;
+    setBulkSaving(true);
+    try {
+      await adminFetch('/api/admin/products/reclassify', {
+        password,
+        method: 'POST',
+        body: { productIds: [...selectedIds], categoryIds: reclassifyCats, action: reclassifyAction },
+      });
+      toast.success(`${selectedIds.size} produto(s) reclassificado(s)!`);
+      setShowReclassify(false);
+      setReclassifyCats([]);
+      clearSelection();
+      onRefresh();
+    } catch (err) {
+      toast.error(`Erro ao reclassificar: ${err.message}`);
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -202,10 +273,30 @@ export default function ProductsManager({ products, categories, role, password, 
         </div>
       </div>
 
+      {role === 'admin' && selectedIds.size > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 p-3 bg-primary/10 border border-primary/30 rounded-box">
+          <span className="text-sm font-bold text-base-content">
+            <i className="fa-solid fa-circle-check text-primary mr-1.5" aria-hidden="true"></i>
+            {selectedIds.size} produto(s) selecionado(s)
+          </span>
+          <div className="flex gap-2">
+            <button onClick={() => { setReclassifyCats([]); setReclassifyAction('add'); setShowReclassify(true); }} className="btn btn-sm btn-primary">
+              <i className="fa-solid fa-tags mr-1.5" aria-hidden="true"></i> Reclassificar
+            </button>
+            <button onClick={clearSelection} className="btn btn-sm btn-ghost">Limpar seleção</button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto bg-base-100 rounded-box border border-base-300">
         <table className="table table-zebra w-full">
           <thead className="bg-base-200">
             <tr>
+              {role === 'admin' && (
+                <th className="w-10 px-4 py-3">
+                  <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={allPageSelected} onChange={toggleSelectAllPage} aria-label="Selecionar todos da página" />
+                </th>
+              )}
               <th className="w-24 px-4 py-3">Imagem</th>
               <th className="w-1/3 min-w-[280px] px-4 py-3">Título</th>
               <th className="w-44 min-w-[160px] px-4 py-3">EAN (SKU)</th>
@@ -217,7 +308,12 @@ export default function ProductsManager({ products, categories, role, password, 
           </thead>
           <tbody>
             {paginatedProducts.map((p) => (
-              <tr key={p.id} className="hover">
+              <tr key={p.id} className={`hover ${selectedIds.has(p.id) ? 'bg-primary/5' : ''}`}>
+                {role === 'admin' && (
+                  <td className="px-4 py-3.5">
+                    <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.title}`} />
+                  </td>
+                )}
                 <td className="px-4 py-3.5">
                   {p.image_url ? (
                     <div className="avatar">
@@ -309,6 +405,56 @@ export default function ProductsManager({ products, categories, role, password, 
           password={password}
         />
       )}
+
+      <Modal
+        open={showReclassify}
+        onClose={() => setShowReclassify(false)}
+        title={`Reclassificar ${selectedIds.size} produto(s)`}
+        size="md"
+        footer={
+          <>
+            <button type="button" className="btn btn-ghost" onClick={() => setShowReclassify(false)}>Cancelar</button>
+            <button
+              type="button"
+              className={`btn ${reclassifyAction === 'remove' ? 'btn-error' : 'btn-primary'}`}
+              onClick={handleReclassify}
+              disabled={bulkSaving || reclassifyCats.length === 0}
+            >
+              {bulkSaving ? 'Aplicando...' : reclassifyAction === 'add' ? 'Adicionar categorias' : 'Remover categorias'}
+            </button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setReclassifyAction('add')} className={`btn btn-sm flex-1 ${reclassifyAction === 'add' ? 'btn-primary' : 'btn-outline'}`}>Adicionar</button>
+            <button type="button" onClick={() => setReclassifyAction('remove')} className={`btn btn-sm flex-1 ${reclassifyAction === 'remove' ? 'btn-error' : 'btn-outline'}`}>Remover</button>
+          </div>
+          <p className="text-xs text-base-content/60">
+            {reclassifyAction === 'add'
+              ? 'As categorias marcadas serão adicionadas aos produtos selecionados (sem remover as já existentes).'
+              : 'As categorias marcadas serão removidas dos produtos selecionados.'}
+          </p>
+          <div className="max-h-[320px] overflow-y-auto flex flex-col gap-3 pr-1">
+            {categoriesGrouped.map((grp) => (
+              <div key={grp.key}>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-base-content/50 mb-1.5">{grp.label}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {grp.cats.map((c) => (
+                    <label key={c.id} className={`flex items-center gap-2 text-sm cursor-pointer px-3 py-2 rounded-lg border transition-colors ${reclassifyCats.includes(c.id) ? 'bg-primary/10 border-primary/40 font-semibold' : 'border-base-300 hover:bg-base-200'}`}>
+                      <input type="checkbox" className="checkbox checkbox-xs checkbox-primary" checked={reclassifyCats.includes(c.id)} onChange={() => toggleReclassifyCat(c.id)} />
+                      <span className="truncate">{c.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {categoriesGrouped.length === 0 && (
+              <div className="text-sm text-base-content/50 italic p-3">Nenhuma categoria cadastrada.</div>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
