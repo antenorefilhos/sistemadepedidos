@@ -184,6 +184,144 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
     }, 300);
   };
 
+  const handlePrintPDF = (order) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('O navegador bloqueou a janela do PDF. Permita pop-ups.');
+      return;
+    }
+    const itemsHtml = (order.items || [])
+      .map(
+        (item) => `
+      <tr style="border-bottom: 1px solid #e5e7eb;">
+        <td style="padding: 10px 12px; font-size: 13px; font-weight: 500;">${item.product_title}</td>
+        <td style="padding: 10px 12px; font-size: 13px; text-align: center;">${item.quantity}x</td>
+        <td style="padding: 10px 12px; font-size: 13px; text-align: right; font-weight: 600;">${
+          item.price
+            ? `R$ ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : 'Sob consulta'
+        }</td>
+      </tr>
+    `
+      )
+      .join('');
+
+    const totalStr = (order.items || [])
+      .reduce((acc, item) => acc + (item.price ? item.price * item.quantity : 0), 0)
+      .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Orçamento Timbrado #${order.id} - Antenor & Filhos</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 40px; color: #1a1a1a; background-color: #fff; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ab9070; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo { font-size: 24px; font-weight: bold; color: #ab9070; letter-spacing: 2px; text-transform: uppercase; }
+            .subtitle { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; background: #f9f8f6; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+            .info-box h4 { margin: 0 0 6px 0; font-size: 11px; text-transform: uppercase; color: #ab9070; letter-spacing: 1px; }
+            .info-box p { margin: 0; font-size: 13px; color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { background: #ab9070; color: #fff; text-align: left; font-size: 12px; text-transform: uppercase; padding: 10px 12px; letter-spacing: 1px; }
+            .total-row { text-align: right; margin-top: 20px; padding: 15px; background: #f4efe9; border-radius: 8px; font-size: 16px; font-weight: bold; color: #222; }
+            .pix-box { margin-top: 30px; padding: 15px; border: 1px dashed #ab9070; border-radius: 8px; background: #fffcf8; font-size: 12px; }
+            .footer { margin-top: 50px; text-align: center; font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="logo">ANTENOR & FILHOS</div>
+              <div class="subtitle">Boutique de Carnes Nobres & Adega de Vinhos</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 18px; font-weight: bold; color: #222;">ORÇAMENTO #${order.id}</div>
+              <div style="font-size: 12px; color: #666;">Data: ${formatDate(order.created_at)}</div>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-box">
+              <h4>Cliente</h4>
+              <p><b>Nome:</b> ${order.customer_name}</p>
+              <p><b>WhatsApp:</b> ${order.customer_whatsapp}</p>
+              ${order.customer_address ? `<p><b>Entrega:</b> ${order.customer_address}</p>` : ''}
+            </div>
+            <div class="info-box">
+              <h4>Atendimento</h4>
+              <p><b>Vendedor:</b> ${order.seller_name || 'Venda Direta / Site'}</p>
+              <p><b>Validade:</b> 5 dias úteis</p>
+              <p><b>Status:</b> ${order.status ? order.status.toUpperCase() : 'PENDENTE'}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Item / Descrição</th>
+                <th style="text-align: center;">Qtd</th>
+                <th style="text-align: right;">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <div class="total-row">
+            Valor Total do Orçamento: R$ ${totalStr}
+          </div>
+
+          <div class="pix-box">
+            <b style="color: #ab9070; font-size: 13px;">💳 Chave PIX Oficial para Pagamento:</b><br/>
+            <span>CNPJ / E-mail: <b>financeiro@antenorefilhos.com.br</b></span><br/>
+            <span style="font-size: 11px; color: #666;">Banco Itaú — Antenor & Filhos Alimentos e Bebidas Ltda.</span>
+          </div>
+
+          <div class="footer">
+            Estrada União Indústria, 12273 — Itaipava, Petrópolis - RJ | Tel: (24) 2222-1945 | www.antenorefilhos.com.br
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
+  };
+
+  const sendWhatsAppStatus = (order, statusType) => {
+    let cleanPhone = (order.customer_whatsapp || '').replace(/\D/g, '');
+    if (!cleanPhone) {
+      toast.error('Telefone de WhatsApp inválido para este cliente.');
+      return;
+    }
+    if (!cleanPhone.startsWith('55')) {
+      cleanPhone = `55${cleanPhone}`;
+    }
+
+    const totalStr = (order.items || [])
+      .reduce((acc, item) => acc + (item.price ? item.price * item.quantity : 0), 0)
+      .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    let msg = '';
+    if (statusType === 'recebido') {
+      msg = `Olá ${order.customer_name}! Recebemos o seu orçamento #${order.id} no valor estimado de R$ ${totalStr}. Em instantes nossa equipe dará andamento ao seu pedido! 🥩🍷`;
+    } else if (statusType === 'separacao') {
+      msg = `Olá ${order.customer_name}! Seu pedido #${order.id} foi APROVADO e os cortes/rótulos já estão em separação na nossa boutique! 🚚`;
+    } else if (statusType === 'entrega') {
+      msg = `Olá ${order.customer_name}! Seu pedido #${order.id} SAIU PARA ENTREGA na Serra Imperial. O entregador chegará em breve! 📦`;
+    } else if (statusType === 'pix') {
+      msg = `Olá ${order.customer_name}! Segue a chave PIX para pagamento do orçamento #${order.id} (R$ ${totalStr}):\n\nChave PIX (E-mail): financeiro@antenorefilhos.com.br\nAntenor & Filhos Ltda.`;
+    }
+
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, '_blank');
+  };
+
   const exportToCSV = () => {
     if (filteredOrders.length === 0) {
       toast.error('Não há orçamentos filtrados para exportar.');
@@ -393,13 +531,15 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
           products={products}
           onClose={() => setSelectedOrder(null)}
           onPrint={handlePrint}
+          onPrintPDF={handlePrintPDF}
+          onSendWhatsApp={sendWhatsAppStatus}
         />
       )}
     </div>
   );
 }
 
-function OrderDetailsModal({ order, products, onClose, onPrint }) {
+function OrderDetailsModal({ order, products, onClose, onPrint, onPrintPDF, onSendWhatsApp }) {
   const totalPrice = order.items.reduce((sum, item) => (item.price ? sum + item.price * item.quantity : sum), 0);
   const hasPrice = order.items.some((item) => item.price);
 
@@ -506,13 +646,33 @@ function OrderDetailsModal({ order, products, onClose, onPrint }) {
           </div>
         )}
 
-        <div className="flex gap-3 justify-end pt-2 border-t border-base-200">
-          <button onClick={() => onPrint(order)} className="btn btn-outline btn-primary">
-            <i className="fa-solid fa-print" aria-hidden="true"></i> Imprimir Cupom
-          </button>
-          <button onClick={onClose} className="btn btn-primary">
-            Fechar
-          </button>
+        <div className="flex gap-2 justify-between flex-wrap items-center pt-4 border-t border-base-200">
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => onSendWhatsApp(order, 'recebido')} className="btn btn-sm btn-outline btn-success" title="Enviar aviso de recebimento via WhatsApp">
+              <i className="fa-brands fa-whatsapp"></i> Aviso Recebido
+            </button>
+            <button onClick={() => onSendWhatsApp(order, 'separacao')} className="btn btn-sm btn-outline btn-info" title="Enviar aviso de separação via WhatsApp">
+              <i className="fa-brands fa-whatsapp"></i> Em Separação
+            </button>
+            <button onClick={() => onSendWhatsApp(order, 'entrega')} className="btn btn-sm btn-outline btn-warning" title="Enviar aviso de entrega via WhatsApp">
+              <i className="fa-brands fa-whatsapp"></i> Em Rota
+            </button>
+            <button onClick={() => onSendWhatsApp(order, 'pix')} className="btn btn-sm btn-outline btn-primary" title="Enviar Chave PIX via WhatsApp">
+              <i className="fa-brands fa-whatsapp"></i> Enviar PIX
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <button onClick={() => onPrintPDF(order)} className="btn btn-outline btn-primary">
+              <i className="fa-solid fa-file-pdf" aria-hidden="true"></i> PDF Timbrado
+            </button>
+            <button onClick={() => onPrint(order)} className="btn btn-outline">
+              <i className="fa-solid fa-print" aria-hidden="true"></i> Cupom
+            </button>
+            <button onClick={onClose} className="btn btn-primary">
+              Fechar
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

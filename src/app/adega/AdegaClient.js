@@ -50,6 +50,7 @@ export default function AdegaClient() {
   const [mobileFiltersActive, setMobileFiltersActive] = useState(false);
   const [priceRange, setPriceRange] = useState('');
   const [selectedScore, setSelectedScore] = useState('');
+  const [selectedPairing, setSelectedPairing] = useState('');
   const [showAllCountries, setShowAllCountries] = useState(false);
   
   // Cart State (stored in localStorage.jet_engine_store_carrinho)
@@ -124,6 +125,27 @@ export default function AdegaClient() {
       result = result.filter(p => {
         const maxScore = getMaxScore(p.pontuacao);
         return maxScore >= Number(selectedScore);
+      });
+    }
+
+    // Filtro de Harmonização
+    if (selectedPairing !== '') {
+      result = result.filter(p => {
+        const uvaStr = (p.uva || '').toLowerCase();
+        const titleStr = (p.title || '').toLowerCase();
+        const descStr = (p.description || '').toLowerCase();
+        const combined = `${uvaStr} ${titleStr} ${descStr}`;
+
+        if (selectedPairing === 'churrasco') {
+          return combined.includes('malbec') || combined.includes('cabernet') || combined.includes('syrah') || combined.includes('tinto') || combined.includes('tannat') || combined.includes('carménère') || combined.includes('carmenere');
+        } else if (selectedPairing === 'massas') {
+          return combined.includes('merlot') || combined.includes('pinot noir') || combined.includes('sangiovese') || combined.includes('chianti') || combined.includes('ital');
+        } else if (selectedPairing === 'queijos') {
+          return combined.includes('rosé') || combined.includes('rose') || combined.includes('chardonnay') || combined.includes('espumante') || combined.includes('queijo');
+        } else if (selectedPairing === 'peixes') {
+          return combined.includes('sauvignon') || combined.includes('branco') || combined.includes('espumante') || combined.includes('grigio') || combined.includes('peixe');
+        }
+        return true;
       });
     }
     
@@ -343,6 +365,45 @@ export default function AdegaClient() {
                       )}
                     </>
                   )}
+
+                  {/* Harmoniza Com: */}
+                  <h4 style={{ color: 'white', fontSize: '13px', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.05em', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                    🍷 Harmoniza Com:
+                  </h4>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[
+                      { key: 'churrasco', label: '🥩 Churrasco & Carnes' },
+                      { key: 'massas', label: '🍝 Massas & Risotos' },
+                      { key: 'queijos', label: '🧀 Queijos Finos & Frios' },
+                      { key: 'peixes', label: '🐟 Pescados & Frutos do Mar' }
+                    ].map(p => (
+                      <li key={p.key}>
+                        <button
+                          onClick={() => setSelectedPairing(selectedPairing === p.key ? '' : p.key)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: selectedPairing === p.key ? 'var(--primary)' : 'var(--text-secondary)',
+                            fontWeight: selectedPairing === p.key ? '600' : '400',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            textAlign: 'left',
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          {selectedPairing === p.key ? (
+                            <i className="fa-solid fa-circle-chevron-right" style={{ fontSize: '11px', color: 'var(--primary)' }}></i>
+                          ) : (
+                            <i className="fa-solid fa-circle" style={{ fontSize: '4px', color: 'var(--text-muted)' }}></i>
+                          )}
+                          {p.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
