@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/pgDb';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,13 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const rl = rateLimit(`reviews:${getClientIp(request)}`, { limit: 5, windowMs: 60000 });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Muitas avaliações em sequência. Aguarde um instante.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
     const body = await request.json();
     const { product_id, customer_name, rating, comment } = body;
 

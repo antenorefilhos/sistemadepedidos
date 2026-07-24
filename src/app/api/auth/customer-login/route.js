@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { getSupabase } from '@/lib/pgDb';
 import { normalizePhone, phonesMatch, createAccessToken } from '@/lib/customerAuth';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,13 @@ async function sendMagicLink(email, name, link) {
 
 export async function POST(req) {
   try {
+    const rl = rateLimit(`customer-login:${getClientIp(req)}`, { limit: 5, windowMs: 60000 });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Muitas solicitações. Aguarde um instante.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
     const { phone } = await req.json();
     const digits = normalizePhone(phone);
     // Exige um mínimo de dígitos para evitar correspondência ampla.

@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/pgDb';
 import { verifyAccessToken, normalizePhone, phonesMatch } from '@/lib/customerAuth';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
+    const rl = rateLimit(`customer-verify:${getClientIp(req)}`, { limit: 10, windowMs: 60000 });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas. Aguarde um instante.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
     const { token } = await req.json();
     const phone = verifyAccessToken(token);
     if (!phone) {

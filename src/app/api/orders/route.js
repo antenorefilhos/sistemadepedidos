@@ -3,6 +3,7 @@ import { getSupabase } from '@/lib/pgDb';
 import nodemailer from 'nodemailer';
 import { generateEmailHtml } from './emailTemplate';
 import { discountedUnitPrice } from '@/lib/pricing';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,13 @@ const createTransporter = () => {
 
 export async function POST(request) {
   try {
+    const rl = rateLimit(`orders:${getClientIp(request)}`, { limit: 8, windowMs: 60000 });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Muitas solicitações. Aguarde um instante antes de enviar outro pedido.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
     const body = await request.json();
     const {
       customer_name,
