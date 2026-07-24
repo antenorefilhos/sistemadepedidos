@@ -49,6 +49,7 @@ export default function AdegaClient() {
   const [mobileFiltersActive, setMobileFiltersActive] = useState(false);
   const [priceRange, setPriceRange] = useState('');
   const [selectedScore, setSelectedScore] = useState('');
+  const [showAllCountries, setShowAllCountries] = useState(false);
   
   // Cart State (stored in localStorage.jet_engine_store_carrinho)
   const [cartItems, setCartItems] = useState([]);
@@ -171,6 +172,11 @@ export default function AdegaClient() {
   const wineTypes = adegaCategories.filter(c => ['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
   const wineCountries = adegaCategories.filter(c => !['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
 
+  // Exibe 5 países por padrão; expande automaticamente se o país selecionado estiver além da 5ª posição
+  const selectedIsHiddenCountry = !!selectedCategory && wineCountries.findIndex(c => c.slug === selectedCategory) >= 5;
+  const countriesExpanded = showAllCountries || selectedIsHiddenCountry;
+  const visibleCountries = countriesExpanded ? wineCountries : wineCountries.slice(0, 5);
+
   return (
     <div className="page-wrapper" style={{ minHeight: '80vh', paddingBottom: '40px' }}>
       <div className="container">
@@ -283,7 +289,7 @@ export default function AdegaClient() {
                         Países / Regiões
                       </h4>
                       <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {wineCountries.map(cat => (
+                        {visibleCountries.map(cat => (
                           <li key={cat.id}>
                             <button 
                               onClick={() => setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)}
@@ -311,6 +317,27 @@ export default function AdegaClient() {
                           </li>
                         ))}
                       </ul>
+                      {wineCountries.length > 5 && !selectedIsHiddenCountry && (
+                        <button
+                          onClick={() => setShowAllCountries(!showAllCountries)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--primary)',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            marginTop: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          {showAllCountries
+                            ? '− Ver menos países'
+                            : `+ Ver mais países (${wineCountries.length - 5})`}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

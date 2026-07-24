@@ -951,9 +951,26 @@ body:not(.admin-body) .btn-danger:hover {
 @media (min-width: 768px) {
   .filters-sidebar {
     position: sticky;
-    top: 120px;
-    height: fit-content;
-    z-index: 1;
+    top: 90px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    z-index: 10;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(171, 144, 112, 0.3) transparent;
+  }
+
+  .filters-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .filters-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .filters-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(171, 144, 112, 0.3);
+    border-radius: 4px;
+  }
+  .filters-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
   }
 }
 
