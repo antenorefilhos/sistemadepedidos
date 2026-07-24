@@ -123,10 +123,40 @@ export default async function ProductDetailPage({ params }) {
     };
   });
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.title,
+    image: p.image_url ? [p.image_url] : [],
+    description: p.description?.replace(/<[^>]*>?/gm, '') || p.title,
+    sku: p.sku || `PROD-${p.id}`,
+    brand: {
+      '@type': 'Brand',
+      name: 'Antenor & Filhos'
+    },
+    offers: {
+      '@type': 'Offer',
+      url: `https://antenorefilhos.com.br/produtos/${p.slug}`,
+      priceCurrency: 'BRL',
+      price: p.preco || '0.00',
+      availability: 'https://schema.org/InStock',
+      seller: {
+        '@type': 'Organization',
+        name: 'Antenor & Filhos'
+      }
+    }
+  };
+
   return (
-    <ProductDetails 
-      product={formattedProduct} 
-      relatedProducts={formattedRelated} 
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductDetails 
+        product={formattedProduct} 
+        relatedProducts={formattedRelated} 
+      />
+    </>
   );
 }

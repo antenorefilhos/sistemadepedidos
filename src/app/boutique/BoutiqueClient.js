@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Fuse from 'fuse.js';
+import ProductCard from '@/components/ProductCard';
 
 export default function BoutiqueClient() {
   const [products, setProducts] = useState([]);
@@ -364,149 +365,9 @@ export default function BoutiqueClient() {
               </div>
             ) : (
               <div className="product-grid">
-                {filteredProducts.map((product, idx) => {
-                  const itemsInCart = cartItems.filter(id => id === String(product.id)).length;
-                  
-                  const breedCat = product.categories?.find(c => c.type === 'racas_carnes');
-                  const embalagemCat = product.categories?.find(c => c.type === 'embalagem_carnes');
-
-                  let breedLogo = null;
-                  if (breedCat) {
-                    const slug = breedCat.slug.toLowerCase();
-                    if (slug.includes('angus')) {
-                      breedLogo = '/novo/wp-content/uploads/CERTIFICADO-ANGUS.png';
-                    } else if (slug.includes('wagyu')) {
-                      breedLogo = '/novo/wp-content/uploads/WAGYU-BEEF-SELO.png';
-                    }
-                  }
-
-                  return (
-                    <div className="product-card" key={product.id}>
-                      <Link href={`/produtos/${product.slug}`} style={{ display: 'block' }}>
-                        <div className="product-image-container">
-                          {product.image_url ? (
-                            <Image 
-                              src={product.image_url} 
-                              alt={product.title} 
-                              className="product-image"
-                              fill
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              priority={idx < 4}
-                              style={{ objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div style={{ 
-                              width: '100%', 
-                              height: '100%', 
-                              display: 'flex', 
-                              justifyContent: 'center', 
-                              alignItems: 'center',
-                              backgroundColor: 'var(--border-color)',
-                              color: 'var(--text-muted)',
-                              fontSize: '12px'
-                            }}>
-                              Sem Foto
-                            </div>
-                          )}
-                          
-                          {/* Breed Seal Tag */}
-                          {breedLogo && (
-                            <img 
-                              src={breedLogo} 
-                              alt={breedCat.name} 
-                              style={{
-                                position: 'absolute',
-                                top: '10px',
-                                left: '10px',
-                                height: '70px',
-                                width: 'auto',
-                                zIndex: 2,
-                                filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))'
-                              }}
-                            />
-                          )}
-
-                          {/* Packaging Badge */}
-                          {embalagemCat && (
-                            <span 
-                              className={`product-badge badge-tag-${embalagemCat.slug.toLowerCase()}`}
-                              style={{
-                                position: 'absolute',
-                                top: '10px',
-                                right: '10px',
-                                left: 'auto',
-                                zIndex: 2
-                              }}
-                            >
-                              {embalagemCat.name}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                      
-                      <div className="product-info">
-                        <h3 className="product-title" title={product.title}>
-                          <Link 
-                            href={`/produtos/${product.slug}`} 
-                            style={{ color: 'inherit', textDecoration: 'none' }} 
-                            dangerouslySetInnerHTML={{ __html: product.title }} 
-                          />
-                        </h3>
-                        
-                        <div 
-                          className="product-desc" 
-                          title={product.description}
-                          dangerouslySetInnerHTML={{ __html: product.description || 'Produto artesanal selecionado de altíssima qualidade.' }}
-                        />
-                        
-                        <div className="product-meta">
-                          <span className="product-weight">
-                            {product.peso ? `${product.peso} ${product.unidade_peso}` : ''}
-                          </span>
-                          <span className="product-price">
-                            {product.preco ? (
-                              <>
-                                <span style={{ fontSize: '0.7em', marginRight: '2px', fontWeight: 'normal' }}>R$</span>
-                                {product.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </>
-                            ) : (
-                              'Preço sob consulta'
-                            )}
-                          </span>
-                        </div>
-                        
-                        {itemsInCart > 0 ? (
-                          <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginTop: '15px', gap: '8px' }}>
-                            <button 
-                              onClick={() => removeFromCart(product.id)}
-                              className="btn btn-secondary" 
-                              style={{ width: '40px', padding: '10px', fontWeight: 'bold' }}
-                            >
-                              -
-                            </button>
-                            <div style={{ flexGrow: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: 'white' }}>
-                              {itemsInCart} no orçamento
-                            </div>
-                            <button 
-                              onClick={() => addToCart(product.id)}
-                              className="btn btn-secondary" 
-                              style={{ width: '40px', padding: '10px', fontWeight: 'bold' }}
-                            >
-                              +
-                            </button>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={() => addToCart(product.id)}
-                            className="btn btn-primary product-action"
-                          >
-                            Incluir
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
               </div>
             )}
           </main>

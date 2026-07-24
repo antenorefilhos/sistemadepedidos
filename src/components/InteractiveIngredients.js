@@ -67,6 +67,11 @@ export default function InteractiveIngredients({ html }) {
       li.style.lineHeight = '1.6';
       li.style.fontSize = '15px';
       
+      // Acessibilidade
+      li.setAttribute('role', 'checkbox');
+      li.setAttribute('tabindex', '0');
+      li.setAttribute('aria-checked', 'false');
+      
       // Cria o elemento do checkbox customizado
       const check = document.createElement('span');
       check.className = 'ingredient-checkbox';
@@ -86,6 +91,7 @@ export default function InteractiveIngredients({ html }) {
         const isChecked = li.getAttribute('data-checked') === 'true';
         if (isChecked) {
           li.setAttribute('data-checked', 'false');
+          li.setAttribute('aria-checked', 'false');
           li.style.textDecoration = 'none';
           li.style.color = 'rgba(209, 213, 219, 1)';
           li.style.opacity = '1';
@@ -93,6 +99,7 @@ export default function InteractiveIngredients({ html }) {
           check.style.color = 'var(--primary)';
         } else {
           li.setAttribute('data-checked', 'true');
+          li.setAttribute('aria-checked', 'true');
           li.style.textDecoration = 'line-through';
           li.style.color = 'rgba(156, 163, 175, 0.6)';
           li.style.opacity = '0.5';
@@ -101,7 +108,15 @@ export default function InteractiveIngredients({ html }) {
         }
       };
 
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleCheck(e);
+        }
+      };
+
       li.addEventListener('click', toggleCheck);
+      li.addEventListener('keydown', handleKeyDown);
     });
   }, [parsedHtml]);
 

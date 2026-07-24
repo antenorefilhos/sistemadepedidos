@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/pgDb';
 import nodemailer from 'nodemailer';
 import { generateEmailHtml } from './emailTemplate';
+import { discountedUnitPrice } from '@/lib/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +72,7 @@ export async function POST(request) {
     if (productIds.length > 0) {
       const { data: dbProducts } = await supabase
         .from('products')
-        .select('id, preco, title, sku')
+        .select('id, preco, title, sku, type')
         .in('id', productIds);
       
       if (dbProducts) {
@@ -81,9 +82,13 @@ export async function POST(request) {
 
     const itemsPayload = items.map(item => {
       const dbProduct = dbPriceMap.get(item.product_id);
-      const validatedPrice = (dbProduct && dbProduct.preco !== null && dbProduct.preco !== undefined) 
-        ? dbProduct.preco 
-        : (item.price || null);
+      const basePrice = (dbProduct && dbProduct.preco !== null && dbProduct.preco !== undefined)
+        ? Number(dbProduct.preco)
+        : (item.price != null ? Number(item.price) : null);
+      // Desconto de volume da Adega aplicado no servidor (fonte autoritativa de preço)
+      const validatedPrice = basePrice != null
+        ? discountedUnitPrice({ preco: basePrice, type: dbProduct?.type }, item.quantity)
+        : null;
 
       return {
         order_id: orderId,

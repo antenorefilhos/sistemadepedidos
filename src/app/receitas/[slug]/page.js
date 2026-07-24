@@ -66,8 +66,26 @@ export default async function RecipeDetailsPage({ params }) {
     if (prods) relatedProducts = prods;
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Recipe',
+    name: recipe.title,
+    image: recipe.image_url ? [recipe.image_url] : [],
+    description: recipe.description?.replace(/<[^>]*>?/gm, '') || recipe.title,
+    prepTime: 'PT45M',
+    recipeYield: recipe.servings || '4 porções',
+    author: {
+      '@type': 'Organization',
+      name: 'Chef Antenor & Filhos'
+    }
+  };
+
   return (
     <div className="bg-[var(--bg-main)] text-white min-h-screen" style={{ paddingTop: '100px', paddingBottom: '80px' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="container mx-auto px-4 max-w-3xl">
         
         {/* Imagem de Destaque no Topo */}

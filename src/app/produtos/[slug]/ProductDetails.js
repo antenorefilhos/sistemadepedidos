@@ -304,6 +304,14 @@ export default function ProductDetails({ product, relatedProducts }) {
     }
   }
 
+  const galleryImages = Array.from(new Set([
+    product.image_url,
+    ...(Array.isArray(product.gallery_urls) ? product.gallery_urls : (typeof product.gallery_urls === 'string' ? JSON.parse(product.gallery_urls || '[]') : []))
+  ])).filter(Boolean);
+
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+  const currentImg = galleryImages[activeImgIndex] || product.image_url;
+
   return (
     <div className="page-wrapper" style={{ paddingBottom: '40px' }}>
       <div className="container">
@@ -322,16 +330,16 @@ export default function ProductDetails({ product, relatedProducts }) {
         {/* Product Details Section */}
         <div className="product-details-container">
           
-          {/* Left Column: Image with Magnifier Zoom */}
+          {/* Left Column: Image with Magnifier Zoom & Multi-Image Gallery */}
           <div>
             <div 
               className="product-zoom-container"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
-              {product.image_url ? (
+              {currentImg ? (
                 <img 
-                  src={product.image_url} 
+                  src={currentImg} 
                   alt={product.title} 
                   className="product-zoom-image"
                   fetchPriority="high"
@@ -344,6 +352,32 @@ export default function ProductDetails({ product, relatedProducts }) {
                 </div>
               )}
             </div>
+
+            {/* Thumbnails Gallery */}
+            {galleryImages.length > 1 && (
+              <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {galleryImages.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveImgIndex(idx)}
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: 'var(--radius-sm)',
+                      overflow: 'hidden',
+                      border: activeImgIndex === idx ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                      background: 'rgba(255,255,255,0.02)',
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                  >
+                    <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </button>
+                ))}
+              </div>
+            )}
+
             <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px' }}>
               <i className="fa-solid fa-magnifying-glass" style={{ marginRight: '6px' }}></i>
               Passe o mouse sobre a imagem para ampliar

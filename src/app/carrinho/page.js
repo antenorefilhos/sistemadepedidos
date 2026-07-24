@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getFingerprint, trackEvent } from '@/lib/telemetry';
 import { useRouter } from 'next/navigation';
+import { adegaVolumeDiscountRate } from '@/lib/pricing';
 
 export default function CartPage() {
   const router = useRouter();
@@ -130,6 +131,12 @@ export default function CartPage() {
       displayPrice = displayPrice * 12;
       unitLabel = 'Caixa com 12un';
       factor = 12;
+    }
+
+    // Desconto de volume da Adega — espelha o cálculo autoritativo do servidor (/api/orders)
+    const totalUnits = (cartQuantities[cartKey] || 0) * factor;
+    if (product.type === 'adega') {
+      displayPrice = displayPrice * (1 - adegaVolumeDiscountRate(totalUnits));
     }
 
     return {

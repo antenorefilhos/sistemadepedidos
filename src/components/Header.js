@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useCart } from '@/hooks/useCart';
 
 export default function Header() {
   const pathname = usePathname();
@@ -11,7 +12,7 @@ export default function Header() {
   if (pathname && pathname.startsWith('/admin')) return null;
 
   const [activeSeller, setActiveSeller] = useState(null);
-  const [cartCount, setCartCount] = useState(0);
+  const { cartCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -29,28 +30,13 @@ export default function Header() {
     } catch (e) {}
   };
 
-  const updateCartCountFromStorage = () => {
-    try {
-      const cartStr = localStorage.getItem('jet_engine_store_carrinho') || '';
-      const ids = cartStr.split(',').filter(id => id.trim() !== '');
-      setCartCount(ids.length);
-    } catch (e) {}
-  };
-
   useEffect(() => {
     updateSellerFromStorage();
-    updateCartCountFromStorage();
-
-
 
     window.addEventListener('seller_changed', updateSellerFromStorage);
-    window.addEventListener('cart_changed', updateCartCountFromStorage);
-    const interval = setInterval(updateCartCountFromStorage, 1500);
 
     return () => {
       window.removeEventListener('seller_changed', updateSellerFromStorage);
-      window.removeEventListener('cart_changed', updateCartCountFromStorage);
-      clearInterval(interval);
     };
   }, []);
 
@@ -122,6 +108,12 @@ export default function Header() {
             )}
 
 
+
+            {/* Account Link */}
+            <Link href="/conta" className="nav-icon-btn hide-mobile" title="Minha Conta & Histórico de Pedidos" style={{ color: 'var(--text-secondary)', marginRight: '10px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+              <i className="fa-regular fa-user" style={{ fontSize: '16px', color: 'var(--primary)' }} />
+              <span>Minha Conta</span>
+            </Link>
 
             {/* Cart Button */}
             <Link href="/carrinho" className="cart-btn" onClick={() => setMobileMenuOpen(false)}>
