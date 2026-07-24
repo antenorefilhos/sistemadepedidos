@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ADMIN_TAB_GROUPS, ADMIN_TABS_FLAT, ADMIN_EXTERNAL_LINKS } from './components/adminTabs';
+import { ADMIN_TAB_GROUPS, ADMIN_EXTERNAL_LINKS } from './components/adminTabs';
 import AdminLogin from './components/AdminLogin';
 import OrdersManager from './components/OrdersManager';
 import ProductsManager from './components/ProductsManager';
@@ -235,13 +235,13 @@ export default function AdminDashboard() {
       <aside className="w-[220px] bg-base-300 border-r border-base-200 flex flex-col flex-shrink-0 hide-mobile">
         <div className="px-5 pt-7 pb-3">
           <h3 className="font-serif text-primary text-[15px] tracking-tight font-bold whitespace-nowrap mb-0.5">Antenor &amp; Filhos</h3>
-          <span className="text-xs text-base-content/50 font-bold uppercase tracking-wider">Módulo de Expedição v1.2</span>
+          <span className="text-xs text-base-content/50 font-bold uppercase tracking-wider">Painel Gerencial v1.2</span>
         </div>
 
         <ul className="menu w-full px-4 gap-1 flex-1 overflow-y-auto mt-4 text-sm font-medium">
           {ADMIN_TAB_GROUPS.map((group) => (
             <div key={group.id}>
-              {group.title && <div className="divider text-xs uppercase opacity-50 my-2">{group.title}</div>}
+              {group.title && <div className="mt-3 mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-base-content/40">{group.title}</div>}
               {group.tabs.map((tab) => (
                 <li key={tab.key}>
                   <button onClick={() => setActiveTab(tab.key)} className={activeTab === tab.key ? 'active' : ''}>
@@ -255,7 +255,7 @@ export default function AdminDashboard() {
             </div>
           ))}
 
-          <div className="divider text-xs uppercase opacity-50 my-2">Atalhos Externos</div>
+          <div className="mt-3 mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-base-content/40">Atalhos Externos</div>
           {ADMIN_EXTERNAL_LINKS.map((link) => (
             <li key={link.href}>
               <a href={link.href} target="_blank" rel="noopener noreferrer">
@@ -293,11 +293,15 @@ export default function AdminDashboard() {
             className="select select-bordered select-primary w-full font-bold"
             aria-label="Navegação do painel"
           >
-            {ADMIN_TABS_FLAT.map((tab) => (
-              <option key={tab.key} value={tab.key}>
-                {tab.label}
-                {tab.countKey ? ` (${tabCounts[tab.countKey]})` : ''}
-              </option>
+            {ADMIN_TAB_GROUPS.map((group) => (
+              <optgroup key={group.id} label={group.title}>
+                {group.tabs.map((tab) => (
+                  <option key={tab.key} value={tab.key}>
+                    {tab.label}
+                    {tab.countKey ? ` (${tabCounts[tab.countKey]})` : ''}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>

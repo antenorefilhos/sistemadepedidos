@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/pgDb';
 import nodemailer from 'nodemailer';
 import { generateEmailHtml } from './emailTemplate';
-import { discountedUnitPrice } from '@/lib/pricing';
+import { discountedUnitPrice, parseDiscountConfig, DEFAULT_DISCOUNT_CONFIG } from '@/lib/pricing';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -82,10 +82,39 @@ export async function POST(request) {
         .from('products')
         .select('id, preco, title, sku, type')
         .in('id', productIds);
-      
+
       if (dbProducts) {
         dbProducts.forEach(p => dbPriceMap.set(p.id, p));
       }
+
+      // Desconto individual por vinho (tolerante: colunas podem não existir ainda → herda o global)
+      try {
+        const { data: discRows } = await supabase
+          .from('products')
+          .select('id, discount_cx6, discount_cx12')
+          .in('id', productIds);
+        if (discRows) {
+          discRows.forEach((d) => {
+            const p = dbPriceMap.get(d.id);
+            if (p) { p.discount_cx6 = d.discount_cx6; p.discount_cx12 = d.discount_cx12; }
+          });
+        }
+      } catch {
+        /* colunas ainda não existem — herda o global */
+      }
+    }
+
+    // Carrega a config de desconto de caixa (Adega) das configurações (fonte autoritativa)
+    let discountConfig = DEFAULT_DISCOUNT_CONFIG;
+    try {
+      const { data: discountSetting } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'adega_discount')
+        .maybeSingle();
+      if (discountSetting?.value) discountConfig = parseDiscountConfig(discountSetting.value);
+    } catch {
+      /* mantém o default */
     }
 
     const itemsPayload = items.map(item => {
@@ -95,7 +124,11 @@ export async function POST(request) {
         : (item.price != null ? Number(item.price) : null);
       // Desconto de volume da Adega aplicado no servidor (fonte autoritativa de preço)
       const validatedPrice = basePrice != null
-        ? discountedUnitPrice({ preco: basePrice, type: dbProduct?.type }, item.quantity)
+        ? discountedUnitPrice(
+            { preco: basePrice, type: dbProduct?.type, discount_cx6: dbProduct?.discount_cx6, discount_cx12: dbProduct?.discount_cx12 },
+            item.quantity,
+            discountConfig
+          )
         : null;
 
       return {

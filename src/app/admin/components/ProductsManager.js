@@ -40,6 +40,8 @@ const EMPTY_PRODUCT = {
   olfativo: '',
   gustativo: '',
   harmonizacao: '',
+  discount_cx6: '',
+  discount_cx12: '',
 };
 
 const PER_PAGE = 20;
@@ -106,6 +108,8 @@ export default function ProductsManager({ products, categories, role, password, 
         olfativo: prod.olfativo || '',
         gustativo: prod.gustativo || '',
         harmonizacao: prod.harmonizacao || '',
+        discount_cx6: prod.discount_cx6 ?? '',
+        discount_cx12: prod.discount_cx12 ?? '',
       });
     } else {
       setForm(EMPTY_PRODUCT);
@@ -121,7 +125,12 @@ export default function ProductsManager({ products, categories, role, password, 
     e.preventDefault();
     if (role !== 'admin') return;
 
-    const payload = { ...form, preco: form.preco.trim() !== '' ? parseFloat(form.preco) : null };
+    const payload = {
+      ...form,
+      preco: form.preco.trim() !== '' ? parseFloat(form.preco) : null,
+      discount_cx6: String(form.discount_cx6 ?? '').trim() !== '' ? parseFloat(form.discount_cx6) : null,
+      discount_cx12: String(form.discount_cx12 ?? '').trim() !== '' ? parseFloat(form.discount_cx12) : null,
+    };
 
     try {
       await adminFetch('/api/admin/products', { password, method: form.id ? 'PUT' : 'POST', body: payload });

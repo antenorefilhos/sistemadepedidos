@@ -37,6 +37,28 @@ export async function GET(request) {
     const { data: products, error } = await query;
     if (error) throw error;
 
+    // Desconto individual por vinho (tolerante: as colunas discount_cx6/cx12 podem não
+    // existir se a migração add-product-discount.sql ainda não rodou → o vinho herda o global).
+    try {
+      const ids = products.map((p) => p.id);
+      if (ids.length) {
+        const { data: disc } = await supabase
+          .from('products')
+          .select('id, discount_cx6, discount_cx12')
+          .in('id', ids);
+        if (disc) {
+          const dmap = new Map(disc.map((d) => [d.id, d]));
+          products.forEach((p) => {
+            const d = dmap.get(p.id);
+            p.discount_cx6 = d?.discount_cx6 ?? null;
+            p.discount_cx12 = d?.discount_cx12 ?? null;
+          });
+        }
+      }
+    } catch {
+      /* colunas ainda não existem — herda o global */
+    }
+
     // Flatten categories
     let result = products.map(p => {
       const categories = (p.product_categories || [])
@@ -69,6 +91,8 @@ export async function GET(request) {
         olfativo: p.olfativo,
         gustativo: p.gustativo,
         harmonizacao: p.harmonizacao,
+        discount_cx6: p.discount_cx6,
+        discount_cx12: p.discount_cx12,
         categories
       };
     });

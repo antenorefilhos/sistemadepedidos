@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/hooks/useCart';
 import { discountedUnitPrice } from '@/lib/pricing';
+import { useDiscountConfig } from '@/hooks/useDiscountConfig';
 
 // Helper for formatting prices in BRL
 export function formatPrice(value) {
@@ -43,6 +44,7 @@ function getCountryBadge(categories) {
 
 export default function ProductCard({ product, showWineBadges = false }) {
   const { addToCart, isInCart } = useCart();
+  const discountConfig = useDiscountConfig();
   const [selectedPackOption, setSelectedPackOption] = useState('single'); // 'single', 'cx6', 'cx12'
   const [addedAnimation, setAddedAnimation] = useState(false);
 
@@ -60,7 +62,7 @@ export default function ProductCard({ product, showWineBadges = false }) {
   }
 
   // Preço total exibido: usa o mesmo desconto de volume aplicado (autoritativamente) no servidor
-  const displayPrice = discountedUnitPrice(product, multiplier) * multiplier;
+  const displayPrice = discountedUnitPrice(product, multiplier, discountConfig) * multiplier;
 
   const handleAdd = () => {
     addToCart(product.id, multiplier);

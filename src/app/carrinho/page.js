@@ -5,10 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getFingerprint, trackEvent } from '@/lib/telemetry';
 import { useRouter } from 'next/navigation';
-import { adegaVolumeDiscountRate } from '@/lib/pricing';
+import { resolveDiscountRate } from '@/lib/pricing';
+import { useDiscountConfig } from '@/hooks/useDiscountConfig';
 
 export default function CartPage() {
   const router = useRouter();
+  const discountConfig = useDiscountConfig();
   const [cartIds, setCartIds] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -133,11 +135,10 @@ export default function CartPage() {
       factor = 12;
     }
 
-    // Desconto de volume da Adega — espelha o cálculo autoritativo do servidor (/api/orders)
+    // Desconto de volume da Adega — espelha o cálculo autoritativo do servidor (/api/orders).
+    // resolveDiscountRate considera o override individual do vinho (prevalece sobre o global).
     const totalUnits = (cartQuantities[cartKey] || 0) * factor;
-    if (product.type === 'adega') {
-      displayPrice = displayPrice * (1 - adegaVolumeDiscountRate(totalUnits));
-    }
+    displayPrice = displayPrice * (1 - resolveDiscountRate(product, totalUnits, discountConfig));
 
     return {
       cartKey,

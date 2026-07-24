@@ -3,26 +3,39 @@
 // e dessincronizadas (faltavam "Clientes" e "Avaliações" no select mobile).
 export const ADMIN_TAB_GROUPS = [
   {
-    id: 'main',
+    id: 'vendas',
+    title: 'Vendas',
     tabs: [
       { key: 'orders', icon: 'fa-list-check', label: 'Orçamentos', countKey: 'orders' },
-      { key: 'products', icon: 'fa-drumstick-bite', label: 'Catálogo', countKey: 'products' },
-      { key: 'categories', icon: 'fa-tags', label: 'Categorias', countKey: 'categories' },
-      { key: 'sellers', icon: 'fa-users', label: 'Vendedores', countKey: 'sellers' },
-      { key: 'customers', icon: 'fa-address-book', label: 'Clientes' },
-      { key: 'stats', icon: 'fa-brain', label: 'Inteligência AI' },
       { key: 'monitor', icon: 'fa-desktop', label: 'Monitor Ao Vivo' },
+      { key: 'customers', icon: 'fa-address-book', label: 'Clientes' },
+      { key: 'sellers', icon: 'fa-users', label: 'Vendedores', countKey: 'sellers' },
+      { key: 'reviews', icon: 'fa-star', label: 'Avaliações' },
+    ],
+  },
+  {
+    id: 'catalogo',
+    title: 'Catálogo',
+    tabs: [
+      { key: 'products', icon: 'fa-drumstick-bite', label: 'Produtos', countKey: 'products' },
+      { key: 'categories', icon: 'fa-tags', label: 'Categorias', countKey: 'categories' },
       { key: 'solidcon', icon: 'fa-cloud-arrow-down', label: 'Integração ERP' },
     ],
   },
   {
-    id: 'extended',
-    title: 'Painel Estendido',
+    id: 'conteudo',
+    title: 'Conteúdo',
     tabs: [
       { key: 'recipes', icon: 'fa-book-open', label: 'Receitas' },
-      { key: 'menu_restaurant', icon: 'fa-utensils', label: 'Cardápio (Admin)' },
-      { key: 'biolinks', icon: 'fa-link', label: 'Biolinks (Admin)' },
-      { key: 'reviews', icon: 'fa-star', label: 'Avaliações' },
+      { key: 'menu_restaurant', icon: 'fa-utensils', label: 'Cardápio' },
+      { key: 'biolinks', icon: 'fa-link', label: 'Biolinks' },
+    ],
+  },
+  {
+    id: 'sistema',
+    title: 'Sistema',
+    tabs: [
+      { key: 'stats', icon: 'fa-brain', label: 'Inteligência AI' },
       { key: 'settings', icon: 'fa-gear', label: 'Configurações' },
     ],
   },

@@ -185,11 +185,46 @@ export default function ProductEditor({
                         Estoque Sincronizado <i className="fa-solid fa-lock text-xs ml-1" aria-hidden="true"></i>
                       </span>
                     </label>
-                    <input 
+                    <input
                       type="text" placeholder="Aguardando conexão com ERP Solidcon..." disabled
                       className="input input-bordered w-full italic opacity-50 cursor-not-allowed"
                     />
                   </div>
+
+                  {productForm.type === 'adega' && (
+                    <div className="rounded-xl border border-base-300 bg-base-200/30 p-5">
+                      <h3 className="text-sm uppercase font-bold text-primary mb-1 tracking-wider flex items-center gap-2">
+                        <i className="fa-solid fa-wine-bottle" aria-hidden="true"></i> Desconto de Caixa deste Vinho
+                      </h3>
+                      <p className="text-xs text-base-content/50 mb-4">
+                        Deixe em branco para <b>herdar o desconto global</b>. Preenchido, o valor prevalece só para este vinho (por tier).
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="form-control w-full">
+                          <label className="label">
+                            <span className="label-text text-xs tracking-widest uppercase font-bold">Desconto Caixa 6 un. (%)</span>
+                          </label>
+                          <input
+                            type="number" min="0" max="100" step="0.5" placeholder="Herda global"
+                            className="input input-bordered w-full h-12"
+                            value={productForm.discount_cx6 ?? ''}
+                            onChange={(e) => setProductForm({ ...productForm, discount_cx6: e.target.value })}
+                          />
+                        </div>
+                        <div className="form-control w-full">
+                          <label className="label">
+                            <span className="label-text text-xs tracking-widest uppercase font-bold">Desconto Caixa 12 un. (%)</span>
+                          </label>
+                          <input
+                            type="number" min="0" max="100" step="0.5" placeholder="Herda global"
+                            className="input input-bordered w-full h-12"
+                            value={productForm.discount_cx12 ?? ''}
+                            onChange={(e) => setProductForm({ ...productForm, discount_cx12: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

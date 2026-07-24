@@ -53,9 +53,10 @@ export async function POST(request) {
 
   try {
     const { 
-      title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds, 
+      title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds,
       uva, safra, origem, produtor, teor_alcoolico, temperatura,
-      enologo, volume, amadurecimento, potencial_guarda, visual, olfativo, gustativo, harmonizacao
+      enologo, volume, amadurecimento, potencial_guarda, visual, olfativo, gustativo, harmonizacao,
+      discount_cx6, discount_cx12
     } = await request.json();
 
     if (!title || !slug || !type) {
@@ -65,24 +66,29 @@ export async function POST(request) {
     const supabase = getSupabase();
 
     // Insert product
-    const { data: product, error: prodError } = await supabase
-      .from('products')
-      .insert({
-        title, slug, description: description || null,
-        sku: sku || null, peso: peso || null,
-        unidade_peso: unidade_peso || null,
-        preco: preco !== '' && preco != null ? parseFloat(preco) : null,
-        status: status || 'on',
-        image_url: image_url || null,
-        type, pontuacao: pontuacao || null,
-        uva: uva || null, safra: safra || null, origem: origem || null,
-        produtor: produtor || null, teor_alcoolico: teor_alcoolico || null, temperatura: temperatura || null,
-        enologo: enologo || null, volume: volume || null, amadurecimento: amadurecimento || null,
-        potencial_guarda: potencial_guarda || null, visual: visual || null, olfativo: olfativo || null,
-        gustativo: gustativo || null, harmonizacao: harmonizacao || null
-      })
-      .select('id')
-      .single();
+    const productData = {
+      title, slug, description: description || null,
+      sku: sku || null, peso: peso || null,
+      unidade_peso: unidade_peso || null,
+      preco: preco !== '' && preco != null ? parseFloat(preco) : null,
+      status: status || 'on',
+      image_url: image_url || null,
+      type, pontuacao: pontuacao || null,
+      uva: uva || null, safra: safra || null, origem: origem || null,
+      produtor: produtor || null, teor_alcoolico: teor_alcoolico || null, temperatura: temperatura || null,
+      enologo: enologo || null, volume: volume || null, amadurecimento: amadurecimento || null,
+      potencial_guarda: potencial_guarda || null, visual: visual || null, olfativo: olfativo || null,
+      gustativo: gustativo || null, harmonizacao: harmonizacao || null,
+      discount_cx6: (discount_cx6 === '' || discount_cx6 == null) ? null : Number(discount_cx6),
+      discount_cx12: (discount_cx12 === '' || discount_cx12 == null) ? null : Number(discount_cx12)
+    };
+    let { data: product, error: prodError } = await supabase.from('products').insert(productData).select('id').single();
+    // Tolerante: se as colunas de desconto ainda não existirem (migração não rodada), salva sem elas
+    if (prodError && prodError.code === '42703') {
+      delete productData.discount_cx6;
+      delete productData.discount_cx12;
+      ({ data: product, error: prodError } = await supabase.from('products').insert(productData).select('id').single());
+    }
 
     if (prodError) throw prodError;
     const productId = product.id;
@@ -108,9 +114,10 @@ export async function PUT(request) {
 
   try {
     const { 
-      id, title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds, 
+      id, title, slug, description, sku, peso, unidade_peso, preco, status, image_url, type, pontuacao, categoryIds,
       uva, safra, origem, produtor, teor_alcoolico, temperatura,
-      enologo, volume, amadurecimento, potencial_guarda, visual, olfativo, gustativo, harmonizacao
+      enologo, volume, amadurecimento, potencial_guarda, visual, olfativo, gustativo, harmonizacao,
+      discount_cx6, discount_cx12
     } = await request.json();
 
     if (!id || !title || !slug || !type) {
@@ -120,22 +127,28 @@ export async function PUT(request) {
     const supabase = getSupabase();
 
     // Update product
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({
-        title, slug, description: description || null,
-        sku: sku || null, peso: peso || null,
-        unidade_peso: unidade_peso || null,
-        preco: preco !== '' && preco != null ? parseFloat(preco) : null,
-        status, image_url: image_url || null,
-        type, pontuacao: pontuacao || null,
-        uva: uva || null, safra: safra || null, origem: origem || null,
-        produtor: produtor || null, teor_alcoolico: teor_alcoolico || null, temperatura: temperatura || null,
-        enologo: enologo || null, volume: volume || null, amadurecimento: amadurecimento || null,
-        potencial_guarda: potencial_guarda || null, visual: visual || null, olfativo: olfativo || null,
-        gustativo: gustativo || null, harmonizacao: harmonizacao || null
-      })
-      .eq('id', id);
+    const productData = {
+      title, slug, description: description || null,
+      sku: sku || null, peso: peso || null,
+      unidade_peso: unidade_peso || null,
+      preco: preco !== '' && preco != null ? parseFloat(preco) : null,
+      status, image_url: image_url || null,
+      type, pontuacao: pontuacao || null,
+      uva: uva || null, safra: safra || null, origem: origem || null,
+      produtor: produtor || null, teor_alcoolico: teor_alcoolico || null, temperatura: temperatura || null,
+      enologo: enologo || null, volume: volume || null, amadurecimento: amadurecimento || null,
+      potencial_guarda: potencial_guarda || null, visual: visual || null, olfativo: olfativo || null,
+      gustativo: gustativo || null, harmonizacao: harmonizacao || null,
+      discount_cx6: (discount_cx6 === '' || discount_cx6 == null) ? null : Number(discount_cx6),
+      discount_cx12: (discount_cx12 === '' || discount_cx12 == null) ? null : Number(discount_cx12)
+    };
+    let { error: updateError } = await supabase.from('products').update(productData).eq('id', id);
+    // Tolerante: se as colunas de desconto ainda não existirem (migração não rodada), salva sem elas
+    if (updateError && updateError.code === '42703') {
+      delete productData.discount_cx6;
+      delete productData.discount_cx12;
+      ({ error: updateError } = await supabase.from('products').update(productData).eq('id', id));
+    }
 
     if (updateError) throw updateError;
 
