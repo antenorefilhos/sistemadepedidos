@@ -12,12 +12,12 @@ export async function POST(request) {
   }
 
   try {
-    const { productIds, categoryIds, action } = await request.json();
+    const { productIds, categoryIds, action, taxonomies } = await request.json();
 
     if (
       !Array.isArray(productIds) || productIds.length === 0 ||
       !Array.isArray(categoryIds) || categoryIds.length === 0 ||
-      !['add', 'remove'].includes(action)
+      !['add', 'remove', 'replace'].includes(action)
     ) {
       return NextResponse.json({ error: 'Parâmetros inválidos' }, { status: 400 });
     }
@@ -31,6 +31,29 @@ export async function POST(request) {
         .in('product_id', productIds)
         .in('category_id', categoryIds);
       if (error) throw error;
+    } else if (action === 'replace') {
+      // Substituir: nas taxonomias das categorias escolhidas, remove os vínculos atuais e adiciona só os escolhidos.
+      const { data: taxCats } = await supabase
+        .from('categories')
+        .select('id')
+        .in('type', Array.isArray(taxonomies) ? taxonomies : []);
+      const taxCatIds = (taxCats || []).map((c) => c.id);
+
+      if (taxCatIds.length > 0) {
+        const { error: delErr } = await supabase
+          .from('product_categories')
+          .delete()
+          .in('product_id', productIds)
+          .in('category_id', taxCatIds);
+        if (delErr) throw delErr;
+      }
+
+      const toInsert = [];
+      productIds.forEach((pid) => categoryIds.forEach((cid) => toInsert.push({ product_id: pid, category_id: cid })));
+      if (toInsert.length > 0) {
+        const { error: insErr } = await supabase.from('product_categories').insert(toInsert);
+        if (insErr) throw insErr;
+      }
     } else {
       // add: insere apenas os vínculos que ainda não existem (evita duplicados sem depender de constraint)
       const { data: existing } = await supabase

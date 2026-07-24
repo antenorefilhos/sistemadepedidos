@@ -187,6 +187,8 @@ export default function ProductsManager({ products, categories, role, password, 
   };
 
   const clearSelection = () => setSelectedIds(new Set());
+  const selectAllFiltered = () => setSelectedIds(new Set(filteredProducts.map((p) => p.id)));
+  const allFilteredSelected = filteredProducts.length > 0 && filteredProducts.every((p) => selectedIds.has(p.id));
   const toggleReclassifyCat = (id) =>
     setReclassifyCats((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
 
@@ -216,7 +218,12 @@ export default function ProductsManager({ products, categories, role, password, 
       await adminFetch('/api/admin/products/reclassify', {
         password,
         method: 'POST',
-        body: { productIds: [...selectedIds], categoryIds: reclassifyCats, action: reclassifyAction },
+        body: {
+          productIds: [...selectedIds],
+          categoryIds: reclassifyCats,
+          action: reclassifyAction,
+          taxonomies: [...new Set(reclassifyCats.map((id) => (categories.find((c) => c.id === id) || {}).type).filter(Boolean))],
+        },
       });
       toast.success(`${selectedIds.size} produto(s) reclassificado(s)!`);
       setShowReclassify(false);
@@ -229,6 +236,16 @@ export default function ProductsManager({ products, categories, role, password, 
       setBulkSaving(false);
     }
   };
+
+  // Setores dos produtos selecionados → filtra as taxonomias mostradas no modal.
+  const selectedSectors = new Set(products.filter((p) => selectedIds.has(p.id)).map((p) => p.type));
+  const TAX_SECTOR = {
+    sessoes_carnes_: 'carnes_', racas_carnes: 'carnes_', embalagem_carnes: 'carnes_',
+    tipos_vinho_: 'adega', sessoes_vinho_: 'adega',
+  };
+  const reclassifyGroups = categoriesGrouped.filter(
+    (g) => selectedSectors.size !== 1 || TAX_SECTOR[g.key] === [...selectedSectors][0]
+  );
 
   return (
     <div>
@@ -274,17 +291,30 @@ export default function ProductsManager({ products, categories, role, password, 
       </div>
 
       {role === 'admin' && selectedIds.size > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 p-3 bg-primary/10 border border-primary/30 rounded-box">
-          <span className="text-sm font-bold text-base-content">
-            <i className="fa-solid fa-circle-check text-primary mr-1.5" aria-hidden="true"></i>
-            {selectedIds.size} produto(s) selecionado(s)
-          </span>
-          <div className="flex gap-2">
-            <button onClick={() => { setReclassifyCats([]); setReclassifyAction('add'); setShowReclassify(true); }} className="btn btn-sm btn-primary">
-              <i className="fa-solid fa-tags mr-1.5" aria-hidden="true"></i> Reclassificar
-            </button>
-            <button onClick={clearSelection} className="btn btn-sm btn-ghost">Limpar seleção</button>
+        <div className="flex flex-col gap-2 mb-4 p-3 bg-primary/10 border border-primary/30 rounded-box">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="text-sm font-bold text-base-content">
+              <i className="fa-solid fa-circle-check text-primary mr-1.5" aria-hidden="true"></i>
+              {selectedIds.size} produto(s) selecionado(s)
+            </span>
+            <div className="flex gap-2">
+              <button onClick={() => { setReclassifyCats([]); setReclassifyAction('add'); setShowReclassify(true); }} className="btn btn-sm btn-primary">
+                <i className="fa-solid fa-tags mr-1.5" aria-hidden="true"></i> Reclassificar
+              </button>
+              <button onClick={clearSelection} className="btn btn-sm btn-ghost">Limpar seleção</button>
+            </div>
           </div>
+          {allPageSelected && filteredProducts.length > pageIds.length && (
+            <div className="text-xs text-center pt-1.5 border-t border-primary/20">
+              {allFilteredSelected ? (
+                <span className="text-base-content/70">Todos os <b>{filteredProducts.length}</b> produtos do filtro estão selecionados.</span>
+              ) : (
+                <button type="button" onClick={selectAllFiltered} className="link link-primary font-semibold">
+                  Selecionar todos os {filteredProducts.length} produtos do filtro (todas as páginas)
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -420,7 +450,7 @@ export default function ProductsManager({ products, categories, role, password, 
               onClick={handleReclassify}
               disabled={bulkSaving || reclassifyCats.length === 0}
             >
-              {bulkSaving ? 'Aplicando...' : reclassifyAction === 'add' ? 'Adicionar categorias' : 'Remover categorias'}
+              {bulkSaving ? 'Aplicando...' : reclassifyAction === 'add' ? 'Adicionar categorias' : reclassifyAction === 'replace' ? 'Substituir categorias' : 'Remover categorias'}
             </button>
           </>
         }
@@ -428,15 +458,18 @@ export default function ProductsManager({ products, categories, role, password, 
         <div className="flex flex-col gap-4">
           <div className="flex gap-2">
             <button type="button" onClick={() => setReclassifyAction('add')} className={`btn btn-sm flex-1 ${reclassifyAction === 'add' ? 'btn-primary' : 'btn-outline'}`}>Adicionar</button>
+            <button type="button" onClick={() => setReclassifyAction('replace')} className={`btn btn-sm flex-1 ${reclassifyAction === 'replace' ? 'btn-primary' : 'btn-outline'}`}>Substituir</button>
             <button type="button" onClick={() => setReclassifyAction('remove')} className={`btn btn-sm flex-1 ${reclassifyAction === 'remove' ? 'btn-error' : 'btn-outline'}`}>Remover</button>
           </div>
           <p className="text-xs text-base-content/60">
             {reclassifyAction === 'add'
               ? 'As categorias marcadas serão adicionadas aos produtos selecionados (sem remover as já existentes).'
+              : reclassifyAction === 'replace'
+              ? 'Nas taxonomias das categorias marcadas, a classificação atual dos produtos será trocada pelas marcadas (ex.: mudar o tipo de Branco → Tinto). Outras taxonomias não são afetadas.'
               : 'As categorias marcadas serão removidas dos produtos selecionados.'}
           </p>
           <div className="max-h-[320px] overflow-y-auto flex flex-col gap-3 pr-1">
-            {categoriesGrouped.map((grp) => (
+            {reclassifyGroups.map((grp) => (
               <div key={grp.key}>
                 <div className="text-[11px] font-bold uppercase tracking-wider text-base-content/50 mb-1.5">{grp.label}</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -449,8 +482,8 @@ export default function ProductsManager({ products, categories, role, password, 
                 </div>
               </div>
             ))}
-            {categoriesGrouped.length === 0 && (
-              <div className="text-sm text-base-content/50 italic p-3">Nenhuma categoria cadastrada.</div>
+            {reclassifyGroups.length === 0 && (
+              <div className="text-sm text-base-content/50 italic p-3">Nenhuma categoria disponível para o setor selecionado.</div>
             )}
           </div>
         </div>
