@@ -18,6 +18,8 @@ const TAXONOMIES = [
   { key: 'sessoes_vinho_', label: 'Adega · Seções de Vinho' },
 ];
 
+const byPos = (a, b) => (a.position ?? 0) - (b.position ?? 0) || a.name.localeCompare(b.name);
+
 // Monta a floresta (nós de topo com .children) de uma lista plana, ordenada por position+nome.
 function buildForest(cats) {
   const byId = new Map(cats.map((c) => [c.id, { ...c, children: [] }]));
@@ -31,7 +33,7 @@ function buildForest(cats) {
     }
   });
   const sortRec = (arr) => {
-    arr.sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.name.localeCompare(b.name));
+    arr.sort(byPos);
     arr.forEach((n) => sortRec(n.children));
   };
   sortRec(roots);
@@ -56,15 +58,15 @@ export default function CategoriesManager({ categories, role, password, onRefres
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [dragId, setDragId] = useState(null);
+  const [dropTarget, setDropTarget] = useState(null); // { id, zone: 'before'|'after'|'inside' }
   const toast = useToast();
   const confirm = useConfirm();
 
-  // Árvore (linhas achatadas) por taxonomia.
   const rowsByType = useMemo(() => {
     const map = {};
     TAXONOMIES.forEach((tax) => {
-      const cats = categories.filter((c) => c.type === tax.key);
-      map[tax.key] = flattenForest(buildForest(cats));
+      map[tax.key] = flattenForest(buildForest(categories.filter((c) => c.type === tax.key)));
     });
     return map;
   }, [categories]);
@@ -85,7 +87,6 @@ export default function CategoriesManager({ categories, role, password, onRefres
     return ids;
   };
 
-  // Opções de categoria-pai: mesma taxonomia, exceto a própria e seus descendentes.
   const parentOptions = useMemo(() => {
     const blocked = form.id ? getDescendantIds(form.id) : new Set();
     return categories
@@ -148,34 +149,114 @@ export default function CategoriesManager({ categories, role, password, onRefres
     }
   };
 
-  // Reordena entre irmãs (mesmo pai + taxonomia): reatribui positions 0..n e persiste.
-  const moveCategory = async (cat, direction) => {
-    if (role !== 'admin' || saving) return;
-    const siblings = categories
-      .filter((c) => c.type === cat.type && (c.parent_id ?? null) === (cat.parent_id ?? null))
-      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.name.localeCompare(b.name));
-    const idx = siblings.findIndex((s) => s.id === cat.id);
-    const swap = direction === 'up' ? idx - 1 : idx + 1;
-    if (swap < 0 || swap >= siblings.length) return;
-    [siblings[idx], siblings[swap]] = [siblings[swap], siblings[idx]];
+  // Persiste um movimento (reordenação e/ou reparent) reatribuindo positions 0..n no grupo afetado.
+  const persistMove = async (movedId, targetId, zone) => {
+    const moved = categories.find((c) => c.id === movedId);
+    const target = categories.find((c) => c.id === targetId);
+    if (!moved || !target || moved.id === target.id || saving) return;
+    if (moved.type !== target.type) {
+      toast.error('Não é possível mover entre taxonomias diferentes.');
+      return;
+    }
+    if (getDescendantIds(moved.id).has(target.id)) return; // evita ciclo
+
+    let newParentId;
+    let order;
+    if (zone === 'inside') {
+      newParentId = target.id;
+      const children = categories
+        .filter((c) => c.type === moved.type && (c.parent_id ?? null) === target.id && c.id !== moved.id)
+        .sort(byPos);
+      order = [...children, moved];
+    } else {
+      newParentId = target.parent_id ?? null;
+      const siblings = categories
+        .filter((c) => c.type === moved.type && (c.parent_id ?? null) === newParentId && c.id !== moved.id)
+        .sort(byPos);
+      const tIdx = siblings.findIndex((s) => s.id === target.id);
+      const insertIdx = zone === 'before' ? tIdx : tIdx + 1;
+      order = [...siblings.slice(0, insertIdx), moved, ...siblings.slice(insertIdx)];
+    }
 
     setSaving(true);
     try {
       await Promise.all(
-        siblings.map((s, i) =>
+        order.map((c, i) =>
           adminFetch('/api/admin/categories', {
             password,
             method: 'PUT',
-            body: { id: s.id, name: s.name, slug: s.slug, parent_id: s.parent_id ?? null, position: i },
+            body: {
+              id: c.id,
+              name: c.name,
+              slug: c.slug,
+              parent_id: c.id === moved.id ? newParentId : c.parent_id ?? null,
+              position: i,
+            },
           })
         )
       );
       onRefresh();
     } catch (err) {
-      toast.error(`Erro ao reordenar: ${err.message}`);
+      toast.error(`Erro ao mover: ${err.message}`);
     } finally {
       setSaving(false);
     }
+  };
+
+  // Setas ↑↓ (fallback acessível): move entre irmãs.
+  const moveArrow = async (cat, direction) => {
+    if (role !== 'admin' || saving) return;
+    const siblings = categories
+      .filter((c) => c.type === cat.type && (c.parent_id ?? null) === (cat.parent_id ?? null))
+      .sort(byPos);
+    const idx = siblings.findIndex((s) => s.id === cat.id);
+    const swap = direction === 'up' ? idx - 1 : idx + 1;
+    if (swap < 0 || swap >= siblings.length) return;
+    await persistMove(cat.id, siblings[swap].id, direction === 'up' ? 'before' : 'after');
+  };
+
+  // ── Drag & Drop nativo ──────────────────────────────────────────────
+  const onDragStart = (e, cat) => {
+    if (role !== 'admin') return;
+    setDragId(cat.id);
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(cat.id)); } catch { /* noop */ }
+  };
+
+  const onDragOverRow = (e, cat) => {
+    if (dragId == null || cat.id === dragId) return;
+    const moved = categories.find((c) => c.id === dragId);
+    if (!moved || moved.type !== cat.type || getDescendantIds(dragId).has(cat.id)) {
+      setDropTarget(null);
+      return;
+    }
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const h = rect.height || 1;
+    const zone = y < h * 0.3 ? 'before' : y > h * 0.7 ? 'after' : 'inside';
+    setDropTarget((prev) => (prev && prev.id === cat.id && prev.zone === zone ? prev : { id: cat.id, zone }));
+  };
+
+  const onDropRow = (e, cat) => {
+    e.preventDefault();
+    if (dragId != null && dropTarget && dropTarget.id === cat.id) {
+      persistMove(dragId, cat.id, dropTarget.zone);
+    }
+    setDragId(null);
+    setDropTarget(null);
+  };
+
+  const onDragEnd = () => {
+    setDragId(null);
+    setDropTarget(null);
+  };
+
+  const dropClass = (catId) => {
+    if (!dropTarget || dropTarget.id !== catId) return '';
+    if (dropTarget.zone === 'before') return 'border-t-2 border-primary';
+    if (dropTarget.zone === 'after') return 'border-b-2 border-primary';
+    return 'ring-2 ring-inset ring-primary bg-primary/5';
   };
 
   return (
@@ -183,7 +264,9 @@ export default function CategoriesManager({ categories, role, password, onRefres
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-lg text-base-content font-bold">Gerenciamento de Categorias</h3>
-          <p className="text-base-content/60 text-sm">Organize em hierarquia (categoria → subcategoria) e ordene com as setas.</p>
+          <p className="text-base-content/60 text-sm">
+            Arraste para reordenar ou aninhar (soltar no meio de uma categoria a torna subcategoria). As setas ↑↓ também funcionam.
+          </p>
         </div>
         {role === 'admin' && (
           <button onClick={() => openModal(null)} className="btn btn-primary">
@@ -207,8 +290,19 @@ export default function CategoriesManager({ categories, role, password, onRefres
               ) : (
                 <ul className="divide-y divide-base-200">
                   {rows.map(({ cat, depth }) => (
-                    <li key={cat.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-base-200/40">
+                    <li
+                      key={cat.id}
+                      draggable={role === 'admin'}
+                      onDragStart={(e) => onDragStart(e, cat)}
+                      onDragOver={(e) => onDragOverRow(e, cat)}
+                      onDrop={(e) => onDropRow(e, cat)}
+                      onDragEnd={onDragEnd}
+                      className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${dragId === cat.id ? 'opacity-40' : 'hover:bg-base-200/40'} ${dropClass(cat.id)}`}
+                    >
                       <div className="flex items-center gap-2 flex-1 min-w-0" style={{ paddingLeft: `${depth * 24}px` }}>
+                        {role === 'admin' && (
+                          <i className="fa-solid fa-grip-vertical text-base-content/25 cursor-grab" aria-hidden="true" title="Arraste para mover"></i>
+                        )}
                         {depth > 0 && <i className="fa-solid fa-turn-up fa-rotate-90 text-base-content/30 text-xs" aria-hidden="true"></i>}
                         <div className="min-w-0">
                           <div className={`truncate ${depth === 0 ? 'font-bold text-base-content' : 'font-medium text-base-content/80'}`}>{cat.name}</div>
@@ -218,10 +312,10 @@ export default function CategoriesManager({ categories, role, password, onRefres
 
                       {role === 'admin' && (
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <button onClick={() => moveCategory(cat, 'up')} disabled={saving} className="btn btn-ghost btn-xs btn-square" aria-label="Mover para cima" title="Mover para cima">
+                          <button onClick={() => moveArrow(cat, 'up')} disabled={saving} className="btn btn-ghost btn-xs btn-square" aria-label="Mover para cima" title="Mover para cima">
                             <i className="fa-solid fa-chevron-up" aria-hidden="true"></i>
                           </button>
-                          <button onClick={() => moveCategory(cat, 'down')} disabled={saving} className="btn btn-ghost btn-xs btn-square" aria-label="Mover para baixo" title="Mover para baixo">
+                          <button onClick={() => moveArrow(cat, 'down')} disabled={saving} className="btn btn-ghost btn-xs btn-square" aria-label="Mover para baixo" title="Mover para baixo">
                             <i className="fa-solid fa-chevron-down" aria-hidden="true"></i>
                           </button>
                           <button onClick={() => openModal(cat)} className="btn btn-xs btn-outline btn-primary">Editar</button>
@@ -286,7 +380,7 @@ export default function CategoriesManager({ categories, role, password, onRefres
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <span className="text-[11px] text-base-content/40 mt-1">Deixe em &quot;topo&quot; para uma categoria raiz, ou escolha um pai para criar uma subcategoria.</span>
+            <span className="text-[11px] text-base-content/40 mt-1">Ou arraste a categoria na lista para dentro de outra.</span>
           </div>
         </form>
       </Modal>
