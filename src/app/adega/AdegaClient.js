@@ -169,9 +169,11 @@ export default function AdegaClient() {
   };
 
   // Group categories by type for display
-  const adegaCategories = categories.filter(c => c.type === 'sessoes_vinho_');
-  const wineTypes = adegaCategories.filter(c => ['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
-  const wineCountries = adegaCategories.filter(c => !['tinto', 'branco', 'rose', 'espumante'].includes(c.slug.toLowerCase()));
+  // Adega abrange as taxonomias de tipo e de país. Compatível antes/depois da migração
+  // split-wine-types (tipos que ainda estiverem em sessoes_vinho_ são pegos pelo slug).
+  const adegaCategories = categories.filter(c => c.type === 'sessoes_vinho_' || c.type === 'tipos_vinho_');
+  const wineTypes = adegaCategories.filter(c => c.type === 'tipos_vinho_' || WINE_TYPE_SLUGS.includes(c.slug.toLowerCase()));
+  const wineCountries = adegaCategories.filter(c => c.type === 'sessoes_vinho_' && !WINE_TYPE_SLUGS.includes(c.slug.toLowerCase()));
 
   // Exibe 5 países por padrão; expande automaticamente se o país selecionado estiver além da 5ª posição
   const selectedIsHiddenCountry = !!selectedCategory && wineCountries.findIndex(c => c.slug === selectedCategory) >= 5;

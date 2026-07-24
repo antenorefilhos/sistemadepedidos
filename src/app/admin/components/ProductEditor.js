@@ -388,7 +388,7 @@ export default function ProductEditor({
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-6 border border-base-300 rounded-2xl bg-base-200/50 max-h-[350px] overflow-y-auto">
                       {categories.filter(c => {
                         if (productForm.type === 'adega') {
-                          return c.type === 'sessoes_vinho_';
+                          return c.type === 'sessoes_vinho_' || c.type === 'tipos_vinho_';
                         } else {
                           return c.type === 'sessoes_carnes_' || c.type === 'racas_carnes' || c.type === 'embalagem_carnes';
                         }
@@ -415,7 +415,7 @@ export default function ProductEditor({
                       
                       {categories.filter(c => {
                         if (productForm.type === 'adega') {
-                          return c.type === 'sessoes_vinho_';
+                          return c.type === 'sessoes_vinho_' || c.type === 'tipos_vinho_';
                         } else {
                           return c.type === 'sessoes_carnes_' || c.type === 'racas_carnes' || c.type === 'embalagem_carnes';
                         }

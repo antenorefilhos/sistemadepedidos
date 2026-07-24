@@ -15,7 +15,8 @@ const TAXONOMIES = [
   { key: 'sessoes_carnes_', label: 'Boutique · Categorias' },
   { key: 'racas_carnes', label: 'Boutique · Raças' },
   { key: 'embalagem_carnes', label: 'Boutique · Embalagens' },
-  { key: 'sessoes_vinho_', label: 'Adega · Seções de Vinho' },
+  { key: 'tipos_vinho_', label: 'Adega · Tipos' },
+  { key: 'sessoes_vinho_', label: 'Adega · Países / Regiões' },
 ];
 
 const byPos = (a, b) => (a.position ?? 0) - (b.position ?? 0) || a.name.localeCompare(b.name);
@@ -234,7 +235,7 @@ export default function CategoriesManager({ categories, role, password, onRefres
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     const h = rect.height || 1;
-    const zone = y < h * 0.3 ? 'before' : y > h * 0.7 ? 'after' : 'inside';
+    const zone = y < h * 0.4 ? 'before' : y > h * 0.6 ? 'after' : 'inside';
     setDropTarget((prev) => (prev && prev.id === cat.id && prev.zone === zone ? prev : { id: cat.id, zone }));
   };
 
@@ -252,12 +253,9 @@ export default function CategoriesManager({ categories, role, password, onRefres
     setDropTarget(null);
   };
 
-  const dropClass = (catId) => {
-    if (!dropTarget || dropTarget.id !== catId) return '';
-    if (dropTarget.zone === 'before') return 'border-t-2 border-primary';
-    if (dropTarget.zone === 'after') return 'border-b-2 border-primary';
-    return 'ring-2 ring-inset ring-primary bg-primary/5';
-  };
+  // 'inside' preenche a linha (vira subcategoria); 'before'/'after' usam a barra de inserção.
+  const nestClass = (catId) =>
+    dropTarget && dropTarget.id === catId && dropTarget.zone === 'inside' ? 'bg-primary/15' : '';
 
   return (
     <div>
@@ -297,8 +295,14 @@ export default function CategoriesManager({ categories, role, password, onRefres
                       onDragOver={(e) => onDragOverRow(e, cat)}
                       onDrop={(e) => onDropRow(e, cat)}
                       onDragEnd={onDragEnd}
-                      className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${dragId === cat.id ? 'opacity-40' : 'hover:bg-base-200/40'} ${dropClass(cat.id)}`}
+                      className={`relative flex items-center gap-3 px-4 py-2.5 transition-colors ${dragId === cat.id ? 'opacity-40' : 'hover:bg-base-200/40'} ${nestClass(cat.id)}`}
                     >
+                      {dropTarget?.id === cat.id && dropTarget.zone === 'before' && (
+                        <div className="absolute left-2 right-2 -top-0.5 h-1 bg-primary rounded-full z-10" aria-hidden="true"></div>
+                      )}
+                      {dropTarget?.id === cat.id && dropTarget.zone === 'after' && (
+                        <div className="absolute left-2 right-2 -bottom-0.5 h-1 bg-primary rounded-full z-10" aria-hidden="true"></div>
+                      )}
                       <div className="flex items-center gap-2 flex-1 min-w-0" style={{ paddingLeft: `${depth * 24}px` }}>
                         {role === 'admin' && (
                           <i className="fa-solid fa-grip-vertical text-base-content/25 cursor-grab" aria-hidden="true" title="Arraste para mover"></i>
@@ -309,6 +313,12 @@ export default function CategoriesManager({ categories, role, password, onRefres
                           <div className="text-[11px] font-mono text-base-content/40 truncate">/{cat.slug} · {cat.products_count ?? 0} produto(s)</div>
                         </div>
                       </div>
+
+                      {dropTarget?.id === cat.id && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-primary whitespace-nowrap flex-shrink-0">
+                          {dropTarget.zone === 'inside' ? '↳ subcategoria' : 'reordenar'}
+                        </span>
+                      )}
 
                       {role === 'admin' && (
                         <div className="flex items-center gap-1 flex-shrink-0">
