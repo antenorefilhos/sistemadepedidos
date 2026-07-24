@@ -7,6 +7,7 @@ export const ADMIN_TAB_GROUPS = [
     title: 'Vendas',
     tabs: [
       { key: 'orders', icon: 'fa-list-check', label: 'Orçamentos', countKey: 'orders' },
+      { key: 'analytics', icon: 'fa-chart-line', label: 'Relatórios & Analytics' },
       { key: 'monitor', icon: 'fa-desktop', label: 'Monitor Ao Vivo' },
       { key: 'customers', icon: 'fa-address-book', label: 'Clientes' },
       { key: 'sellers', icon: 'fa-users', label: 'Vendedores', countKey: 'sellers' },

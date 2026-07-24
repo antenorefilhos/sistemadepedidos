@@ -117,6 +117,9 @@ export default function ProductDetails({ product, relatedProducts }) {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  // Pairings State
+  const [pairings, setPairings] = useState([]);
+
   useEffect(() => {
     if (product?.id) {
       setReviewsLoading(true);
@@ -127,6 +130,15 @@ export default function ProductDetails({ product, relatedProducts }) {
         })
         .catch(err => console.error(err))
         .finally(() => setReviewsLoading(false));
+
+      fetch(`/api/pairings?product_id=${product.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && Array.isArray(data.pairings)) {
+            setPairings(data.pairings);
+          }
+        })
+        .catch(err => console.error(err));
     }
   }, [product?.id]);
 
@@ -1011,6 +1023,42 @@ export default function ProductDetails({ product, relatedProducts }) {
 
           </div>
         </div>
+
+        {/* Harmonizações Recomendadas (Sommelier / Hermes IA) */}
+        {pairings.length > 0 && (
+          <div style={{ marginTop: '50px', paddingTop: '40px', borderTop: '1px solid var(--border-color)' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '22px', fontFamily: 'var(--font-serif)', color: 'white', marginBottom: '4px' }}>
+                {isWine ? '🍷 Harmonização Perfeita com Carnes Nobres' : '🥩 Vinho Ideal para Acompanhar'}
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                Sugestões selecionadas pelo Sommelier & Hermes IA Antenor & Filhos
+              </p>
+            </div>
+
+            <div className="product-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+              {pairings.map(item => (
+                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <ProductCard product={item.product} showWineBadges={!isWine} />
+                  {item.notes && (
+                    <div style={{
+                      padding: '10px 12px',
+                      background: 'rgba(171,144,112,0.1)',
+                      border: '1px dashed rgba(171,144,112,0.3)',
+                      borderRadius: '0 0 var(--radius-md) var(--radius-md)',
+                      fontSize: '11px',
+                      color: 'var(--text-secondary)',
+                      lineHeight: '1.4'
+                    }}>
+                      <i className="fa-solid fa-quote-left" style={{ marginRight: '6px', color: 'var(--primary)' }}></i>
+                      {item.notes}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Related Products Showcase */}
         {relatedProducts.length > 0 && (

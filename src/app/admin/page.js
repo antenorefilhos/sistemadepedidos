@@ -16,6 +16,7 @@ import MenuRestaurantEditor from './components/MenuRestaurantEditor';
 import BiolinksManager from './components/BiolinksManager';
 import ReviewsModerator from './components/ReviewsModerator';
 import CustomersManager from './components/CustomersManager';
+import AnalyticsManager from './components/AnalyticsManager';
 import { adminFetch } from '@/components/admin/hooks/useAdminFetch';
 import { formatCurrencyBRL } from '@/components/admin/lib/formatCurrency';
 import { useToast } from '@/components/admin/ui/Toast';
@@ -343,6 +344,8 @@ export default function AdminDashboard() {
             {activeTab === 'orders' && (
               <OrdersManager orders={orders} sellers={sellers} products={products} role={role} password={password} onRefresh={fetchData} />
             )}
+
+            {activeTab === 'analytics' && <AnalyticsManager />}
 
             {activeTab === 'products' && (
               <ProductsManager products={products} categories={categories} role={role} password={password} onRefresh={fetchData} />

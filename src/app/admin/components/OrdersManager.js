@@ -145,7 +145,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
             .total { font-weight: bold; font-size: 14px; text-align: right; margin-top: 10px; }
           </style>
         </head>
-        <body onload="window.print(); window.close();">
+        <body>
           <h2>ANTENOR & FILHOS</h2>
           <p style="text-align: center;">Estrada União Indústria, 12273 - Itaipava</p>
           <div class="divider"></div>
@@ -177,6 +177,11 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
       </html>
     `);
     printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
   };
 
   const exportToCSV = () => {
