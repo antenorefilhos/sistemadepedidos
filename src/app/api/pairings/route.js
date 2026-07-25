@@ -56,7 +56,7 @@ export async function GET(req) {
     }
 
     // 3. Smart Fallback Pairing Algorithm if database pairings not yet populated
-    const oppositeType = isWine ? 'boutique' : 'adega';
+    const oppositeType = isWine ? 'carnes_' : 'adega';
     const { data: fallbackProducts } = await supabase
       .from('products')
       .select('id, title, slug, preco, image_url, type, peso, unidade_peso, uva, pontuacao')

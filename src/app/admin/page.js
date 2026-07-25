@@ -345,7 +345,7 @@ export default function AdminDashboard() {
               <OrdersManager orders={orders} sellers={sellers} products={products} role={role} password={password} onRefresh={fetchData} />
             )}
 
-            {activeTab === 'analytics' && <AnalyticsManager />}
+            {activeTab === 'analytics' && <AnalyticsManager orders={orders} />}
 
             {activeTab === 'products' && (
               <ProductsManager products={products} categories={categories} role={role} password={password} onRefresh={fetchData} />

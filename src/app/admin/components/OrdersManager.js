@@ -10,6 +10,9 @@ import { adminFetch } from '@/components/admin/hooks/useAdminFetch';
 import { useDebouncedValue } from '@/components/admin/hooks/useDebouncedValue';
 import { formatCurrencyBRL } from '@/components/admin/lib/formatCurrency';
 
+// Escapa valores dinâmicos antes de injetar no HTML de impressão (previne XSS de dados do cliente).
+const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 const STATUS_LABELS = { pending: 'Pendente', viewed: 'Visualizado', completed: 'Finalizado', cancelled: 'Cancelado' };
 
 const STATUS_SELECT_CLASS = {
@@ -117,7 +120,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
       .map(
         (item) => `
       <tr style="border-bottom: 1px dashed #ccc;">
-        <td style="padding: 6px 0; font-size: 13px;">${item.quantity}x ${item.product_title}</td>
+        <td style="padding: 6px 0; font-size: 13px;">${escapeHtml(item.quantity)}x ${escapeHtml(item.product_title)}</td>
         <td style="padding: 6px 0; font-size: 13px; text-align: right;">${
           item.price
             ? `<span style="font-size: 10px; font-weight: normal;">R$</span> ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -135,7 +138,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
     printWindow.document.write(`
       <html>
         <head>
-          <title>Recibo - Pedido #${order.id}</title>
+          <title>Recibo - Pedido #${escapeHtml(order.id)}</title>
           <style>
             body { font-family: 'Courier New', Courier, monospace; width: 80mm; margin: 0 auto; padding: 10px; color: #000; background-color: #fff; }
             h2 { text-align: center; margin: 5px 0; font-size: 18px; }
@@ -149,13 +152,13 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
           <h2>ANTENOR & FILHOS</h2>
           <p style="text-align: center;">Estrada União Indústria, 12273 - Itaipava</p>
           <div class="divider"></div>
-          <p><b>Pedido:</b> #${order.id}</p>
+          <p><b>Pedido:</b> #${escapeHtml(order.id)}</p>
           <p><b>Data:</b> ${formatDate(order.created_at)}</p>
-          <p><b>Cliente:</b> ${order.customer_name}</p>
-          <p><b>WhatsApp:</b> ${order.customer_whatsapp}</p>
-          ${order.customer_address ? `<p><b>Entrega:</b> ${order.customer_address}</p>` : ''}
-          ${order.delivery_date ? `<p><b>Agenda Entrega:</b> ${order.delivery_date.split('-').reverse().join('/')} (${order.delivery_period || 'Qualquer Horário'})</p>` : ''}
-          <p><b>Atendente:</b> ${order.seller_name || 'Site Direto'}</p>
+          <p><b>Cliente:</b> ${escapeHtml(order.customer_name)}</p>
+          <p><b>WhatsApp:</b> ${escapeHtml(order.customer_whatsapp)}</p>
+          ${order.customer_address ? `<p><b>Entrega:</b> ${escapeHtml(order.customer_address)}</p>` : ''}
+          ${order.delivery_date ? `<p><b>Agenda Entrega:</b> ${escapeHtml(order.delivery_date.split('-').reverse().join('/'))} (${escapeHtml(order.delivery_period || 'Qualquer Horário')})</p>` : ''}
+          <p><b>Atendente:</b> ${escapeHtml(order.seller_name || 'Site Direto')}</p>
           <div class="divider"></div>
           <table>
             <thead>
@@ -170,7 +173,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
           </table>
           <div class="divider"></div>
           <p class="total">Total Estimado: <span style="font-size: 11px; font-weight: normal;">R$</span> ${totalStr}</p>
-          ${order.notes ? `<p style="font-size: 11px; margin-top: 10px;"><b>Obs:</b> ${order.notes}</p>` : ''}
+          ${order.notes ? `<p style="font-size: 11px; margin-top: 10px;"><b>Obs:</b> ${escapeHtml(order.notes)}</p>` : ''}
           <div class="divider"></div>
           <p style="text-align: center; font-size: 10px;">Obrigado pela preferência!</p>
         </body>
@@ -194,8 +197,8 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
       .map(
         (item) => `
       <tr style="border-bottom: 1px solid #e5e7eb;">
-        <td style="padding: 10px 12px; font-size: 13px; font-weight: 500;">${item.product_title}</td>
-        <td style="padding: 10px 12px; font-size: 13px; text-align: center;">${item.quantity}x</td>
+        <td style="padding: 10px 12px; font-size: 13px; font-weight: 500;">${escapeHtml(item.product_title)}</td>
+        <td style="padding: 10px 12px; font-size: 13px; text-align: center;">${escapeHtml(item.quantity)}x</td>
         <td style="padding: 10px 12px; font-size: 13px; text-align: right; font-weight: 600;">${
           item.price
             ? `R$ ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -213,7 +216,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
     printWindow.document.write(`
       <html>
         <head>
-          <title>Orçamento Timbrado #${order.id} - Antenor & Filhos</title>
+          <title>Orçamento Timbrado #${escapeHtml(order.id)} - Antenor & Filhos</title>
           <style>
             body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 40px; color: #1a1a1a; background-color: #fff; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ab9070; padding-bottom: 20px; margin-bottom: 30px; }
@@ -236,7 +239,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
               <div class="subtitle">Boutique de Carnes Nobres & Adega de Vinhos</div>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 18px; font-weight: bold; color: #222;">ORÇAMENTO #${order.id}</div>
+              <div style="font-size: 18px; font-weight: bold; color: #222;">ORÇAMENTO #${escapeHtml(order.id)}</div>
               <div style="font-size: 12px; color: #666;">Data: ${formatDate(order.created_at)}</div>
             </div>
           </div>
@@ -244,15 +247,15 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
           <div class="info-grid">
             <div class="info-box">
               <h4>Cliente</h4>
-              <p><b>Nome:</b> ${order.customer_name}</p>
-              <p><b>WhatsApp:</b> ${order.customer_whatsapp}</p>
-              ${order.customer_address ? `<p><b>Entrega:</b> ${order.customer_address}</p>` : ''}
+              <p><b>Nome:</b> ${escapeHtml(order.customer_name)}</p>
+              <p><b>WhatsApp:</b> ${escapeHtml(order.customer_whatsapp)}</p>
+              ${order.customer_address ? `<p><b>Entrega:</b> ${escapeHtml(order.customer_address)}</p>` : ''}
             </div>
             <div class="info-box">
               <h4>Atendimento</h4>
-              <p><b>Vendedor:</b> ${order.seller_name || 'Venda Direta / Site'}</p>
+              <p><b>Vendedor:</b> ${escapeHtml(order.seller_name || 'Venda Direta / Site')}</p>
               <p><b>Validade:</b> 5 dias úteis</p>
-              <p><b>Status:</b> ${order.status ? order.status.toUpperCase() : 'PENDENTE'}</p>
+              <p><b>Status:</b> ${escapeHtml(order.status ? order.status.toUpperCase() : 'PENDENTE')}</p>
             </div>
           </div>
 
@@ -299,7 +302,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
       toast.error('Telefone de WhatsApp inválido para este cliente.');
       return;
     }
-    if (!cleanPhone.startsWith('55')) {
+    if (cleanPhone.length <= 11) {
       cleanPhone = `55${cleanPhone}`;
     }
 

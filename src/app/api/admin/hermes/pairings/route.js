@@ -13,8 +13,8 @@ export async function POST(req) {
 
     // Fetch active wines and meats
     const [winesRes, meatsRes] = await Promise.all([
-      supabase.from('products').select('id, title, uva, origem, descricao, pontuacao').eq('type', 'adega').eq('status', 'on').limit(30),
-      supabase.from('products').select('id, title, peso, descricao').eq('type', 'boutique').eq('status', 'on').limit(30)
+      supabase.from('products').select('id, title, uva, origem, description, pontuacao').eq('type', 'adega').eq('status', 'on').limit(30),
+      supabase.from('products').select('id, title, peso, description').eq('type', 'carnes_').eq('status', 'on').limit(30)
     ]);
 
     const wines = winesRes.data || [];

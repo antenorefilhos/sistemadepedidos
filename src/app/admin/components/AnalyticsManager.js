@@ -1,39 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { StatCard, LoadingSpinner, EmptyState } from '@/components/admin';
+import { useState } from 'react';
+import { StatCard, EmptyState } from '@/components/admin';
 import { formatCurrencyBRL } from '@/components/admin/lib/formatCurrency';
 
-export default function AnalyticsManager() {
-  const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
+// Soma o total de um pedido a partir dos itens (a tabela orders não tem coluna de total).
+const orderTotal = (o) => (o.items || []).reduce((s, it) => s + (it.price ? it.price * it.quantity : 0), 0);
+
+export default function AnalyticsManager({ orders = [] }) {
   const [timeRange, setTimeRange] = useState('all'); // 'all', '7d', '30d'
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [ordersRes, prodsRes] = await Promise.all([
-        fetch('/api/admin/orders'),
-        fetch('/api/admin/products')
-      ]);
-
-      if (ordersRes.ok && prodsRes.ok) {
-        const ordersData = await ordersRes.json();
-        const prodsData = await prodsRes.json();
-        setOrders(Array.isArray(ordersData) ? ordersData : (ordersData.orders || []));
-        setProducts(Array.isArray(prodsData) ? prodsData : (prodsData.products || []));
-      }
-    } catch (err) {
-      console.error('Error fetching analytics data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filter orders by time range
   const now = new Date();
@@ -47,7 +22,7 @@ export default function AnalyticsManager() {
   });
 
   // Calculate Metrics
-  const totalRevenue = filteredOrders.reduce((sum, o) => sum + Number(o.total_amount || o.total || 0), 0);
+  const totalRevenue = filteredOrders.reduce((sum, o) => sum + orderTotal(o), 0);
   const totalOrdersCount = filteredOrders.length;
   const completedOrders = filteredOrders.filter(o => o.status === 'completed' || o.status === 'aprovado');
   const avgTicket = totalOrdersCount > 0 ? totalRevenue / totalOrdersCount : 0;
@@ -56,7 +31,7 @@ export default function AnalyticsManager() {
   const sellerStats = {};
   filteredOrders.forEach(o => {
     const seller = o.seller_name || 'Venda Direta / Site';
-    const amount = Number(o.total_amount || o.total || 0);
+    const amount = orderTotal(o);
     if (!sellerStats[seller]) {
       sellerStats[seller] = { count: 0, revenue: 0 };
     }
@@ -69,10 +44,6 @@ export default function AnalyticsManager() {
     count: sellerStats[name].count,
     revenue: sellerStats[name].revenue
   })).sort((a, b) => b.revenue - a.revenue);
-
-  if (loading) {
-    return <LoadingSpinner text="Carregando Relatórios Gerenciais..." />;
-  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

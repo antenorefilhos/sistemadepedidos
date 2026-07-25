@@ -28,7 +28,7 @@ export default function SolidconIntegration({ password }) {
     setIsSyncing(true);
     setLogs([]);
     addLog('Iniciando sincronização com ERP Solidcon...', 'info');
-    addLog('Autenticando na API Solidcon...', 'info');
+    addLog('Autenticando na API Solidcon (Simulado)...', 'info');
 
     try {
       const data = await adminFetch('/api/admin/solidcon', { password, method: 'POST' });
