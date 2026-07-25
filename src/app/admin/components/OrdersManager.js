@@ -278,7 +278,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
 
           <div class="pix-box">
             <b style="color: #ab9070; font-size: 13px;">💳 Chave PIX Oficial para Pagamento:</b><br/>
-            <span>CNPJ / E-mail: <b>financeiro@antenorefilhos.com.br</b></span><br/>
+            <span>Chave PIX (CNPJ): <b>13.711.074/0001-88</b></span><br/>
             <span style="font-size: 11px; color: #666;">Banco Itaú — Antenor & Filhos Alimentos e Bebidas Ltda.</span>
           </div>
 
@@ -318,7 +318,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
     } else if (statusType === 'entrega') {
       msg = `Olá ${order.customer_name}! Seu pedido #${order.id} SAIU PARA ENTREGA na Serra Imperial. O entregador chegará em breve! 📦`;
     } else if (statusType === 'pix') {
-      msg = `Olá ${order.customer_name}! Segue a chave PIX para pagamento do orçamento #${order.id} (R$ ${totalStr}):\n\nChave PIX (E-mail): financeiro@antenorefilhos.com.br\nAntenor & Filhos Ltda.`;
+      msg = `Olá ${order.customer_name}! Segue a chave PIX para pagamento do orçamento #${order.id} (R$ ${totalStr}):\n\nChave PIX (CNPJ): 13.711.074/0001-88\nAntenor & Filhos Ltda.`;
     }
 
     const encoded = encodeURIComponent(msg);
