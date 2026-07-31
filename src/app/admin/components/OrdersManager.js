@@ -283,7 +283,7 @@ export default function OrdersManager({ orders, sellers, products, role, passwor
           </div>
 
           <div class="footer">
-            Estrada União Indústria, 12273 — Itaipava, Petrópolis - RJ | Tel: (24) 2222-1945 | www.antenorefilhos.com.br
+            Estrada União Indústria, 12273 — Itaipava, Petrópolis - RJ | Tel: (24) 2222-1945 | Contato: financeiro@antenorefilhos.com.br | www.antenorefilhos.com.br
           </div>
         </body>
       </html>
