@@ -12,50 +12,26 @@ export default function BiolinkView({ slug }) {
   useEffect(() => {
     async function loadBiolink() {
       try {
-        const res = await fetch(`/api/settings`);
-        if (!res.ok) throw new Error('Falha ao carregar configurações');
-        
-        // Carrega o biolink via Supabase REST API
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-        if (!supabaseUrl || !supabaseAnonKey) {
-          throw new Error('Credenciais do Supabase não configuradas no ambiente.');
-        }
-
-        // Fetch do biolink principal
-        const bioRes = await fetch(`${supabaseUrl}/rest/v1/biolinks?slug=eq.${slug}&select=*`, {
-          headers: {
-            'apikey': supabaseAnonKey,
-            'Authorization': `Bearer ${supabaseAnonKey}`
+        const res = await fetch(`/api/biolinks/public?slug=${encodeURIComponent(slug)}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError('Biolink não encontrado.');
+          } else {
+            setError('Erro ao carregar o link.');
           }
-        });
-        if (!bioRes.ok) throw new Error('Biolink não encontrado');
-        const bioData = await bioRes.json();
-        
-        if (!bioData || bioData.length === 0) {
-          setError('Biolink não encontrado');
           setLoading(false);
           return;
         }
 
-        const bio = bioData[0];
-        setBiolink(bio);
-
-        // Fetch dos blocos internos
-        const blocksRes = await fetch(`${supabaseUrl}/rest/v1/biolink_blocks?biolink_id=eq.${bio.id}&is_enabled=eq.true&order=sort_order.asc&select=*`, {
-          headers: {
-            'apikey': supabaseAnonKey,
-            'Authorization': `Bearer ${supabaseAnonKey}`
-          }
-        });
-        
-        if (blocksRes.ok) {
-          const blocksData = await blocksRes.json();
-          setBlocks(blocksData);
+        const data = await res.json();
+        if (data.biolink) {
+          setBiolink(data.biolink);
+          setBlocks(data.blocks || []);
+        } else {
+          setError('Biolink não encontrado.');
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error loading biolink:', err);
         setError('Erro ao carregar o link.');
       } finally {
         setLoading(false);
