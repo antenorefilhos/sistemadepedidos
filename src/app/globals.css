@@ -1762,6 +1762,31 @@ body.admin-body .rsw-field-wrapper .rsw-btn:hover {
 .hermes-markdown code { background: rgba(0, 0, 0, 0.3); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
 .hermes-markdown pre { background: rgba(0, 0, 0, 0.4); padding: 12px; border-radius: 8px; overflow-x: auto; margin-bottom: 12px; }
 
+/* ── Responsividade Cardápio Sem Bordas (Mobile Edge-to-Edge) ── */
+@media (max-width: 768px) {
+  .cardapio-glass-container {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-left: -15px !important;
+    margin-right: -15px !important;
+    width: calc(100% + 30px) !important;
+    border-radius: 0 !important;
+  }
+
+  .cardapio-img-box {
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .cardapio-img-box img {
+    border-radius: 0 !important;
+    width: 100% !important;
+  }
+}
+
 
 
 

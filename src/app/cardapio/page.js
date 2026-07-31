@@ -93,7 +93,7 @@ export default function CardapioPage() {
         </div>
 
         {/* Menu Content Display */}
-        <div className="glass" style={{ 
+        <div className="glass cardapio-glass-container" style={{ 
           padding: '20px', 
           borderRadius: 'var(--radius-lg)', 
           textAlign: 'center',
@@ -103,7 +103,7 @@ export default function CardapioPage() {
           {activeTab === 'food' ? (
             <div>
               <h3 style={{ color: 'white', marginBottom: '20px', fontSize: '18px' }}>Cardápio de Alimentação À La Carte</h3>
-              <div style={{ 
+              <div className="cardapio-img-box" style={{ 
                 position: 'relative', 
                 width: '100%', 
                 backgroundColor: '#15181c', 
@@ -126,7 +126,7 @@ export default function CardapioPage() {
           ) : (
             <div>
               <h3 style={{ color: 'white', marginBottom: '20px', fontSize: '18px' }}>Carta de Bebidas e Vinhos</h3>
-              <div style={{ 
+              <div className="cardapio-img-box" style={{ 
                 position: 'relative', 
                 width: '100%', 
                 backgroundColor: '#15181c', 
