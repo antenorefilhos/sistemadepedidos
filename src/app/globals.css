@@ -50,7 +50,13 @@
   font-display: swap;
 }
 
+html, body {
+  color-scheme: dark;
+  background-color: #000000;
+}
+
 :root {
+  color-scheme: dark;
   /* Colors from main site design system */
   --bg-main: #000000;
   --bg-card: #090a0d;
@@ -1547,21 +1553,20 @@ footer a:hover {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: #090a0d !important;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--primary);
+  background: var(--primary) !important;
   border-radius: 4px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.4);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--primary-hover);
+  background-color: var(--primary-hover) !important;
 }
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) rgba(0, 0, 0, 0.2);
+  scrollbar-color: var(--primary) #090a0d !important;
 }
 
 /* ── Hermes AI Markdown Styling ───────────────────────────────── */

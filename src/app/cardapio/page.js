@@ -55,20 +55,38 @@ export default function CardapioPage() {
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
-          gap: '15px', 
-          marginBottom: '45px' 
+          gap: '12px', 
+          marginBottom: '40px',
+          flexWrap: 'wrap',
+          width: '100%'
         }}>
           <button 
             onClick={() => setActiveTab('food')}
             className={`btn ${activeTab === 'food' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px 30px', fontSize: '14px', fontWeight: '600' }}
+            style={{ 
+              padding: '12px 24px', 
+              fontSize: '13px', 
+              fontWeight: '600',
+              maxWidth: '100%',
+              whiteSpace: 'normal',
+              textAlign: 'center',
+              lineHeight: '1.3'
+            }}
           >
             <i className="fa-solid fa-utensils" style={{ marginRight: '8px' }}></i> Cardápio À La Carte
           </button>
           <button 
             onClick={() => setActiveTab('drinks')}
             className={`btn ${activeTab === 'drinks' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px 30px', fontSize: '14px', fontWeight: '600' }}
+            style={{ 
+              padding: '12px 24px', 
+              fontSize: '13px', 
+              fontWeight: '600',
+              maxWidth: '100%',
+              whiteSpace: 'normal',
+              textAlign: 'center',
+              lineHeight: '1.3'
+            }}
           >
             <i className="fa-solid fa-wine-glass" style={{ marginRight: '8px' }}></i> Carta de Bebidas & Adega
           </button>
