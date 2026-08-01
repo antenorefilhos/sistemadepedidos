@@ -1774,16 +1774,38 @@ body.admin-body .rsw-field-wrapper .rsw-btn:hover {
     width: calc(100% + 30px) !important;
     border-radius: 0 !important;
   }
-
   .cardapio-img-box {
     border-radius: 0 !important;
     background-color: transparent !important;
     box-shadow: none !important;
   }
-
   .cardapio-img-box img {
     border-radius: 0 !important;
     width: 100% !important;
+  }
+}
+
+/* ── Product Card Edge-to-Edge Image & Mobile Grid Optimization ── */
+.product-card-img {
+  padding: 2px !important;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .product-grid {
+    gap: 8px !important;
+  }
+
+  .product-card-body {
+    padding: 10px 8px !important;
+  }
+
+  .product-card-img {
+    padding: 0px !important;
   }
 }
 

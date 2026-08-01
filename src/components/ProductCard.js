@@ -119,7 +119,7 @@ export default function ProductCard({ product, showWineBadges = false }) {
           position: 'relative',
           width: '100%',
           aspectRatio: '1',
-          background: 'rgba(255,255,255,0.02)',
+          background: '#ffffff',
           overflow: 'hidden'
         }}
       >
@@ -130,7 +130,7 @@ export default function ProductCard({ product, showWineBadges = false }) {
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           style={{
             objectFit: 'contain',
-            padding: '16px',
+            padding: '4px',
             transition: 'transform 0.4s ease'
           }}
           className="product-card-img"
@@ -139,12 +139,13 @@ export default function ProductCard({ product, showWineBadges = false }) {
 
       {/* Product Details */}
       <div 
+        className="product-card-body"
         style={{
-          padding: '20px',
+          padding: '16px',
           display: 'flex',
           flexDirection: 'column',
           flexGrow: 1,
-          justify: 'space-between'
+          justifyContent: 'space-between'
         }}
       >
         <div>
