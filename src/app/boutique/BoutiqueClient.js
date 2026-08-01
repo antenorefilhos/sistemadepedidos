@@ -124,7 +124,7 @@ export default function BoutiqueClient() {
 
   return (
     <div className="page-wrapper" style={{ minHeight: '80vh', paddingBottom: '40px' }}>
-      <div className="container">
+      <div className="container catalog-container">
         
         {/* Page Title & Search bar */}
         <div style={{ 

@@ -1785,13 +1785,13 @@ body.admin-body .rsw-field-wrapper .rsw-btn:hover {
   }
 }
 
-/* ── Product Card Edge-to-Edge Image & Mobile Grid Optimization ── */
+/* ── Product Card Edge-to-Edge Image & Mobile Grid Optimization (Apenas em Catálogos) ── */
 .product-card-img {
   padding: 2px !important;
 }
 
 @media (max-width: 600px) {
-  .container {
+  .catalog-container {
     padding-left: 8px !important;
     padding-right: 8px !important;
   }
