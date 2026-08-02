@@ -102,7 +102,6 @@ export default function CardapioPage() {
         }}>
           {activeTab === 'food' ? (
             <div>
-              <h3 style={{ color: 'white', marginBottom: '20px', fontSize: '18px' }}>Cardápio de Alimentação À La Carte</h3>
               <div className="cardapio-img-box" style={{ 
                 position: 'relative', 
                 width: '100%', 
@@ -125,7 +124,6 @@ export default function CardapioPage() {
             </div>
           ) : (
             <div>
-              <h3 style={{ color: 'white', marginBottom: '20px', fontSize: '18px' }}>Carta de Bebidas e Vinhos</h3>
               <div className="cardapio-img-box" style={{ 
                 position: 'relative', 
                 width: '100%', 
