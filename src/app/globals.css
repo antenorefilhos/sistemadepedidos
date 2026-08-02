@@ -1569,9 +1569,9 @@ footer a:hover {
   scrollbar-color: var(--primary) #090a0d !important;
 }
 
-/* ── Hermes AI Markdown Styling ───────────────────────────────── */
+/* ── Hermes AI Markdown Styling (Light & Dark Theme Compatible) ── */
 .hermes-markdown {
-  color: #f3f4f6;
+  color: inherit;
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.6;
@@ -1579,8 +1579,13 @@ footer a:hover {
 
 .hermes-markdown p {
   color: inherit !important;
+  margin-top: 0;
   margin-bottom: 12px;
   max-width: 100% !important;
+}
+
+.hermes-markdown p:last-child {
+  margin-bottom: 0;
 }
 
 .hermes-markdown h1, 
@@ -1593,45 +1598,49 @@ footer a:hover {
   letter-spacing: normal;
   margin-top: 16px;
   margin-bottom: 10px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
 }
 
 .hermes-markdown h1 { font-size: 20px; }
-.hermes-markdown h2 { font-size: 18px; border-bottom: 1px solid rgba(171, 144, 112, 0.2); padding-bottom: 4px; }
+.hermes-markdown h2 { font-size: 18px; border-bottom: 1px solid rgba(171, 144, 112, 0.3); padding-bottom: 4px; }
 .hermes-markdown h3 { font-size: 16px; }
 
 .hermes-markdown ul, 
 .hermes-markdown ol {
   margin-left: 20px;
   margin-bottom: 12px;
+  color: inherit;
+  list-style: disc;
 }
 
 .hermes-markdown li {
   margin-bottom: 6px;
+  color: inherit;
 }
 
 .hermes-markdown strong {
-  color: #ffffff;
+  color: inherit;
   font-weight: 700;
 }
 
 .hermes-markdown pre {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
   margin-bottom: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(171, 144, 112, 0.2);
 }
 
 .hermes-markdown code {
   font-family: monospace;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(171, 144, 112, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  color: #e5e7eb;
+  color: inherit;
 }
 
 /* ==========================================================================
@@ -1749,18 +1758,15 @@ body.admin-body .rsw-field-wrapper .rsw-btn:hover {
   50% { opacity: 0; }
 }
 
-/* HermesChatPanel.js — markdown renderizado das respostas da IA (antes injetado via <style> inline) */
-.hermes-markdown { color: inherit; font-size: 14px; line-height: 1.6; }
-.hermes-markdown p { margin-top: 0; margin-bottom: 12px; color: inherit; }
-.hermes-markdown p:last-child { margin-bottom: 0; }
-.hermes-markdown ul, .hermes-markdown ol { margin-top: 0; margin-bottom: 12px; padding-left: 24px; color: inherit; list-style: disc; }
-.hermes-markdown li { margin-bottom: 6px; }
-.hermes-markdown h1, .hermes-markdown h2, .hermes-markdown h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
-.hermes-markdown h3 { font-size: 16px; }
-.hermes-markdown h2 { font-size: 18px; border-bottom: 1px solid currentColor; padding-bottom: 4px; opacity: 0.8; }
-.hermes-markdown strong { font-weight: 700; }
-.hermes-markdown code { background: rgba(0, 0, 0, 0.3); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
-.hermes-markdown pre { background: rgba(0, 0, 0, 0.4); padding: 12px; border-radius: 8px; overflow-x: auto; margin-bottom: 12px; }
+/* SolidconIntegration.js — cursor piscando no terminal de logs (antes injetado via <style> inline) */
+.pulsing-text {
+  animation: admin-pulse 1s infinite;
+}
+
+@keyframes admin-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 
 /* ── Responsividade Cardápio Sem Bordas (Mobile Edge-to-Edge) ── */
 @media (max-width: 768px) {
