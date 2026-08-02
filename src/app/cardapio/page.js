@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from 'react';
 
+const DEFAULT_IMAGES = {
+  food: 'https://iwcgjjfcckkolrwjheqr.supabase.co/storage/v1/object/public/imagens/cardapios/alacarte.jpg',
+  drinks: 'https://iwcgjjfcckkolrwjheqr.supabase.co/storage/v1/object/public/imagens/cardapios/bebidas.jpg',
+  breakfast: 'https://iwcgjjfcckkolrwjheqr.supabase.co/storage/v1/object/public/imagens/cardapios/cafe.jpg'
+};
+
 export default function CardapioPage() {
-  const [activeTab, setActiveTab] = useState('food'); // 'food' or 'drinks'
-  const [images, setImages] = useState({ food: '/images/alacarte.jpg', drinks: '/images/bebidas.jpg' });
+  const [activeTab, setActiveTab] = useState('food'); // 'food', 'drinks', or 'breakfast'
+  const [images, setImages] = useState(DEFAULT_IMAGES);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -13,8 +19,9 @@ export default function CardapioPage() {
         const cardapioData = data.find(item => item.key === 'cardapio_images');
         if (cardapioData && cardapioData.value) {
           setImages({
-            food: cardapioData.value.food || '/images/alacarte.jpg',
-            drinks: cardapioData.value.drinks || '/images/bebidas.jpg'
+            food: cardapioData.value.food || DEFAULT_IMAGES.food,
+            drinks: cardapioData.value.drinks || DEFAULT_IMAGES.drinks,
+            breakfast: cardapioData.value.breakfast || DEFAULT_IMAGES.breakfast
           });
         }
       })
@@ -22,7 +29,7 @@ export default function CardapioPage() {
   }, []);
 
   useEffect(() => {
-    document.title = "Nosso Cardápio À La Carte e Carta de Vinhos | Antenor e Filhos";
+    document.title = "Nosso Cardápio À La Carte, Café da Manhã e Carta de Vinhos | Antenor e Filhos";
   }, []);
 
   return (
@@ -47,7 +54,7 @@ export default function CardapioPage() {
           </h1>
           <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--primary)', margin: '0 auto 20px auto' }}></div>
           <p style={{ maxWidth: '600px', margin: '0 auto', fontSize: '15px' }}>
-            Nossas carnes preparadas na brasa, petiscos exclusivos e vinhos finos para degustação no local. Escolha o menu abaixo.
+            Nossas carnes preparadas na brasa, petiscos exclusivos, café da manhã especial e vinhos finos para degustação no local. Escolha o menu abaixo.
           </p>
         </div>
 
@@ -76,6 +83,21 @@ export default function CardapioPage() {
             <i className="fa-solid fa-utensils" style={{ marginRight: '8px' }}></i> Cardápio À La Carte
           </button>
           <button 
+            onClick={() => setActiveTab('breakfast')}
+            className={`btn ${activeTab === 'breakfast' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ 
+              padding: '12px 24px', 
+              fontSize: '13px', 
+              fontWeight: '600',
+              maxWidth: '100%',
+              whiteSpace: 'normal',
+              textAlign: 'center',
+              lineHeight: '1.3'
+            }}
+          >
+            <i className="fa-solid fa-mug-hot" style={{ marginRight: '8px' }}></i> Café da Manhã
+          </button>
+          <button 
             onClick={() => setActiveTab('drinks')}
             className={`btn ${activeTab === 'drinks' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ 
@@ -100,7 +122,7 @@ export default function CardapioPage() {
           overflow: 'hidden',
           marginBottom: '40px'
         }}>
-          {activeTab === 'food' ? (
+          {activeTab === 'food' && (
             <div>
               <div className="cardapio-img-box" style={{ 
                 position: 'relative', 
@@ -122,7 +144,33 @@ export default function CardapioPage() {
                 />
               </div>
             </div>
-          ) : (
+          )}
+
+          {activeTab === 'breakfast' && (
+            <div>
+              <div className="cardapio-img-box" style={{ 
+                position: 'relative', 
+                width: '100%', 
+                backgroundColor: '#15181c', 
+                borderRadius: 'var(--radius-md)',
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-md)'
+              }}>
+                <img 
+                  src={images.breakfast} 
+                  alt="Cardápio de Café da Manhã Antenor e Filhos" 
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    margin: '0 auto'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'drinks' && (
             <div>
               <div className="cardapio-img-box" style={{ 
                 position: 'relative', 
