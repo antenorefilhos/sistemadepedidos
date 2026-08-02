@@ -28,21 +28,42 @@ export async function POST(request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 
-    // Se o arquivo for uma imagem, fazemos a otimização com a biblioteca sharp
+    // Se o arquivo for uma imagem, fazemos a otimização inteligente com sharp
     if (file.type.startsWith('image/')) {
       try {
-        const maxSize = type === 'product' ? 800 : 1400;
-        optimizedBuffer = await sharp(buffer)
-          .resize({
-            width: maxSize,
-            height: maxSize,
-            fit: 'inside',
-            withoutEnlargement: true // Não amplia se a imagem for menor
-          })
-          .webp({ quality: 82 }) // Qualidade premium otimizada sem perda perceptível
-          .toBuffer();
+        if (type === 'cardapio') {
+          // Para cardápios: largura travada em 1000px, altura proporcional livre/ilimitada e qualidade 95%
+          optimizedBuffer = await sharp(buffer)
+            .resize({
+              width: 1000,
+              withoutEnlargement: true // Não amplia se a imagem original for menor que 1000px
+            })
+            .webp({ quality: 95, effort: 6 })
+            .toBuffer();
+        } else {
+          let maxSize = 1200;
+          let quality = 90;
+
+          if (type === 'product') {
+            maxSize = 1200;
+            quality = 90;
+          } else if (type === 'biolink' || type === 'avatar') {
+            maxSize = 800;
+            quality = 92;
+          }
+
+          optimizedBuffer = await sharp(buffer)
+            .resize({
+              width: maxSize,
+              height: maxSize,
+              fit: 'inside',
+              withoutEnlargement: true
+            })
+            .webp({ quality })
+            .toBuffer();
+        }
           
-        console.log(`Image optimized successfully (max: ${maxSize}px). Original: ${buffer.length} bytes, Optimized: ${optimizedBuffer.length} bytes`);
+        console.log(`Image optimized successfully (type: ${type}). Original: ${buffer.length} bytes, Optimized: ${optimizedBuffer.length} bytes`);
       } catch (sharpError) {
         console.error('Error optimizing image with sharp, uploading original:', sharpError);
         filename = `${uniqueSuffix}_${originalName}`;
