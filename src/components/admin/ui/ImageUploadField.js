@@ -117,27 +117,27 @@ export default function ImageUploadField({
           <span className="font-bold">Enviando arquivo...</span>
         </div>
       ) : value ? (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <div
-            className={`w-full ${heightClass} bg-base-300 rounded-2xl border border-base-300 overflow-hidden relative flex items-center justify-center p-4`}
+            className={`w-full ${heightClass} bg-base-300/40 rounded-2xl border border-base-300 overflow-hidden relative flex items-center justify-center p-3`}
           >
-            <img src={value} alt="Pré-visualização" className="max-w-full max-h-full object-contain rounded-xl" />
+            <img src={value} alt="Pré-visualização" className="max-w-full max-h-full object-contain rounded-xl shadow-sm" />
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="btn btn-outline flex-1 gap-2 font-bold"
+              className="btn btn-sm btn-outline flex-1 gap-1.5 text-xs font-bold whitespace-nowrap"
             >
-              <i className="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Substituir Foto
+              <i className="fa-solid fa-arrows-rotate text-xs" aria-hidden="true"></i> Substituir
             </button>
             <button
               type="button"
               onClick={handleDelete}
-              className="btn btn-error btn-outline gap-2 font-bold"
+              className="btn btn-sm btn-error btn-outline flex-1 gap-1.5 text-xs font-bold whitespace-nowrap"
               title="Apagar foto e remover do storage"
             >
-              <i className="fa-solid fa-trash-can" aria-hidden="true"></i> Remover Foto
+              <i className="fa-solid fa-trash-can text-xs" aria-hidden="true"></i> Remover
             </button>
           </div>
           <input
