@@ -1571,14 +1571,24 @@ footer a:hover {
 
 /* ── Hermes AI Markdown Styling (Light & Dark Theme Compatible) ── */
 .hermes-markdown {
-  color: inherit;
+  color: var(--base-content, inherit) !important;
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.6;
 }
 
+.hermes-markdown p,
+.hermes-markdown span,
+.hermes-markdown li,
+.hermes-markdown td,
+.hermes-markdown th,
+.hermes-markdown strong,
+.hermes-markdown em,
+.hermes-markdown b {
+  color: var(--base-content, inherit) !important;
+}
+
 .hermes-markdown p {
-  color: inherit !important;
   margin-top: 0;
   margin-bottom: 12px;
   max-width: 100% !important;
@@ -1592,7 +1602,7 @@ footer a:hover {
 .hermes-markdown h2, 
 .hermes-markdown h3, 
 .hermes-markdown h4 {
-  color: var(--primary);
+  color: var(--primary) !important;
   font-family: var(--font-sans);
   text-transform: none;
   letter-spacing: normal;
@@ -1610,23 +1620,22 @@ footer a:hover {
 .hermes-markdown ol {
   margin-left: 20px;
   margin-bottom: 12px;
-  color: inherit;
+  color: var(--base-content, inherit) !important;
   list-style: disc;
 }
 
 .hermes-markdown li {
   margin-bottom: 6px;
-  color: inherit;
 }
 
-.hermes-markdown strong {
-  color: inherit;
+.hermes-markdown strong,
+.hermes-markdown b {
   font-weight: 700;
 }
 
 .hermes-markdown pre {
-  background: rgba(0, 0, 0, 0.06);
-  color: inherit;
+  background: var(--base-300, rgba(0, 0, 0, 0.08));
+  color: var(--base-content, inherit) !important;
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
@@ -1636,11 +1645,11 @@ footer a:hover {
 
 .hermes-markdown code {
   font-family: monospace;
-  background: rgba(171, 144, 112, 0.15);
+  background: rgba(171, 144, 112, 0.18);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  color: inherit;
+  color: var(--base-content, inherit) !important;
 }
 
 /* ==========================================================================

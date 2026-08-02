@@ -178,12 +178,16 @@ export default function HermesChatPanel({ password, buildDataContext, onOpenConf
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-base-100">
           {messages.map((msg, idx) => (
             <div key={idx} className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}>
-              <div className="chat-header text-xs opacity-50 mb-1 uppercase tracking-widest font-bold">
+              <div className="chat-header text-xs opacity-60 mb-1 uppercase tracking-widest font-bold">
                 {msg.role === 'user' ? 'Você' : msg.role === 'error' ? 'Sistema' : 'Hermes'}
               </div>
               <div
                 className={`chat-bubble text-sm leading-relaxed shadow-sm
-                  ${msg.role === 'user' ? 'chat-bubble-neutral' : msg.role === 'error' ? 'chat-bubble-error' : 'bg-primary/10 text-base-content border border-primary/20'}`}
+                  ${msg.role === 'user' 
+                    ? 'chat-bubble-primary text-primary-content font-medium' 
+                    : msg.role === 'error' 
+                      ? 'chat-bubble-error' 
+                      : 'bg-base-200 text-base-content border border-base-300'}`}
               >
                 <div
                   className="hermes-markdown"
