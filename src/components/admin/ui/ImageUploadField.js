@@ -170,13 +170,13 @@ export default function ImageUploadField({
             className="hidden"
             aria-label={label}
           />
-          <div className="text-center p-10 text-base-content/60 flex flex-col items-center">
-            <div className="w-20 h-20 bg-base-content/5 rounded-full flex items-center justify-center mb-5 text-base-content">
-              <i className="fa-regular fa-image text-3xl" aria-hidden="true"></i>
+          <div className="text-center p-4 sm:p-6 text-base-content/60 flex flex-col items-center justify-center h-full w-full">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-base-content/5 rounded-full flex items-center justify-center mb-2 text-base-content shrink-0">
+              <i className="fa-regular fa-image text-xl sm:text-2xl" aria-hidden="true"></i>
             </div>
-            <div className="text-lg text-base-content font-bold mb-2">Arraste uma foto aqui</div>
-            <div className="text-sm">ou clique para procurar no seu computador</div>
-            <div className="text-xs mt-5 opacity-60 bg-base-content/5 px-4 py-2 rounded-full">{hint}</div>
+            <div className="text-sm font-bold text-base-content mb-1">Arraste uma foto aqui</div>
+            <div className="text-xs text-base-content/70">ou clique para procurar no seu computador</div>
+            {hint && <div className="text-[10px] sm:text-xs mt-3 opacity-60 bg-base-content/5 px-3 py-1 rounded-full">{hint}</div>}
           </div>
         </div>
       )}

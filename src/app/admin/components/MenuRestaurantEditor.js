@@ -61,68 +61,88 @@ export default function MenuRestaurantEditor({ password }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-20 animate-[fadeIn_0.3s_ease]">
-      <div>
-        <h3 className="text-lg text-base-content font-bold mb-1">Cardápios do Restaurante (Admin)</h3>
-        <p className="text-base-content/60 text-sm">Atualize os arquivos visuais dos cardápios (hospedados no Supabase Storage) exibidos na página pública.</p>
+    <div className="flex flex-col gap-6 w-full pb-20 animate-[fadeIn_0.3s_ease]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm">
+        <div>
+          <h3 className="text-xl text-base-content font-bold mb-1">Cardápios do Restaurante (Admin)</h3>
+          <p className="text-base-content/60 text-sm">Gerencie e substitua as imagens dos cardápios (salvas no Supabase Storage) exibidas na página pública.</p>
+        </div>
+        <button className="btn btn-primary px-8 gap-2 font-bold shadow-md self-start sm:self-auto shrink-0" onClick={handleSave} disabled={saving}>
+          {saving ? <LoadingSpinner size="sm" /> : <><i className="fa-solid fa-floppy-disk"></i> Salvar Alterações</>}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="card bg-base-100 border border-base-300 shadow-xl overflow-hidden">
-          <div className="card-body p-6">
-            <h4 className="text-sm font-bold text-base-content mb-1">Cardápio À La Carte (Alimentação)</h4>
-            <p className="text-xs text-base-content/60 leading-relaxed mb-4">
-              Esta imagem representa o menu principal oferecido na Brasa e nos pratos à la carte do restaurante.
-            </p>
+          <div className="card-body p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <h4 className="text-base font-bold text-base-content">Cardápio À La Carte</h4>
+              </div>
+              <p className="text-xs text-base-content/60 leading-relaxed mb-4">
+                Imagem do menu principal de carnes na brasa, entradas e pratos à la carte do restaurante.
+              </p>
+            </div>
             <ImageUploadField
               value={settings.cardapio_images.food}
               onChange={setImage('food')}
               uploadType="cardapio"
               password={password}
               label=""
-              heightClass="h-48"
+              heightClass="h-56"
             />
           </div>
         </div>
 
         <div className="card bg-base-100 border border-base-300 shadow-xl overflow-hidden">
-          <div className="card-body p-6">
-            <h4 className="text-sm font-bold text-base-content mb-1">☕ Café da Manhã</h4>
-            <p className="text-xs text-base-content/60 leading-relaxed mb-4">
-              Esta imagem representa o menu especial de café da manhã servido no restaurante.
-            </p>
+          <div className="card-body p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                <h4 className="text-base font-bold text-base-content">☕ Café da Manhã</h4>
+              </div>
+              <p className="text-xs text-base-content/60 leading-relaxed mb-4">
+                Imagem do menu especial de café da manhã servido no restaurante.
+              </p>
+            </div>
             <ImageUploadField
               value={settings.cardapio_images.breakfast}
               onChange={setImage('breakfast')}
               uploadType="cardapio"
               password={password}
               label=""
-              heightClass="h-48"
+              heightClass="h-56"
             />
           </div>
         </div>
 
         <div className="card bg-base-100 border border-base-300 shadow-xl overflow-hidden">
-          <div className="card-body p-6">
-            <h4 className="text-sm font-bold text-base-content mb-1">🍷 Carta de Vinhos &amp; Bebidas</h4>
-            <p className="text-xs text-base-content/60 leading-relaxed mb-4">
-              Esta imagem representa a carta de vinhos finos da adega e o menu de drinks/bebidas no local.
-            </p>
+          <div className="card-body p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                <h4 className="text-base font-bold text-base-content">🍷 Carta de Vinhos &amp; Bebidas</h4>
+              </div>
+              <p className="text-xs text-base-content/60 leading-relaxed mb-4">
+                Imagem da carta de vinhos finos da adega e menu de bebidas do restaurante.
+              </p>
+            </div>
             <ImageUploadField
               value={settings.cardapio_images.drinks}
               onChange={setImage('drinks')}
               uploadType="cardapio"
               password={password}
               label=""
-              heightClass="h-48"
+              heightClass="h-56"
             />
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end mt-4">
-        <button className="btn btn-primary px-8" onClick={handleSave} disabled={saving}>
-          {saving ? <LoadingSpinner size="sm" /> : 'Salvar Alterações dos Cardápios'}
+      <div className="flex justify-end mt-2">
+        <button className="btn btn-primary px-8 gap-2 font-bold shadow-md" onClick={handleSave} disabled={saving}>
+          {saving ? <LoadingSpinner size="sm" /> : <><i className="fa-solid fa-floppy-disk"></i> Salvar Alterações dos Cardápios</>}
         </button>
       </div>
     </div>
