@@ -51,9 +51,9 @@ next-env.d.ts
 .next/
 /.next/
 
-# PHP dependencies
-bio-links/vendor/
-/bio-links/vendor/
+# PHP application (bio-links)
+bio-links/
+/bio-links/
 
 # Local tests, notes and screenshots
 /IDEIAS.md
